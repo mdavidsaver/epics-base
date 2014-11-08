@@ -232,6 +232,7 @@ $(TESTPRODNAME) $(PRODNAME): %$(EXE):
 	@$(RM) $@
 	$(RCCMD)
 
+LEXOPT ?= $($*_LEXOPT)
 YACCOPT ?= $($*_YACCOPT)
 #
 # rename the y.tab.h file only if we

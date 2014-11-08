@@ -11,3 +11,9 @@
 
 # Ensure that the lexer is built before it is needed
 parse.c: $(EPICS_BASE_HOST_BIN)/antelope$(HOSTEXE)
+
+$(COMMON_DIR)/flex.skel.static: $(LIBCOM)/flex/flex.skel
+	$(PERL) $< $(LIBCOM)/flex > $@
+
+skel.c: $(COMMON_DIR)/flex.skel.static
+	$(PERL) $(TOOLS)/txt2c.pl skel $< $@

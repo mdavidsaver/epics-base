@@ -13,13 +13,14 @@ SRC_DIRS += $(LIBCOM)/flex
 
 parse_YACCOPT = -l -d
 
-SKELETON_FILE = flex.skel.static
-
-parse_CPPFLAGS = -DDEFAULT_SKELETON_FILE=$(SKELETON_FILE)
-
+# No longer needs to be installed,
+# but do it anyway to avoid breaking
+# 3rd party builds which copied
+# old rules
 INC += flex.skel.static
 
-# flex.c is included in parse.c
+# main.c is included in parse.c
+e_flex_SRCS += buf.c
 e_flex_SRCS += ccl.c
 e_flex_SRCS += dfa.c
 e_flex_SRCS += ecs.c
@@ -28,8 +29,12 @@ e_flex_SRCS += misc.c
 e_flex_SRCS += nfa.c
 e_flex_SRCS += sym.c
 e_flex_SRCS += tblcmp.c
+e_flex_SRCS += options.c
 e_flex_SRCS += parse.c
-e_flex_OBJS += epicsTempFile$(OBJ)
+e_flex_SRCS += scanopt.c
+e_flex_SRCS += skel.c
+e_flex_SRCS += tables_shared.c
+e_flex_SRCS += tables.c
 
 PROD_HOST += e_flex
 

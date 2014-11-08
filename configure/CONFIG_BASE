@@ -82,7 +82,7 @@ REPLACEVAR                 = $(PERL) $(TOOLS)/replaceVAR.pl
 #---------------------------------------------------------------
 # private versions of lex/yacc from EPICS
 EYACC = $(TOOLS)/antelope$(HOSTEXE)
-ELEX = $(TOOLS)/e_flex$(HOSTEXE) -S$(EPICS_BASE)/include/flex.skel.static
+ELEX = $(TOOLS)/e_flex$(HOSTEXE)
 
 YACC  = $(EYACC)
 LEX   = $(ELEX)
