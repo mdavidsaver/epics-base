@@ -1,78 +1,71 @@
-// $Revision-Id$
+This is flex, the fast lexical analyzer generator.
 
-This is release 2.3 of flex - a full release.
+flex is a tool for generating scanners: programs which recognize
+lexical patterns in text.
 
-The flex distribution consists of the following files:
+More information about flex as well as the latest official release of
+flex can be found at:
 
-	README		This message
+http://lex.sourceforge.net/
 
-	Makefile
-	flexdef.h
-	parse.y
-	scan.l
-	ccl.c
-	dfa.c
-	ecs.c		flex sources
-	gen.c
-	main.c
-	misc.c
-	nfa.c
-	sym.c
-	tblcmp.c
-	yylex.c
+Of particular interest is the mailing list
+lex-announce@lists.sourceforge.net as that is where posts will be made
+announcing new releases of flex.
 
-	libmain.c	flex library (-lfl) source
+Note that flex is distributed under a copyright very similar to that of
+BSD Unix, and not under the GNU General Public License (GPL).
 
-	initscan.c	pre-flex'd version of scan.l
+This file is part of flex.
 
-	flex.skel	skeleton for generated scanners
+This code is derived from software contributed to Berkeley by
+Vern Paxson.
 
-	flexdoc.1	full user documentation
-	flex.1		reference documentation
+The United States Government has rights in this work pursuant
+to contract no. DE-AC03-76SF00098 between the United States
+Department of Energy and the University of California.
 
-	Changes		Differences between this release and the previous one
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
 
-	COPYING		flex's copyright
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
 
-	MISC/		a directory containing miscellaneous porting-related
-			notes (for Atari, MS-DOS, Turbo-C, and VMS)
+Neither the name of the University nor the names of its contributors
+may be used to endorse or promote products derived from this software
+without specific prior written permission.
 
+THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE.
 
-Decide where you want to keep flex.skel (suggestion:  /usr/local/lib),
-but don't move it there yet.  Edit "Makefile" and change the definition
-of SKELETON_FILE to reflect the full pathname of flex.skel.
+Please send bug reports and feedback to lex-help@lists.sourceforge.net.
 
-Read the "Porting considerations" note in the Makefile and make
-the necessary changes.
+The flex distribution contains the following files which may be of interest:
 
-To make flex for the first time, use:
+README - This file.
 
-    make first_flex
+NEWS - current version number and list of user-visible changes.
 
-which uses the pre-generated copy of the flex scanner (the scanner
-itself is written using flex).
+INSTALL - basic installation information.
 
-Assuming it builds successfully, you can test it using
+ABOUT-NLS - description of internationalization support in flex.
 
-    make test
+COPYING - flex's copyright and license.
 
-The "diff" should not show any differences.
+flex.1, flex.texi - user documentation.
 
-If you're feeling adventurous, issue "make bigtest" and be prepared
-to wait a while.
+RoadMap - notes for developers.
 
-Install flex using:
+examples/ - containing examples of some possible flex scanners and a
+few other things. See the file examples/README for more details.
 
-	make install
+TODO - outstanding bug reports, desired features, etc.
 
+tests/ - regression tests. See TESTS/README for details.
 
-Please send problems and feedback to:
-
-	vern@cs.cornell.edu
-	decvax!cornell!vern
-
-	Vern Paxson
-	CS Department
-	4126 Upson Hall
-	Cornell University
-	Ithaca, NY 14853-7501
+po/ - internationalization support files.
