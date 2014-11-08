@@ -35,35 +35,16 @@
 #ifndef FLEXDEF_H
 #define FLEXDEF_H 1
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#ifdef STDC_HEADERS
 #include <stdio.h>
 #include <stdlib.h>
 #include <setjmp.h>
 #include <ctype.h>
 #include <string.h>
-#endif
-#ifdef HAVE_LIMITS_H
 #include <limits.h>
-#endif
 #include "flexint.h"
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
 
-/* We use gettext. So, when we write strings which should be translated, we mark them with _() */
-#ifdef ENABLE_NLS
-#ifdef HAVE_LOCALE_H
-#include <locale.h>
-#endif /* HAVE_LOCALE_H */
-#include "gettext.h"
-#define _(String) gettext (String)
-#else
-#define _(STRING) STRING
-#endif /* ENABLE_NLS */
+/* stub out NLS */
+#define _(X) X
 
 /* Always be prepared to generate an 8-bit scanner. */
 #define CSIZE 256
@@ -75,24 +56,8 @@
 #endif
 
 #ifndef PROTO
-#if __STDC__
 #define PROTO(proto) proto
-#else
-#define PROTO(proto) ()
 #endif
-#endif
-
-#ifdef VMS
-#ifndef __VMS_POSIX
-#define unlink remove
-#define SHORT_FILE_NAMES
-#endif
-#endif
-
-#ifdef MS_DOS
-#define SHORT_FILE_NAMES
-#endif
-
 
 /* Maximum line length we'll have to deal with. */
 #define MAXLINE 2048
@@ -113,22 +78,11 @@
 #define isascii(c) ((c) <= 0177)
 #endif
 
-#ifdef HAVE_STDBOOL_H
-#include <stdbool.h>
-#else
 #define bool int
 #define true 1
 #define false 0
-#endif
 
 #define unspecified -1
-
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif
-#ifdef HAVE_SYS_PARAMS_H
-#include <sys/params.h>
-#endif
 
 /* Special chk[] values marking the slots taking by end-of-buffer and action
  * numbers.
@@ -697,13 +651,6 @@ void flex_free PROTO ((void *));
 
 #define reallocate_Character_array(array,size) \
 	(Char *) reallocate_array( (void *) array, size, sizeof( Char ) )
-
-
-/* Used to communicate between scanner and parser.  The type should really
- * be YYSTYPE, but we can't easily get our hands on it.
- */
-extern int yylval;
-
 
 /* External functions that are cross-referenced among the flex source files. */
 
