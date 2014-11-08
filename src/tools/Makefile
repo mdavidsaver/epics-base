@@ -52,6 +52,7 @@ PERL_SCRIPTS += dbdExpand.pl
 PERL_SCRIPTS += dbdToHtml.pl
 PERL_SCRIPTS += podToHtml.pl
 PERL_SCRIPTS += registerRecordDeviceDriver.pl
+PERL_SCRIPTS += txt2c.pl
 
 HTMLS = style.css
 
