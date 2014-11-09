@@ -838,10 +838,12 @@ void flexend (exit_status)
 		else if (fclose (stdout))
 			lerrsf (_("error closing output file %s"),
 				outfilename);
-
+/*
 		else if (unlink (outfilename))
 			lerrsf (_("error deleting output file %s"),
 				outfilename);
+*/
+
 	}
 
 
