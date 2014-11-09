@@ -1,34 +1,27 @@
-/*************************************************************************\
-* Copyright (c) 2002 The University of Chicago, as Operator of Argonne
-*     National Laboratory.
-* Copyright (c) 2002 The Regents of the University of California, as
-*     Operator of Los Alamos National Laboratory.
-* EPICS BASE is distributed subject to a Software License Agreement found
-* in file LICENSE that is included with this distribution. 
-\*************************************************************************/
+/* $Id: closure.c,v 1.11 2014/09/18 00:40:07 tom Exp $ */
 
 #include "defs.h"
 
-short *itemset;
-short *itemsetend;
+Value_t *itemset;
+Value_t *itemsetend;
 unsigned *ruleset;
 
+static unsigned *first_base;
 static unsigned *first_derives;
 static unsigned *EFF;
 
-#ifdef DEBUG
-static void print_closure(int n);
+#ifdef	DEBUG
+static void print_closure(int);
 static void print_EFF(void);
 static void print_first_derives(void);
 #endif
-
 
 static void
 set_EFF(void)
 {
     unsigned *row;
     int symbol;
-    short *sp;
+    Value_t *sp;
     int rowsize;
     int i;
     int rule;
@@ -59,7 +52,6 @@ set_EFF(void)
 #endif
 }
 
-
 void
 set_first_derives(void)
 {
@@ -68,7 +60,7 @@ set_first_derives(void)
     int j;
     unsigned k;
     unsigned cword = 0;
-    short *rp;
+    Value_t *rp;
 
     int rule;
     int i;
@@ -77,7 +69,8 @@ set_first_derives(void)
 
     rulesetsize = WORDSIZE(nrules);
     varsetsize = WORDSIZE(nvars);
-    first_derives = NEW2(nvars * rulesetsize, unsigned) - ntokens * rulesetsize;
+    first_base = NEW2(nvars * rulesetsize, unsigned);
+    first_derives = first_base - ntokens * rulesetsize;
 
     set_EFF();
 
@@ -94,7 +87,7 @@ set_first_derives(void)
 		k = 0;
 	    }
 
-	    if (cword & (1 << k))
+	    if (cword & (unsigned)(1 << k))
 	    {
 		rp = derives[j];
 		while ((rule = *rp++) >= 0)
@@ -104,7 +97,6 @@ set_first_derives(void)
 	    }
 	}
 
-	vrow += varsetsize;
 	rrow += rulesetsize;
     }
 
@@ -115,25 +107,23 @@ set_first_derives(void)
     FREE(EFF);
 }
 
-
 void
-closure(short int *nucleus, int n)
+closure(Value_t *nucleus, int n)
 {
-    int ruleno;
+    unsigned ruleno;
     unsigned word;
     unsigned i;
-    short *csp;
+    Value_t *csp;
     unsigned *dsp;
     unsigned *rsp;
     int rulesetsize;
 
-    short *csend;
+    Value_t *csend;
     unsigned *rsend;
     int symbol;
-    int itemno;
+    Value_t itemno;
 
     rulesetsize = WORDSIZE(nrules);
-    rsp = ruleset;
     rsend = ruleset + rulesetsize;
     for (rsp = ruleset; rsp < rsend; rsp++)
 	*rsp = 0;
@@ -161,9 +151,9 @@ closure(short int *nucleus, int n)
 	{
 	    for (i = 0; i < BITS_PER_WORD; ++i)
 	    {
-		if (word & (1 << i))
+		if (word & (unsigned)(1 << i))
 		{
-		    itemno = rrhs[ruleno+i];
+		    itemno = rrhs[ruleno + i];
 		    while (csp < csend && *csp < itemno)
 			*itemsetend++ = *csp++;
 		    *itemsetend++ = itemno;
@@ -179,33 +169,29 @@ closure(short int *nucleus, int n)
 	*itemsetend++ = *csp++;
 
 #ifdef	DEBUG
-  print_closure(n);
+    print_closure(n);
 #endif
 }
-
-
 
 void
 finalize_closure(void)
 {
-  FREE(itemset);
-  FREE(ruleset);
-  FREE(first_derives + ntokens * WORDSIZE(nrules));
+    FREE(itemset);
+    FREE(ruleset);
+    FREE(first_base);
 }
 
-
-#ifdef DEBUG
+#ifdef	DEBUG
 
 static void
 print_closure(int n)
 {
-  short *isp;
+    Value_t *isp;
 
-  printf("\n\nn = %d\n\n", n);
-  for (isp = itemset; isp < itemsetend; isp++)
-    printf("   %d\n", *isp);
+    printf("\n\nn = %d\n\n", n);
+    for (isp = itemset; isp < itemsetend; isp++)
+	printf("   %d\n", *isp);
 }
-
 
 static void
 print_EFF(void)
@@ -238,14 +224,13 @@ print_EFF(void)
     }
 }
 
-
 static void
 print_first_derives(void)
 {
     int i;
     int j;
     unsigned *rp;
-    unsigned cword;
+    unsigned cword = 0;
     unsigned k;
 
     printf("\n\n\nFirst Derives\n");
@@ -256,19 +241,19 @@ print_first_derives(void)
 	rp = first_derives + i * WORDSIZE(nrules);
 	k = BITS_PER_WORD;
 	for (j = 0; j <= nrules; k++, j++)
-        {
-	  if (k >= BITS_PER_WORD)
-	  {
-	      cword = *rp++;
-	      k = 0;
-	  }
+	{
+	    if (k >= BITS_PER_WORD)
+	    {
+		cword = *rp++;
+		k = 0;
+	    }
 
-	  if (cword & (1 << k))
-	    printf("   %d\n", j);
+	    if (cword & (1 << k))
+		printf("   %d\n", j);
 	}
     }
 
-  fflush(stdout);
+    fflush(stdout);
 }
 
 #endif

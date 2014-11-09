@@ -1,37 +1,31 @@
-/*************************************************************************\
-* Copyright (c) 2002 The University of Chicago, as Operator of Argonne
-*     National Laboratory.
-* Copyright (c) 2002 The Regents of the University of California, as
-*     Operator of Los Alamos National Laboratory.
-* EPICS BASE is distributed subject to a Software License Agreement found
-* in file LICENSE that is included with this distribution. 
-\*************************************************************************/
+/* $Id: verbose.c,v 1.11 2014/04/01 23:15:59 Tom.Shields Exp $ */
 
 #include "defs.h"
 
-static short *null_rules;
-
-static void log_unused(void);
 static void log_conflicts(void);
-static void print_state(int state);
+static void log_unused(void);
+static void print_actions(int stateno);
 static void print_conflicts(int state);
 static void print_core(int state);
-static void print_nulls(int state);
-static void print_actions(int state);
-static void print_shifts(action *p);
-static void print_reductions(action *p, int defred);
 static void print_gotos(int stateno);
+static void print_nulls(int state);
+static void print_shifts(action *p);
+static void print_state(int state);
+static void print_reductions(action *p, int defred2);
 
+static Value_t *null_rules;
 
 void
 verbose(void)
 {
     int i;
 
-    if (!vflag) return;
+    if (!vflag)
+	return;
 
-    null_rules = (short *) MALLOC(nrules*sizeof(short));
-    if (null_rules == 0) no_space();
+    null_rules = TMALLOC(Value_t, nrules);
+    NO_SPACE(null_rules);
+
     fprintf(verbose_file, "\f\n");
     for (i = 0; i < nstates; i++)
 	print_state(i);
@@ -42,16 +36,36 @@ verbose(void)
     if (SRtotal || RRtotal)
 	log_conflicts();
 
-    fprintf(verbose_file, "\n\n%d terminals, %d nonterminals\n", ntokens, nvars);
+    fprintf(verbose_file, "\n\n%d terminals, %d nonterminals\n", ntokens,
+	    nvars);
     fprintf(verbose_file, "%d grammar rules, %d states\n", nrules - 2, nstates);
-}
+#if defined(YYBTYACC)
+    {				/* print out the grammar symbol # and parser internal symbol # for each
+				   symbol as an aide to writing the implementation for YYDESTRUCT_CALL()
+				   and YYSTYPE_TOSTRING() */
+	int maxtok = 0;
 
+	fputs("\ngrammar parser grammar\n", verbose_file);
+	fputs("symbol# value# symbol\n", verbose_file);
+	for (i = 0; i < ntokens; ++i)
+	{
+	    fprintf(verbose_file, " %5d  %5d  %s\n",
+		    i, symbol_value[i], symbol_name[i]);
+	    if (symbol_value[i] > maxtok)
+		maxtok = symbol_value[i];
+	}
+	for (i = ntokens; i < nsyms; ++i)
+	    fprintf(verbose_file, " %5d  %5d  %s\n",
+		    i, (maxtok + 1) + symbol_value[i] + 1, symbol_name[i]);
+    }
+#endif
+}
 
 static void
 log_unused(void)
 {
     int i;
-    short *p;
+    Value_t *p;
 
     fprintf(verbose_file, "\n\nRules never reduced:\n");
     for (i = 3; i < nrules; ++i)
@@ -66,7 +80,6 @@ log_unused(void)
     }
 }
 
-
 static void
 log_conflicts(void)
 {
@@ -78,23 +91,20 @@ log_conflicts(void)
 	if (SRconflicts[i] || RRconflicts[i])
 	{
 	    fprintf(verbose_file, "State %d contains ", i);
-	    if (SRconflicts[i] == 1)
-		fprintf(verbose_file, "1 shift/reduce conflict");
-	    else if (SRconflicts[i] > 1)
-		fprintf(verbose_file, "%d shift/reduce conflicts",
-			SRconflicts[i]);
+	    if (SRconflicts[i] > 0)
+		fprintf(verbose_file, "%d shift/reduce conflict%s",
+			SRconflicts[i],
+			PLURAL(SRconflicts[i]));
 	    if (SRconflicts[i] && RRconflicts[i])
 		fprintf(verbose_file, ", ");
-	    if (RRconflicts[i] == 1)
-		fprintf(verbose_file, "1 reduce/reduce conflict");
-	    else if (RRconflicts[i] > 1)
-		fprintf(verbose_file, "%d reduce/reduce conflicts",
-			RRconflicts[i]);
+	    if (RRconflicts[i] > 0)
+		fprintf(verbose_file, "%d reduce/reduce conflict%s",
+			RRconflicts[i],
+			PLURAL(RRconflicts[i]));
 	    fprintf(verbose_file, ".\n");
 	}
     }
 }
-
 
 static void
 print_state(int state)
@@ -109,13 +119,14 @@ print_state(int state)
     print_actions(state);
 }
 
-
 static void
 print_conflicts(int state)
 {
-    int symbol, act = 0, number = 0;
+    int symbol, act, number;
     action *p;
 
+    act = 0;			/* not shift/reduce... */
+    number = -1;
     symbol = -1;
     for (p = parser[state]; p; p = p->next)
     {
@@ -157,7 +168,6 @@ print_conflicts(int state)
     }
 }
 
-
 static void
 print_core(int state)
 {
@@ -165,8 +175,8 @@ print_core(int state)
     int k;
     int rule;
     core *statep;
-    short *sp;
-    short *sp1;
+    Value_t *sp;
+    Value_t *sp1;
 
     statep = state_table[state];
     k = statep->nitems;
@@ -175,11 +185,12 @@ print_core(int state)
     {
 	sp1 = sp = ritem + statep->items[i];
 
-	while (*sp >= 0) ++sp;
+	while (*sp >= 0)
+	    ++sp;
 	rule = -(*sp);
 	fprintf(verbose_file, "\t%s : ", symbol_name[rlhs[rule]]);
 
-        for (sp = ritem + rrhs[rule]; sp < sp1; sp++)
+	for (sp = ritem + rrhs[rule]; sp < sp1; sp++)
 	    fprintf(verbose_file, "%s ", symbol_name[*sp]);
 
 	putc('.', verbose_file);
@@ -193,21 +204,20 @@ print_core(int state)
     }
 }
 
-
 static void
 print_nulls(int state)
 {
     action *p;
-    int i, j, k, nnulls;
+    Value_t i, j, k, nnulls;
 
     nnulls = 0;
     for (p = parser[state]; p; p = p->next)
     {
 	if (p->action_code == REDUCE &&
-		(p->suppressed == 0 || p->suppressed == 1))
+	    (p->suppressed == 0 || p->suppressed == 1))
 	{
 	    i = p->number;
-	    if (rrhs[i] + 1 == rrhs[i+1])
+	    if (rrhs[i] + 1 == rrhs[i + 1])
 	    {
 		for (j = 0; j < nnulls && i > null_rules[j]; ++j)
 		    continue;
@@ -220,8 +230,8 @@ print_nulls(int state)
 		else if (i != null_rules[j])
 		{
 		    ++nnulls;
-		    for (k = nnulls - 1; k > j; --k)
-			null_rules[k] = null_rules[k-1];
+		    for (k = (Value_t) (nnulls - 1); k > j; --k)
+			null_rules[k] = null_rules[k - 1];
 		    null_rules[j] = i;
 		}
 	    }
@@ -236,7 +246,6 @@ print_nulls(int state)
     }
     fprintf(verbose_file, "\n");
 }
-
 
 static void
 print_actions(int stateno)
@@ -264,7 +273,6 @@ print_actions(int stateno)
     }
 }
 
-
 static void
 print_shifts(action *p)
 {
@@ -284,20 +292,24 @@ print_shifts(action *p)
 	{
 	    if (p->action_code == SHIFT && p->suppressed == 0)
 		fprintf(verbose_file, "\t%s  shift %d\n",
-			    symbol_name[p->symbol], p->number);
+			symbol_name[p->symbol], p->number);
+#if defined(YYBTYACC)
+	    if (backtrack && p->action_code == SHIFT && p->suppressed == 1)
+		fprintf(verbose_file, "\t%s  [trial] shift %d\n",
+			symbol_name[p->symbol], p->number);
+#endif
 	}
     }
 }
 
-
 static void
-print_reductions(action *p, int defred)
+print_reductions(action *p, int defred2)
 {
     int k, anyreds;
     action *q;
 
     anyreds = 0;
-    for (q = p; q ; q = q->next)
+    for (q = p; q; q = q->next)
     {
 	if (q->action_code == REDUCE && q->suppressed < 2)
 	{
@@ -312,38 +324,41 @@ print_reductions(action *p, int defred)
     {
 	for (; p; p = p->next)
 	{
-	    if (p->action_code == REDUCE && p->number != defred)
+	    if (p->action_code == REDUCE && p->number != defred2)
 	    {
 		k = p->number - 2;
 		if (p->suppressed == 0)
 		    fprintf(verbose_file, "\t%s  reduce %d\n",
 			    symbol_name[p->symbol], k);
+#if defined(YYBTYACC)
+		if (backtrack && p->suppressed == 1)
+		    fprintf(verbose_file, "\t%s  [trial] reduce %d\n",
+			    symbol_name[p->symbol], k);
+#endif
 	    }
 	}
 
-        if (defred > 0)
-	    fprintf(verbose_file, "\t.  reduce %d\n", defred - 2);
+	if (defred2 > 0)
+	    fprintf(verbose_file, "\t.  reduce %d\n", defred2 - 2);
     }
 }
-
 
 static void
 print_gotos(int stateno)
 {
     int i, k;
     int as;
-    short *to_state;
+    Value_t *to_state2;
     shifts *sp;
 
     putc('\n', verbose_file);
     sp = shift_table[stateno];
-    to_state = sp->shift;
+    to_state2 = sp->shift;
     for (i = 0; i < sp->nshifts; ++i)
     {
-	k = to_state[i];
+	k = to_state2[i];
 	as = accessing_symbol[k];
 	if (ISVAR(as))
 	    fprintf(verbose_file, "\t%s  goto %d\n", symbol_name[as], k);
     }
 }
-

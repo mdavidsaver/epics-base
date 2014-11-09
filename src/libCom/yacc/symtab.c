@@ -1,69 +1,66 @@
-/*************************************************************************\
-* Copyright (c) 2002 The University of Chicago, as Operator of Argonne
-*     National Laboratory.
-* Copyright (c) 2002 The Regents of the University of California, as
-*     Operator of Los Alamos National Laboratory.
-* EPICS BASE is distributed subject to a Software License Agreement found
-* in file LICENSE that is included with this distribution. 
-\*************************************************************************/
-#include "defs.h"
+/* $Id: symtab.c,v 1.11 2014/03/26 00:17:09 Tom.Shields Exp $ */
 
+#include "defs.h"
 
 /* TABLE_SIZE is the number of entries in the symbol table. */
 /* TABLE_SIZE must be a power of two.			    */
 
 #define	TABLE_SIZE 1024
 
-
-bucket **symbol_table;
+static bucket **symbol_table = 0;
 bucket *first_symbol;
 bucket *last_symbol;
 
-
 static int
-hash(char *name)
+hash(const char *name)
 {
-    char *s;
+    const char *s;
     int c, k;
 
     assert(name && *name);
     s = name;
     k = *s;
-    while ((c = *++s))
-	k = (31*k + c) & (TABLE_SIZE - 1);
+    while ((c = *++s) != 0)
+	k = (31 * k + c) & (TABLE_SIZE - 1);
 
     return (k);
 }
 
-
 bucket *
-make_bucket(char *name)
+make_bucket(const char *name)
 {
     bucket *bp;
 
-    assert(name);
-    bp = (bucket *) MALLOC(sizeof(bucket));
-    if (bp == 0) no_space();
+    assert(name != 0);
+
+    bp = TMALLOC(bucket, 1);
+    NO_SPACE(bp);
+
     bp->link = 0;
     bp->next = 0;
-    bp->name = MALLOC(strlen(name) + 1);
-    if (bp->name == 0) no_space();
+
+    bp->name = TMALLOC(char, strlen(name) + 1);
+    NO_SPACE(bp->name);
+
     bp->tag = 0;
     bp->value = UNDEFINED;
     bp->index = 0;
     bp->prec = 0;
-    bp-> class = UNKNOWN;
+    bp->class = UNKNOWN;
     bp->assoc = TOKEN;
-
-    if (bp->name == 0) no_space();
+#if defined(YYBTYACC)
+    bp->args = -1;
+    bp->argnames = 0;
+    bp->argtags = 0;
+    bp->destructor = 0;
+#endif
     strcpy(bp->name, name);
 
     return (bp);
 }
 
-
 bucket *
-lookup(char *name)
+lookup(const char *name)
 {
     bucket *bp, **bpp;
 
@@ -72,7 +69,8 @@ lookup(char *name)
 
     while (bp)
     {
-	if (strcmp(name, bp->name) == 0) return (bp);
+	if (strcmp(name, bp->name) == 0)
+	    return (bp);
 	bpp = &bp->link;
 	bp = *bpp;
     }
@@ -90,8 +88,9 @@ create_symbol_table(void)
     int i;
     bucket *bp;
 
-    symbol_table = (bucket **) MALLOC(TABLE_SIZE*sizeof(bucket *));
-    if (symbol_table == 0) no_space();
+    symbol_table = TMALLOC(bucket *, TABLE_SIZE);
+    NO_SPACE(symbol_table);
+
     for (i = 0; i < TABLE_SIZE; i++)
 	symbol_table[i] = 0;
 
@@ -104,14 +103,12 @@ create_symbol_table(void)
     symbol_table[hash("error")] = bp;
 }
 
-
 void
 free_symbol_table(void)
 {
     FREE(symbol_table);
     symbol_table = 0;
 }
-
 
 void
 free_symbols(void)

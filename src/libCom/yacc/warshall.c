@@ -1,15 +1,9 @@
-/*************************************************************************\
-* Copyright (c) 2002 The University of Chicago, as Operator of Argonne
-*     National Laboratory.
-* Copyright (c) 2002 The Regents of the University of California, as
-*     Operator of Los Alamos National Laboratory.
-* EPICS BASE is distributed subject to a Software License Agreement found
-* in file LICENSE that is included with this distribution. 
-\*************************************************************************/
+/* $Id: warshall.c,v 1.7 2010/06/06 22:48:51 tom Exp $ */
+
 #include "defs.h"
 
 static void
-transitive_closure(unsigned int *R, int n)
+transitive_closure(unsigned *R, int n)
 {
     int rowsize;
     unsigned i;
@@ -22,7 +16,7 @@ transitive_closure(unsigned int *R, int n)
     unsigned *rowi;
 
     rowsize = WORDSIZE(n);
-    relend = R + n*rowsize;
+    relend = R + n * rowsize;
 
     cword = R;
     i = 0;
@@ -34,7 +28,7 @@ transitive_closure(unsigned int *R, int n)
 
 	while (rowj < relend)
 	{
-	    if (*ccol & (1 << i))
+	    if (*ccol & (unsigned)(1 << i))
 	    {
 		rp = rowi;
 		rend = rowj + rowsize;
@@ -60,7 +54,7 @@ transitive_closure(unsigned int *R, int n)
 }
 
 void
-reflexive_transitive_closure(unsigned int *R, int n)
+reflexive_transitive_closure(unsigned *R, int n)
 {
     int rowsize;
     unsigned i;
@@ -70,13 +64,13 @@ reflexive_transitive_closure(unsigned int *R, int n)
     transitive_closure(R, n);
 
     rowsize = WORDSIZE(n);
-    relend = R + n*rowsize;
+    relend = R + n * rowsize;
 
     i = 0;
     rp = R;
     while (rp < relend)
     {
-	*rp |= (1 << i);
+	*rp |= (unsigned)(1 << i);
 	if (++i >= BITS_PER_WORD)
 	{
 	    i = 0;
