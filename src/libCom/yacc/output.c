@@ -1208,7 +1208,8 @@ output_defines(FILE * fp)
 		while ((c = getc(union_file)) != EOF)
 		    putc_code(fp, c);
 	    }
-	    fprintf(fp, "extern YYSTYPE %slval;\n", symbol_prefix);
+	    if(!pure_parser)
+            fprintf(fp, "extern YYSTYPE %slval;\n", symbol_prefix);
 	}
     }
 }
