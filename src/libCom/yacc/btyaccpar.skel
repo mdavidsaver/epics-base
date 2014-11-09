@@ -26,42 +26,42 @@
 #define YYEOF          0
 %% xdecls
 
-extern int YYPARSE_DECL();
+static int YYPARSE_DECL();
 %% tables
-extern const YYINT yylhs[];
-extern const YYINT yylen[];
-extern const YYINT yydefred[];
-extern const YYINT yystos[];
-extern const YYINT yydgoto[];
-extern const YYINT yysindex[];
-extern const YYINT yyrindex[];
+static const YYINT yylhs[];
+static const YYINT yylen[];
+static const YYINT yydefred[];
+static const YYINT yystos[];
+static const YYINT yydgoto[];
+static const YYINT yysindex[];
+static const YYINT yyrindex[];
 %%ifdef YYBTYACC
-extern const YYINT yycindex[];
+static const YYINT yycindex[];
 %%endif
-extern const YYINT yygindex[];
-extern const YYINT yytable[];
-extern const YYINT yycheck[];
+static const YYINT yygindex[];
+static const YYINT yytable[];
+static const YYINT yycheck[];
 %%ifdef YYBTYACC
-extern const YYINT yyctable[];
+static const YYINT yyctable[];
 %%endif
 
 #if YYDEBUG
-extern const char *const yyname[];
-extern const char *const yyrule[];
+static const char *const yyname[];
+static const char *const yyrule[];
 #endif
 %% global_vars
 
-int      yydebug;
-int      yynerrs;
+static int      yydebug;
+static int      yynerrs;
 %% impure_vars
 
-int      yyerrflag;
-int      yychar;
-YYSTYPE  yyval;
-YYSTYPE  yylval;
+static int      yyerrflag;
+static int      yychar;
+static YYSTYPE  yyval;
+static YYSTYPE  yylval;
 #if defined(YYLTYPE) || defined(YYLTYPE_IS_DECLARED)
-YYLTYPE  yyloc; /* position returned by actions */
-YYLTYPE  yylloc; /* position from the lexer */
+static YYLTYPE  yyloc; /* position returned by actions */
+static YYLTYPE  yylloc; /* position from the lexer */
 #endif
 %% hdr_defs
 
@@ -359,6 +359,7 @@ yyFreeState(YYParseState *p)
                                 yyps->save->save == 0) goto yyvalid; } while(0)
 %%endif
 
+static
 int
 YYPARSE_DECL()
 {

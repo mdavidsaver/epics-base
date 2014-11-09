@@ -26,32 +26,32 @@
 #define YYEOF          0
 %% xdecls
 
-extern int YYPARSE_DECL();
+static int YYPARSE_DECL();
 %% tables
-extern YYINT yylhs[];
-extern YYINT yylen[];
-extern YYINT yydefred[];
-extern YYINT yydgoto[];
-extern YYINT yysindex[];
-extern YYINT yyrindex[];
-extern YYINT yygindex[];
-extern YYINT yytable[];
-extern YYINT yycheck[];
+static YYINT yylhs[];
+static YYINT yylen[];
+static YYINT yydefred[];
+static YYINT yydgoto[];
+static YYINT yysindex[];
+static YYINT yyrindex[];
+static YYINT yygindex[];
+static YYINT yytable[];
+static YYINT yycheck[];
 
 #if YYDEBUG
-extern char *yyname[];
-extern char *yyrule[];
+static char *yyname[];
+static char *yyrule[];
 #endif
 %% global_vars
 
-int      yydebug;
-int      yynerrs;
+static int      yydebug;
+static int      yynerrs;
 %% impure_vars
 
-int      yyerrflag;
-int      yychar;
-YYSTYPE  yyval;
-YYSTYPE  yylval;
+static int      yyerrflag;
+static int      yychar;
+static YYSTYPE  yyval;
+static YYSTYPE  yylval;
 %% hdr_defs
 
 /* define the initial stack-sizes */
@@ -148,6 +148,7 @@ static void yyfreestack(YYSTACKDATA *data)
 #define YYACCEPT goto yyaccept
 #define YYERROR  goto yyerrlab
 
+static
 int
 YYPARSE_DECL()
 {

@@ -947,7 +947,6 @@ extern void synerr PROTO ((const char *));	/* report a syntax error */
 extern void format_warn PROTO ((const char *, const char *));
 extern void warn PROTO ((const char *));	/* report a warning */
 extern void yyerror PROTO ((const char *));	/* report a parse error */
-extern int yyparse PROTO ((void));	/* the YACC parser */
 
 
 /* from file scan.l */
