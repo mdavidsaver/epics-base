@@ -37,7 +37,7 @@
 #include "options.h"
 #include "tables.h"
 
-static char flex_version[] = FLEX_VERSION;
+static char flex_version[] = "FLEX_VERSION";
 
 /* declare functions that have forward references */
 

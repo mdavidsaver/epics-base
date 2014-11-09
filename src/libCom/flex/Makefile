@@ -19,6 +19,8 @@ parse_YACCOPT = -l -d
 # old rules
 INC += flex.skel.static
 
+parse_c_CPPFLAGS += -DFLEX_VERSION=2.5.29epics
+
 # main.c is included in parse.c
 e_flex_SRCS += buf.c
 e_flex_SRCS += ccl.c
