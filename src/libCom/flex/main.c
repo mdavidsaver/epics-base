@@ -1557,9 +1557,9 @@ void flexinit (argc, argv)
 
 void readin ()
 {
-	static char yy_stdinit[] = "FILE *yyin = stdin, *yyout = stdout;";
+	static char yy_stdinit[] = "static FILE *yyin = stdin, *yyout = stdout;";
 	static char yy_nostdinit[] =
-		"FILE *yyin = (FILE *) 0, *yyout = (FILE *) 0;";
+		"static FILE *yyin = (FILE *) 0, *yyout = (FILE *) 0;";
 
 	line_directive_out ((FILE *) 0, 1);
 
@@ -1739,9 +1739,8 @@ void readin ()
 		outn ("#define YY_FLEX_LEX_COMPAT");
 
 	if (!C_plus_plus && !reentrant) {
-		outn ("extern int yylineno;");
 		OUT_BEGIN_CODE ();
-		outn ("int yylineno = 1;");
+		outn ("static int yylineno = 1;");
 		OUT_END_CODE ();
 	}
 
@@ -1767,14 +1766,14 @@ void readin ()
 		 */
 		if (yytext_is_array) {
 			if (!reentrant)
-				outn ("extern char yytext[];\n");
+				outn ("static char yytext[];\n");
 		}
 		else {
 			if (reentrant) {
 				outn ("#define yytext_ptr yytext_r");
 			}
 			else {
-				outn ("extern char *yytext;");
+				outn ("static char *yytext;");
 				outn ("#define yytext_ptr yytext");
 			}
 		}

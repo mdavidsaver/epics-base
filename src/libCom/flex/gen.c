@@ -1746,8 +1746,7 @@ void make_tables ()
 	}
 
 	if (!C_plus_plus && !reentrant) {
-		indent_puts ("extern int yy_flex_debug;");
-		indent_put2s ("int yy_flex_debug = %s;\n",
+		indent_put2s ("static int yy_flex_debug = %s;\n",
 			      ddebug ? "1" : "0");
 	}
 
@@ -1864,14 +1863,14 @@ void make_tables ()
 			outn ("#define YYLMAX 8192");
 			outn ("#endif\n");
 			outn ("#ifndef YY_REENTRANT");
-			outn ("char yytext[YYLMAX];");
-			outn ("char *yytext_ptr;");
+			outn ("static char yytext[YYLMAX];");
+			outn ("static char *yytext_ptr;");
 			outn ("#endif");
 		}
 
 		else {
 			outn ("#ifndef YY_REENTRANT");
-			outn ("char *yytext;");
+			outn ("static char *yytext;");
 			outn ("#endif");
 		}
 	}

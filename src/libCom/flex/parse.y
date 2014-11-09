@@ -71,6 +71,7 @@
 
 #include "flexdef.h"
 #include "tables.h"
+#include "options.h"
 
 /* The remainder of the alloca() cruft has to come after including flexdef.h,
  * so HAVE_ALLOCA_H is (possibly) defined.
@@ -1047,3 +1048,7 @@ void yyerror( msg )
 const char *msg;
 	{
 	}
+
+#include "scan.c"
+#include "yylex.c"
+#include "main.c"

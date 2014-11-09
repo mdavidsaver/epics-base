@@ -259,12 +259,12 @@ typedef struct yy_buffer_state *YY_BUFFER_STATE;
 #endif
 
 %if-not-reentrant
-extern int yyleng;
+static int yyleng;
 %endif
 
 %if-c-only
 %if-not-reentrant
-extern FILE *yyin, *yyout;
+static FILE *yyin, *yyout;
 %endif
 %endif
 
@@ -435,7 +435,7 @@ static char yy_hold_char;
 static int yy_n_chars;		/* number of characters read into yy_ch_buf */
 
 
-int yyleng;
+static int yyleng;
 
 /* Points to current character in buffer. */
 static char *yy_c_buf_p = (char *) 0;
@@ -449,17 +449,17 @@ static int yy_did_buffer_switch_on_eof;
 %ok-for-header
 %endif
 
-void yyrestart YY_PARAMS(( FILE *input_file YY_PROTO_LAST_ARG ));
+static void yyrestart YY_PARAMS(( FILE *input_file YY_PROTO_LAST_ARG ));
 
 
-void yy_switch_to_buffer YY_PARAMS(( YY_BUFFER_STATE new_buffer YY_PROTO_LAST_ARG ));
-void yy_load_buffer_state YY_PARAMS(( YY_PROTO_ONLY_ARG ));
-YY_BUFFER_STATE yy_create_buffer YY_PARAMS(( FILE *file, int size YY_PROTO_LAST_ARG ));
-void yy_delete_buffer YY_PARAMS(( YY_BUFFER_STATE b YY_PROTO_LAST_ARG ));
-void yy_init_buffer YY_PARAMS(( YY_BUFFER_STATE b, FILE *file YY_PROTO_LAST_ARG ));
-void yy_flush_buffer YY_PARAMS(( YY_BUFFER_STATE b YY_PROTO_LAST_ARG ));
-void yypush_buffer_state YY_PARAMS(( YY_BUFFER_STATE new_buffer YY_PROTO_LAST_ARG ));
-void yypop_buffer_state YY_PARAMS(( YY_PROTO_ONLY_ARG ));
+static void yy_switch_to_buffer YY_PARAMS(( YY_BUFFER_STATE new_buffer YY_PROTO_LAST_ARG ));
+static void yy_load_buffer_state YY_PARAMS(( YY_PROTO_ONLY_ARG ));
+static YY_BUFFER_STATE yy_create_buffer YY_PARAMS(( FILE *file, int size YY_PROTO_LAST_ARG ));
+static void yy_delete_buffer YY_PARAMS(( YY_BUFFER_STATE b YY_PROTO_LAST_ARG ));
+static void yy_init_buffer YY_PARAMS(( YY_BUFFER_STATE b, FILE *file YY_PROTO_LAST_ARG ));
+static void yy_flush_buffer YY_PARAMS(( YY_BUFFER_STATE b YY_PROTO_LAST_ARG ));
+static void yypush_buffer_state YY_PARAMS(( YY_BUFFER_STATE new_buffer YY_PROTO_LAST_ARG ));
+static void yypop_buffer_state YY_PARAMS(( YY_PROTO_ONLY_ARG ));
 
 %not-for-header
 static void yyensure_buffer_stack YY_PARAMS(( YY_PROTO_ONLY_ARG ));
@@ -467,15 +467,15 @@ static void yyensure_buffer_stack YY_PARAMS(( YY_PROTO_ONLY_ARG ));
 
 #define YY_FLUSH_BUFFER yy_flush_buffer( YY_CURRENT_BUFFER YY_CALL_LAST_ARG)
 
-YY_BUFFER_STATE yy_scan_buffer YY_PARAMS(( char *base, yy_size_t size YY_PROTO_LAST_ARG ));
-YY_BUFFER_STATE yy_scan_string YY_PARAMS(( yyconst char *yy_str YY_PROTO_LAST_ARG ));
-YY_BUFFER_STATE yy_scan_bytes YY_PARAMS(( yyconst char *bytes, int len YY_PROTO_LAST_ARG ));
+static YY_BUFFER_STATE yy_scan_buffer YY_PARAMS(( char *base, yy_size_t size YY_PROTO_LAST_ARG ));
+static YY_BUFFER_STATE yy_scan_string YY_PARAMS(( yyconst char *yy_str YY_PROTO_LAST_ARG ));
+static YY_BUFFER_STATE yy_scan_bytes YY_PARAMS(( yyconst char *bytes, int len YY_PROTO_LAST_ARG ));
 
 %endif
 
-void *yyalloc YY_PARAMS(( yy_size_t YY_PROTO_LAST_ARG ));
-void *yyrealloc YY_PARAMS(( void *, yy_size_t YY_PROTO_LAST_ARG ));
-void yyfree YY_PARAMS(( void * YY_PROTO_LAST_ARG ));
+static void *yyalloc YY_PARAMS(( yy_size_t YY_PROTO_LAST_ARG ));
+static void *yyrealloc YY_PARAMS(( void *, yy_size_t YY_PROTO_LAST_ARG ));
+static void yyfree YY_PARAMS(( void * YY_PROTO_LAST_ARG ));
 
 #define yy_new_buffer yy_create_buffer
 
@@ -628,68 +628,68 @@ static int yy_init_globals YY_PARAMS(( YY_PROTO_ONLY_ARG ));
    These are made visible to non-reentrant scanners for convenience. */
 
 #ifndef YY_NO_DESTROY
-int yylex_destroy YY_PARAMS(( YY_PROTO_ONLY_ARG ));
+static int yylex_destroy YY_PARAMS(( YY_PROTO_ONLY_ARG ));
 #endif
 
 #ifndef YY_NO_GET_DEBUG
-int yyget_debug YY_PARAMS(( YY_PROTO_ONLY_ARG ));
+static int yyget_debug YY_PARAMS(( YY_PROTO_ONLY_ARG ));
 #endif
 
 #ifndef YY_NO_SET_DEBUG
-void yyset_debug YY_PARAMS(( int debug_flag YY_PROTO_LAST_ARG ));
+static void yyset_debug YY_PARAMS(( int debug_flag YY_PROTO_LAST_ARG ));
 #endif
 
 #ifndef YY_NO_GET_EXTRA
-YY_EXTRA_TYPE yyget_extra YY_PARAMS(( YY_PROTO_ONLY_ARG ));
+static YY_EXTRA_TYPE yyget_extra YY_PARAMS(( YY_PROTO_ONLY_ARG ));
 #endif
 
 #ifndef YY_NO_SET_EXTRA
-void yyset_extra YY_PARAMS(( YY_EXTRA_TYPE user_defined YY_PROTO_LAST_ARG ));
+static void yyset_extra YY_PARAMS(( YY_EXTRA_TYPE user_defined YY_PROTO_LAST_ARG ));
 #endif
 
 #ifndef YY_NO_GET_IN
-FILE *yyget_in YY_PARAMS(( YY_PROTO_ONLY_ARG ));
+static FILE *yyget_in YY_PARAMS(( YY_PROTO_ONLY_ARG ));
 #endif
 
 #ifndef YY_NO_SET_IN
-void yyset_in  YY_PARAMS(( FILE * in_str YY_PROTO_LAST_ARG ));
+static void yyset_in  YY_PARAMS(( FILE * in_str YY_PROTO_LAST_ARG ));
 #endif
 
 #ifndef YY_NO_GET_OUT
-FILE *yyget_out YY_PARAMS(( YY_PROTO_ONLY_ARG ));
+static FILE *yyget_out YY_PARAMS(( YY_PROTO_ONLY_ARG ));
 #endif
 
 #ifndef YY_NO_SET_OUT
-void yyset_out  YY_PARAMS(( FILE * out_str YY_PROTO_LAST_ARG ));
+static void yyset_out  YY_PARAMS(( FILE * out_str YY_PROTO_LAST_ARG ));
 #endif
 
 #ifndef YY_NO_GET_LENG
-int yyget_leng YY_PARAMS(( YY_PROTO_ONLY_ARG ));
+static int yyget_leng YY_PARAMS(( YY_PROTO_ONLY_ARG ));
 #endif
 
 #ifndef YY_NO_GET_TEXT
-char *yyget_text YY_PARAMS(( YY_PROTO_ONLY_ARG ));
+static char *yyget_text YY_PARAMS(( YY_PROTO_ONLY_ARG ));
 #endif
 
 #ifndef YY_NO_GET_LINENO
-int yyget_lineno YY_PARAMS(( YY_PROTO_ONLY_ARG ));
+static int yyget_lineno YY_PARAMS(( YY_PROTO_ONLY_ARG ));
 #endif
 
 #ifndef YY_NO_SET_LINENO
-void yyset_lineno YY_PARAMS(( int line_number YY_PROTO_LAST_ARG ));
+static void yyset_lineno YY_PARAMS(( int line_number YY_PROTO_LAST_ARG ));
 #endif
 
 %if-bison-bridge
 #ifndef YY_NO_GET_LVAL
-YYSTYPE * yyget_lval YY_PARAMS(( YY_PROTO_ONLY_ARG ));
+static YYSTYPE * yyget_lval YY_PARAMS(( YY_PROTO_ONLY_ARG ));
 #endif
-void yyset_lval YY_PARAMS(( YYSTYPE * yylvalp YY_PROTO_LAST_ARG ));
+static void yyset_lval YY_PARAMS(( YYSTYPE * yylvalp YY_PROTO_LAST_ARG ));
 #if defined(YYLTYPE) || defined(YYLTYPE_IS_DECLARED)
 #ifndef YY_NO_GET_LLOC
-   YYLTYPE *yyget_lloc YY_PARAMS(( YY_PROTO_ONLY_ARG ));
+   static YYLTYPE *yyget_lloc YY_PARAMS(( YY_PROTO_ONLY_ARG ));
 #endif
 #ifndef YY_NO_SET_LLOC
-    void yyset_lloc YY_PARAMS(( YYLTYPE * yyllocp YY_PROTO_LAST_ARG ));
+    static void yyset_lloc YY_PARAMS(( YYLTYPE * yyllocp YY_PROTO_LAST_ARG ));
 #endif
 #endif /* YYLTYPE */
 %endif
@@ -699,11 +699,7 @@ void yyset_lval YY_PARAMS(( YYSTYPE * yylvalp YY_PROTO_LAST_ARG ));
  */
 
 #ifndef YY_SKIP_YYWRAP
-#ifdef __cplusplus
-extern "C" int yywrap YY_PARAMS(( YY_PROTO_ONLY_ARG ));
-#else
-extern int yywrap YY_PARAMS(( YY_PROTO_ONLY_ARG ));
-#endif
+static int yywrap YY_PARAMS(( YY_PROTO_ONLY_ARG ));
 #endif
 
 %not-for-header
@@ -823,10 +819,10 @@ m4_include("${srcdir}/tables_shared.h");
 print <<'UNTIL';
 
 /* Load the DFA tables from the given stream.  */
-int yytables_fload YY_PARAMS ((FILE * fp YY_PROTO_LAST_ARG));
+static int yytables_fload YY_PARAMS ((FILE * fp YY_PROTO_LAST_ARG));
 
 /* Unload the tables from memory. */
-int yytables_destroy YY_PARAMS ((YY_PROTO_ONLY_ARG));
+static int yytables_destroy YY_PARAMS ((YY_PROTO_ONLY_ARG));
 %not-for-header
 
 /** Describes a mapping from a serialized table id to its deserialized state in
@@ -882,7 +878,7 @@ struct yytbl_reader {
 %endif
 
 
-extern int yylex YY_LEX_PROTO;
+static int yylex YY_LEX_PROTO;
 
 #define YY_DECL int yylex YY_LEX_DECLARATION
 %endif
@@ -1133,6 +1129,7 @@ do_action:	/* This label is used only to access EOF actions. */
 
 %if-c++-only
 %not-for-header
+namespace {
 yyFlexLexer::yyFlexLexer( std::istream* arg_yyin, std::ostream* arg_yyout )
 	{
 	yyin = arg_yyin;
@@ -1660,7 +1657,7 @@ int yyFlexLexer::yy_get_next_buffer()
 #ifndef YY_ALWAYS_INTERACTIVE
 #ifndef YY_NEVER_INTERACTIVE
 #ifndef __cplusplus
-extern int isatty YY_PARAMS(( int ));
+int isatty YY_PARAMS(( int ));
 #endif /* __cplusplus */
 #endif /* !YY_NEVER_INTERACTIVE */
 #endif /* !YY_ALWAYS_INTERACTIVE */
@@ -1671,7 +1668,7 @@ extern int isatty YY_PARAMS(( int ));
 %endif
 %if-c++-only
 #ifndef YY_NEVER_INTERACTIVE
-extern "C" int isatty YY_PARAMS(( int ));
+int isatty YY_PARAMS(( int ));
 #endif
 void yyFlexLexer::yy_init_buffer( YY_BUFFER_STATE b, std::istream* file )
 %endif
@@ -2008,6 +2005,7 @@ void yyFlexLexer::LexerError( yyconst char msg[] )
 	std::cerr << msg << std::endl;
 	exit( YY_EXIT_FAILURE );
 	}
+} /* namespace */
 %endif
 
 /* Redefine yyless() so it works in section 3 code. */

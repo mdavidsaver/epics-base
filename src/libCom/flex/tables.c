@@ -36,6 +36,9 @@
 #include "flexdef.h"
 #include "tables.h"
 
+/* for htons and htonl */
+#include "osdSock.h"
+
 /** Convert size_t to t_flag.
  *  @param n in {1,2,4}
  *  @return YYTD_DATA*. 
