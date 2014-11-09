@@ -1076,7 +1076,8 @@ void flexinit (argc, argv)
 		false;
 	yymore_really_used = reject_really_used = unspecified;
 	interactive = csize = unspecified;
-	do_yywrap = gen_line_dirs = usemecs = useecs = true;
+	gen_line_dirs = usemecs = useecs = true;
+        do_yywrap = false;
 	reentrant = bison_bridge = false;
 	performance_report = 0;
 	did_outfilename = 0;
