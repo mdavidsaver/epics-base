@@ -20,6 +20,20 @@
 
 -->
 
+<h3>Update antelope and e_flex</h3>
+
+<p>Pull in newer versions of the lexer and parser generator tools
+to allow generation of re-entrant parsers.
+Also, newer byacc supports bison destructor extension
+to simplify cleanup of parser stack.</p>
+
+<p>Update e_flex from 2.3 (circa 1993) to 2.5.29 (circa 2003).
+This is the most recent version before flex began depending on M4
+at runtime.</p>
+
+<p>Update antelope (aka. byacc) to version 20141006.
+Don't really know what version was in use before.</p>
+
 <h3>Callback subsystem API</h3>
 
 <p>Added a new macro <tt>callbackGetPriority(prio, callback)</tt> to the
