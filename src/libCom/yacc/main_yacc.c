@@ -701,5 +701,5 @@ main(int argc, char *argv[])
     verbose();
     output();
     done(exit_code);
-    /*NOTREACHED */
+    return -42; /*NOTREACHED */
 }

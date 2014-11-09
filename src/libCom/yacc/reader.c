@@ -385,6 +385,7 @@ keyword(void)
 	    return (NONASSOC);
     }
     syntax_error(lineno, line, t_cptr);
+    return 0; /* never reached */
 }
 
 static void
