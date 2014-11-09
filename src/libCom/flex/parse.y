@@ -1051,4 +1051,4 @@ const char *msg;
 
 #include "scan.c"
 #include "yylex.c"
-#include "main.c"
+#include "main_flex.c"
