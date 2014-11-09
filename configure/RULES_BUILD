@@ -239,12 +239,8 @@ YACCOPT ?= $($*_YACCOPT)
 # rename the y.tab.h file only if we
 # are creating it
 #
-%.c: %.y
+%.h %.c: %.y
 	$(YACC) -b$* $(YACCOPT) $<
-
-# must be a seperate rule since when not using '-d' the
-# prefix for .h will be different then .c
-%.h : %.c %.y
 
 %.c: %.l
 	@$(RM) $*.yy.c
