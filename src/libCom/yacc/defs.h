@@ -29,7 +29,9 @@
 #define VSTRING(a,b) CONCAT2(a,b)
 #endif
 
-#define VERSION VSTRING(YYMAJOR, YYMINOR)
+#define VERSION "1.9 epics"
+
+#define YYBTYACC 1
 
 /*  machine-dependent definitions:			*/
 
