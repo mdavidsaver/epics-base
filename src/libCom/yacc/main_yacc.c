@@ -65,10 +65,10 @@ static char *verbose_file_name;
 FILE *action_file;	/*  a temp file, used to save actions associated    */
 			/*  with rules until the parser is written          */
 FILE *code_file;	/*  y.code.c (used when the -r option is specified) */
-FILE *defines_file;	/*  y.tab.h                                         */
-FILE *externs_file;	/*  y.tab.i                                         */
+FILE *defines_file;	/*  y.h                                         */
+FILE *externs_file;	/*  y.i                                         */
 FILE *input_file;	/*  the input file                                  */
-FILE *output_file;	/*  y.tab.c                                         */
+FILE *output_file;	/*  y.c                                         */
 FILE *text_file;	/*  a temp file, used to save text until all        */
 			/*  symbols have been defined                       */
 FILE *union_file;	/*  a temp file, used to save the union             */
@@ -208,7 +208,7 @@ usage(void)
 	,"  -b file_prefix        set filename prefix (default \"y.\")"
 	,"  -B                    create a backtracking parser"
 	,"  -d                    write definitions (" DEFINES_SUFFIX ")"
-	,"  -i                    write interface (y.tab.i)"
+	,"  -i                    write interface (y.i)"
 	,"  -g                    write a graphical description"
 	,"  -l                    suppress #line directives"
 	,"  -L                    enable position processing, e.g., \"%locations\""

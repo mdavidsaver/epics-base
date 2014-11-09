@@ -94,9 +94,9 @@
 #define	OUTPUT_SUFFIX	"_tab.c"
 #else
 #define CODE_SUFFIX	".code.c"
-#define	DEFINES_SUFFIX	".tab.h"
-#define	EXTERNS_SUFFIX	".tab.i"
-#define	OUTPUT_SUFFIX	".tab.c"
+#define	DEFINES_SUFFIX	".h"
+#define	EXTERNS_SUFFIX	".i"
+#define	OUTPUT_SUFFIX	".c"
 #endif
 #define	VERBOSE_SUFFIX	".output"
 #define GRAPH_SUFFIX    ".dot"
