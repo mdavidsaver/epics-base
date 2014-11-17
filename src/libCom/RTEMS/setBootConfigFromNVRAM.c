@@ -24,6 +24,7 @@
 char *env_nfsServer;
 char *env_nfsPath;
 char *env_nfsMountPoint;
+int epics_initialized_environment;
 
 /*
  * Split argument string of form nfs_server:nfs_export:<path>
@@ -161,6 +162,9 @@ setBootConfigFromNVRAM(void)
     const char *mot_script_boot;
     char *nvp;
 
+    if (rtems_bsdnet_config.bootp != NULL)
+        return;
+
 # if defined(BSP_NVRAM_BASE_ADDR)
     nvp = (volatile unsigned char *)(BSP_NVRAM_BASE_ADDR+0x70f8);
 # elif defined(BSP_I2C_VPD_EEPROM_DEV_NAME)
@@ -181,8 +185,6 @@ setBootConfigFromNVRAM(void)
 #  error "No way to read GEV!"
 # endif
 
-    if (rtems_bsdnet_config.bootp != NULL)
-        return;
     mot_script_boot = gev("mot-script-boot", nvp);
     if ((rtems_bsdnet_bootp_server_name = gev("mot-/dev/enet0-sipa", nvp)) == NULL)
         rtems_bsdnet_bootp_server_name = motScriptParm(mot_script_boot, 's');
@@ -214,6 +216,7 @@ setBootConfigFromNVRAM(void)
         rtems_bsdnet_config.ntp_server[0] = rtems_bsdnet_bootp_server_name;
     if ((cp = gev("epics-tz", nvp)) != NULL)
         epicsEnvSet("TZ", cp);
+    epics_initialized_environment = 1;
 }
 
 #elif defined(HAVE_PPCBUG)
@@ -314,6 +317,7 @@ setBootConfigFromNVRAM(void)
     rtems_bsdnet_bootp_boot_file_name = nvram.BootFilenameString;
     rtems_bsdnet_bootp_cmdline = nvram.ArgumentFilenameString;
     splitRtemsBsdnetBootpCmdline();
+    epics_initialized_environment = 1;
 }
 
 #elif defined(__mcf528x__)
@@ -355,6 +359,78 @@ setBootConfigFromNVRAM(void)
     splitNfsMountPath(env("NFSMOUNT", NULL));
     if ((cp1 = env("TZ", NULL)) != NULL)
         epicsEnvSet("TZ", cp1);
+    epics_initialized_environment = 1;
+}
+
+#elif defined(USE_MULTIBOOT) && (__RTEMS_MAJOR__>4 || (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__>9))
+
+/* Try to fill out missing BOOTP/DHCP configuration from the environment */
+void
+bootpFallbackFromNVRAM(void)
+{
+#define ENV2VAR(ENV, VAR) if(!VAR) {VAR = getenv(ENV);}
+    ENV2VAR("epics-ip",     rtems_bsdnet_config.ifconfig->ip_address);
+    ENV2VAR("epics-gw",     rtems_bsdnet_config.gateway);
+    ENV2VAR("epics-mask",   rtems_bsdnet_config.ifconfig->ip_netmask);
+    ENV2VAR("epics-dns",    rtems_bsdnet_config.name_server[0]);
+    ENV2VAR("epics-domain", rtems_bsdnet_config.domainname);
+    ENV2VAR("epics-server", rtems_bsdnet_bootp_server_name);
+    ENV2VAR("epics-client", rtems_bsdnet_config.hostname);
+    ENV2VAR("epics-script", rtems_bsdnet_bootp_cmdline);
+    ENV2VAR("epics-ntp",    rtems_bsdnet_config.ntp_server[0]);
+#undef ENV2VAR
+
+    if (rtems_bsdnet_config.ntp_server[0] == NULL)
+        rtems_bsdnet_config.ntp_server[0] = rtems_bsdnet_bootp_server_name;
+
+    splitRtemsBsdnetBootpCmdline();
+    splitNfsMountPath(getenv("epics-nfsmount"));
+}
+
+void
+setBootConfigFromNVRAM(void)
+{
+    const char *mboot = bsp_cmdline();
+    size_t blen = strlen(mboot);
+    char *mboot2;
+    char *tok, *store, *save;
+
+    store = mboot2 = malloc(blen+1);
+    if(!mboot2)
+        return;
+    strcpy(mboot2, mboot);
+
+    /* Populate environment with multiboot arguments.
+     * format of multiboot string is a space seperated list of
+     * sub-strings.  eg.
+     *  "progname --arg=one --other=two otherjunk"
+     */
+
+    for(;;mboot2=NULL) {
+        char *val;
+        /* break up by space */
+        tok = strtok_r(mboot2, " ", &save);
+        if(!tok)
+            break;
+
+        /* only accept arguments starting with '--' */
+        if(tok[0]!='-' || tok[1]!='-')
+            continue;
+        tok+=2;
+
+        /* only accept arguments with an assignment */
+        val = strchr(tok, '=');
+        if(!val)
+            continue;
+        *val++ = '\0';
+
+        epicsEnvSet(tok, val);
+        printk("Set '%s' = '%s'\n", tok, val);
+    }
+
+    free(store);
+
+    epics_initialized_environment = 1;
 }
 
 #else
@@ -364,7 +440,6 @@ setBootConfigFromNVRAM(void)
 void
 setBootConfigFromNVRAM(void)
 {
-    printf("SYSTEM HAS NO NON-VOLATILE RAM!\n");
-    printf("YOU MUST USE SOME OTHER METHOD TO OBTAIN NETWORK CONFIGURATION\n");
+    /* no point in printing here as the console isn't initialized... */
 }
 #endif
