@@ -198,9 +198,7 @@ mustMalloc(int size, const char *msg)
  *                         REMOTE FILE ACCESS                          *
  ***********************************************************************
  */
-#ifdef OMIT_NFS_SUPPORT
 # include <rtems/tftp.h>
-#endif
 
 const epicsMemFS *epicsRtemsFSImage __attribute__((weak));
 const epicsMemFS *epicsRtemsFSImage = (void*)&epicsRtemsFSImage;
@@ -234,6 +232,9 @@ initialize_local_filesystem(char **argv)
     extern char _FlashBase[] __attribute__((weak));
     extern char _FlashSize[]  __attribute__((weak));
 
+    if(rtems_bsdnet_bootp_cmdline)
+        printf("**** cmdline \"%s\" ***\n", rtems_bsdnet_bootp_cmdline);
+
     argv[0] = rtems_bsdnet_bootp_boot_file_name;
     if (epicsRtemsMountLocalFilesystem(argv)==0) {
         return 1; /* FS setup successful */
@@ -263,7 +264,6 @@ initialize_local_filesystem(char **argv)
     return 0;
 }
 
-#ifndef OMIT_NFS_SUPPORT
 int
 nfsMount(char *uidhost, char *path, char *mntpoint)
 {
@@ -285,36 +285,26 @@ nfsMount(char *uidhost, char *path, char *mntpoint)
     free(dev);
     return rval;
 }
-#define NFS_INIT
-#endif
 
 
 static void
 initialize_remote_filesystem(char **argv, int hasLocalFilesystem)
 {
-#ifdef OMIT_NFS_SUPPORT
     printf ("***** Initializing TFTP *****\n");
-    mount_and_make_target_path(NULL,
+    if(mount_and_make_target_path("10.0.2.2:",
                                "/TFTP",
                                RTEMS_FILESYSTEM_TYPE_TFTPFS,
                                RTEMS_FILESYSTEM_READ_WRITE,
-                               NULL);
-    if (!hasLocalFilesystem) {
-        char *path;
-        int pathsize = 200;
-        int l;
-
-        path = mustMalloc(pathsize, "Command path name ");
-        strcpy (path, "/TFTP/BOOTP_HOST/epics/");
-        l = strlen (path);
-        if (gethostname (&path[l], pathsize - l - 10) || (path[l] == '\0'))
-        {
-            LogFatal ("Can't get host name");
-        }
-        strcat (path, "/st.cmd");
-        argv[1] = path;
+                               "verbose"))
+    {
+        perror("mount TFTP");
     }
-#else
+    if(rtems_bsdnet_bootp_cmdline && strncmp("/TFTP", rtems_bsdnet_bootp_cmdline, 4)==0) {
+        argv[1] = rtems_bsdnet_bootp_cmdline;
+        printf("Boot from TFTP\n");
+        return;
+    }
+
     char *server_name;
     char *server_path;
     char *mount_point;
@@ -322,7 +312,6 @@ initialize_remote_filesystem(char **argv, int hasLocalFilesystem)
     int l = 0;
 
     printf ("***** Initializing NFS *****\n");
-    NFS_INIT
     if (env_nfsServer && env_nfsPath && env_nfsMountPoint) {
         server_name = env_nfsServer;
         server_path = env_nfsPath;
@@ -339,9 +328,10 @@ initialize_remote_filesystem(char **argv, int hasLocalFilesystem)
         argv[1] = rtems_bsdnet_bootp_cmdline;
     }
     else if (hasLocalFilesystem) {
+        printk("Using Local FS\n");
         return;
     }
-    else {
+    else if (rtems_bsdnet_bootp_cmdline) {
         /*
          * Use first component of nvram/bootp command line pathname
          * to set up initial NFS mount.  A "/tftpboot/" is prepended
@@ -411,10 +401,30 @@ initialize_remote_filesystem(char **argv, int hasLocalFilesystem)
             argv[1] = abspath;
         }
     }
-    errlogPrintf("nfsMount(\"%s\", \"%s\", \"%s\")\n",
-                 server_name, server_path, mount_point);
-    nfsMount(server_name, server_path, mount_point);
-#endif
+    if(server_name && server_path && mount_point) {
+        int ret = nfsMount(server_name, server_path, mount_point);
+        printk("nfsMount(\"%s\", \"%s\", \"%s\") -> %d\n", server_name, server_path, mount_point, ret);
+
+    } else if (!hasLocalFilesystem) {
+        char *path;
+        int pathsize = 200;
+        int l;
+
+        printk("No NFS configuration found.  Falling back to TFTP\n");
+
+        path = mustMalloc(pathsize, "Command path name ");
+        strcpy (path, "/TFTP/BOOTP_HOST/epics/");
+        l = strlen (path);
+        if (gethostname (&path[l], pathsize - l - 10) || (path[l] == '\0'))
+        {
+            LogFatal ("Can't get host name");
+        }
+        strcat (path, "/st.cmd");
+        argv[1] = path;
+
+    } else {
+        printk("Local FS\n");
+    }
 }
 
 static
@@ -747,7 +757,7 @@ dhcpcd_hook_handler(rtems_dhcpcd_hook *hook, char *const *env)
         DEFVAR("new_ntp_servers", rtemsInit_NTP_server_ip),
         DEFVAR("new_tftp_server_name", bootp_server_name_init),
         DEFVAR("new_bootfile_name", bootp_boot_file_name_init),
-        DEFVAR("new_rtems_cmdline", bootp_cmdline_init),
+        DEFVAR("new_filename", bootp_cmdline_init),
 #undef DEFVAR
         {NULL}
     };
