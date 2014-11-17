@@ -557,6 +557,10 @@ exitHandler(void)
     rtems_shutdown_executive(0);
 }
 
+extern int epics_initialized_environment;
+extern void setBootConfigFromNVRAM(void);
+extern void bootpFallbackFromNVRAM(void);
+
 /*
  * RTEMS Startup task
  */
@@ -580,10 +584,8 @@ Init (rtems_task_argument ignored)
      */
     if (epicsRtemsInitPreSetBootConfigFromNVRAM(&rtems_bsdnet_config) != 0)
         delayedPanic("epicsRtemsInitPreSetBootConfigFromNVRAM");
-    if (rtems_bsdnet_config.bootp == NULL) {
-        extern void setBootConfigFromNVRAM(void);
-        setBootConfigFromNVRAM();
-    }
+    epics_initialized_environment = 0;
+    setBootConfigFromNVRAM();
     if (epicsRtemsInitPostSetBootConfigFromNVRAM(&rtems_bsdnet_config) != 0)
         delayedPanic("epicsRtemsInitPostSetBootConfigFromNVRAM");
 
@@ -601,6 +603,10 @@ Init (rtems_task_argument ignored)
     initConsole ();
     putenv ("TERM=xterm");
     putenv ("IOCSH_HISTSIZE=20");
+
+    if(!epics_initialized_environment) {
+        printf("BSP doesn't implement non-volatile memory.\n");
+    }
 
     /*
      * Display some OS information
@@ -624,6 +630,7 @@ Init (rtems_task_argument ignored)
     }
     printf("\n***** Initializing network *****\n");
     rtems_bsdnet_initialize_network();
+    bootpFallbackFromNVRAM();
     printf("\n***** Setting up file system *****\n");
     initialize_remote_filesystem(argv, initialize_local_filesystem(argv));
     fixup_hosts();
