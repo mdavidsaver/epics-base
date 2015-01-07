@@ -75,7 +75,7 @@ INP{link} {
 	yyerror(message);
 
 	/*The following suppress compiler warning messages*/
-	if (0) yyunput('c',(unsigned char *) message);
+        if (0) yyunput('c',(char *) message);
 	if (0) yy_switch_to_buffer(*dummy);
 	}
 

@@ -83,7 +83,7 @@ static int yyreset(void)
 	sprintf(message,"Invalid character '%c'",yytext[0]);
 	yyerror(message);
 	/*The following suppresses compiler warning messages*/
-	if(FALSE) yyunput('c',(unsigned char *) message);
+        if(FALSE) yyunput('c',(char *) message);
 	if(FALSE) yy_switch_to_buffer(*dummy);
 }
 

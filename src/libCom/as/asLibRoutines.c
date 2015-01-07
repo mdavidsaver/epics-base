@@ -848,7 +848,7 @@ epicsShareFunc void * epicsShareAPI asCalloc(size_t nobj,size_t size)
     p=callocMustSucceed(nobj,size,"asCalloc");
     return(p);
 }
-epicsShareFunc char * epicsShareAPI asStrdup(unsigned char *str)
+epicsShareFunc char * epicsShareAPI asStrdup(char *str)
 {
 	size_t len = strlen((char *) str);
 	char *buf = asCalloc(1, len + 1);
