@@ -504,8 +504,7 @@ int     scanopt_usage (scanner, fp, usage)
 						if (lastws) {
 							fprintf (fp,
 								 "%.*s\n",
-								 lastws -
-								 pstart,
+                                 (int)(lastws - pstart),
 								 pstart);
 							pstart =
 								lastws + 1;
@@ -537,11 +536,7 @@ static int scanopt_err (s, opt_offset, is_short, err)
      int     err;
 {
 	const char *optname = "";
-	char    optchar[2];
-	const optspec_t *opt = NULL;
-
-	if (opt_offset >= 0)
-		opt = s->options + opt_offset;
+    char    optchar[2];
 
 	if (!s->no_err_msg) {
 

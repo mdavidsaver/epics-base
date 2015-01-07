@@ -51,7 +51,9 @@ static const char *const yyrule[];
 #endif
 %% global_vars
 
+#if YYDEBUG
 static int      yydebug;
+#endif
 static int      yynerrs;
 %% impure_vars
 
