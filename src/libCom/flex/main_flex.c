@@ -1524,6 +1524,8 @@ void flexinit (argc, argv)
 				       "1");
 			break;
 
+        default:
+            break;
 		}		/* switch */
 	}			/* while scanopt() */
 

@@ -449,33 +449,33 @@ static int yy_did_buffer_switch_on_eof;
 %ok-for-header
 %endif
 
-static void yyrestart YY_PARAMS(( FILE *input_file YY_PROTO_LAST_ARG ));
+static inline void yyrestart YY_PARAMS(( FILE *input_file YY_PROTO_LAST_ARG ));
 
 
-static void yy_switch_to_buffer YY_PARAMS(( YY_BUFFER_STATE new_buffer YY_PROTO_LAST_ARG ));
-static void yy_load_buffer_state YY_PARAMS(( YY_PROTO_ONLY_ARG ));
-static YY_BUFFER_STATE yy_create_buffer YY_PARAMS(( FILE *file, int size YY_PROTO_LAST_ARG ));
-static void yy_delete_buffer YY_PARAMS(( YY_BUFFER_STATE b YY_PROTO_LAST_ARG ));
-static void yy_init_buffer YY_PARAMS(( YY_BUFFER_STATE b, FILE *file YY_PROTO_LAST_ARG ));
-static void yy_flush_buffer YY_PARAMS(( YY_BUFFER_STATE b YY_PROTO_LAST_ARG ));
-static void yypush_buffer_state YY_PARAMS(( YY_BUFFER_STATE new_buffer YY_PROTO_LAST_ARG ));
-static void yypop_buffer_state YY_PARAMS(( YY_PROTO_ONLY_ARG ));
+static inline void yy_switch_to_buffer YY_PARAMS(( YY_BUFFER_STATE new_buffer YY_PROTO_LAST_ARG ));
+static inline void yy_load_buffer_state YY_PARAMS(( YY_PROTO_ONLY_ARG ));
+static inline YY_BUFFER_STATE yy_create_buffer YY_PARAMS(( FILE *file, int size YY_PROTO_LAST_ARG ));
+static inline void yy_delete_buffer YY_PARAMS(( YY_BUFFER_STATE b YY_PROTO_LAST_ARG ));
+static inline void yy_init_buffer YY_PARAMS(( YY_BUFFER_STATE b, FILE *file YY_PROTO_LAST_ARG ));
+static inline void yy_flush_buffer YY_PARAMS(( YY_BUFFER_STATE b YY_PROTO_LAST_ARG ));
+static inline void yypush_buffer_state YY_PARAMS(( YY_BUFFER_STATE new_buffer YY_PROTO_LAST_ARG ));
+static inline void yypop_buffer_state YY_PARAMS(( YY_PROTO_ONLY_ARG ));
 
 %not-for-header
-static void yyensure_buffer_stack YY_PARAMS(( YY_PROTO_ONLY_ARG ));
+static inline void yyensure_buffer_stack YY_PARAMS(( YY_PROTO_ONLY_ARG ));
 %ok-for-header
 
 #define YY_FLUSH_BUFFER yy_flush_buffer( YY_CURRENT_BUFFER YY_CALL_LAST_ARG)
 
-static YY_BUFFER_STATE yy_scan_buffer YY_PARAMS(( char *base, yy_size_t size YY_PROTO_LAST_ARG ));
-static YY_BUFFER_STATE yy_scan_string YY_PARAMS(( yyconst char *yy_str YY_PROTO_LAST_ARG ));
-static YY_BUFFER_STATE yy_scan_bytes YY_PARAMS(( yyconst char *bytes, int len YY_PROTO_LAST_ARG ));
+static inline YY_BUFFER_STATE yy_scan_buffer YY_PARAMS(( char *base, yy_size_t size YY_PROTO_LAST_ARG ));
+static inline YY_BUFFER_STATE yy_scan_string YY_PARAMS(( yyconst char *yy_str YY_PROTO_LAST_ARG ));
+static inline YY_BUFFER_STATE yy_scan_bytes YY_PARAMS(( yyconst char *bytes, int len YY_PROTO_LAST_ARG ));
 
 %endif
 
-static void *yyalloc YY_PARAMS(( yy_size_t YY_PROTO_LAST_ARG ));
-static void *yyrealloc YY_PARAMS(( void *, yy_size_t YY_PROTO_LAST_ARG ));
-static void yyfree YY_PARAMS(( void * YY_PROTO_LAST_ARG ));
+static inline void *yyalloc YY_PARAMS(( yy_size_t YY_PROTO_LAST_ARG ));
+static inline void *yyrealloc YY_PARAMS(( void *, yy_size_t YY_PROTO_LAST_ARG ));
+static inline void yyfree YY_PARAMS(( void * YY_PROTO_LAST_ARG ));
 
 #define yy_new_buffer yy_create_buffer
 
@@ -628,68 +628,76 @@ static int yy_init_globals YY_PARAMS(( YY_PROTO_ONLY_ARG ));
    These are made visible to non-reentrant scanners for convenience. */
 
 #ifndef YY_NO_DESTROY
-static int yylex_destroy YY_PARAMS(( YY_PROTO_ONLY_ARG ));
+static inline int yylex_destroy YY_PARAMS(( YY_PROTO_ONLY_ARG ));
 #endif
 
 #ifndef YY_NO_GET_DEBUG
-static int yyget_debug YY_PARAMS(( YY_PROTO_ONLY_ARG ));
+static inline int yyget_debug YY_PARAMS(( YY_PROTO_ONLY_ARG ));
 #endif
 
 #ifndef YY_NO_SET_DEBUG
-static void yyset_debug YY_PARAMS(( int debug_flag YY_PROTO_LAST_ARG ));
+static inline void yyset_debug YY_PARAMS(( int debug_flag YY_PROTO_LAST_ARG ));
 #endif
 
+%if-c-only
+%if-reentrant
 #ifndef YY_NO_GET_EXTRA
-static YY_EXTRA_TYPE yyget_extra YY_PARAMS(( YY_PROTO_ONLY_ARG ));
+static inline YY_EXTRA_TYPE yyget_extra YY_PARAMS(( YY_PROTO_ONLY_ARG ));
 #endif
+%endif
+%endif
 
+%if-c-only
+%if-reentrant
 #ifndef YY_NO_SET_EXTRA
-static void yyset_extra YY_PARAMS(( YY_EXTRA_TYPE user_defined YY_PROTO_LAST_ARG ));
+static inline void yyset_extra YY_PARAMS(( YY_EXTRA_TYPE user_defined YY_PROTO_LAST_ARG ));
 #endif
+%endif
+%endif
 
 #ifndef YY_NO_GET_IN
-static FILE *yyget_in YY_PARAMS(( YY_PROTO_ONLY_ARG ));
+static inline FILE *yyget_in YY_PARAMS(( YY_PROTO_ONLY_ARG ));
 #endif
 
 #ifndef YY_NO_SET_IN
-static void yyset_in  YY_PARAMS(( FILE * in_str YY_PROTO_LAST_ARG ));
+static inline void yyset_in  YY_PARAMS(( FILE * in_str YY_PROTO_LAST_ARG ));
 #endif
 
 #ifndef YY_NO_GET_OUT
-static FILE *yyget_out YY_PARAMS(( YY_PROTO_ONLY_ARG ));
+static inline FILE *yyget_out YY_PARAMS(( YY_PROTO_ONLY_ARG ));
 #endif
 
 #ifndef YY_NO_SET_OUT
-static void yyset_out  YY_PARAMS(( FILE * out_str YY_PROTO_LAST_ARG ));
+static inline void yyset_out  YY_PARAMS(( FILE * out_str YY_PROTO_LAST_ARG ));
 #endif
 
 #ifndef YY_NO_GET_LENG
-static int yyget_leng YY_PARAMS(( YY_PROTO_ONLY_ARG ));
+static inline int yyget_leng YY_PARAMS(( YY_PROTO_ONLY_ARG ));
 #endif
 
 #ifndef YY_NO_GET_TEXT
-static char *yyget_text YY_PARAMS(( YY_PROTO_ONLY_ARG ));
+static inline char *yyget_text YY_PARAMS(( YY_PROTO_ONLY_ARG ));
 #endif
 
 #ifndef YY_NO_GET_LINENO
-static int yyget_lineno YY_PARAMS(( YY_PROTO_ONLY_ARG ));
+static inline int yyget_lineno YY_PARAMS(( YY_PROTO_ONLY_ARG ));
 #endif
 
 #ifndef YY_NO_SET_LINENO
-static void yyset_lineno YY_PARAMS(( int line_number YY_PROTO_LAST_ARG ));
+static inline void yyset_lineno YY_PARAMS(( int line_number YY_PROTO_LAST_ARG ));
 #endif
 
 %if-bison-bridge
 #ifndef YY_NO_GET_LVAL
-static YYSTYPE * yyget_lval YY_PARAMS(( YY_PROTO_ONLY_ARG ));
+static inline YYSTYPE * yyget_lval YY_PARAMS(( YY_PROTO_ONLY_ARG ));
 #endif
-static void yyset_lval YY_PARAMS(( YYSTYPE * yylvalp YY_PROTO_LAST_ARG ));
+static inline void yyset_lval YY_PARAMS(( YYSTYPE * yylvalp YY_PROTO_LAST_ARG ));
 #if defined(YYLTYPE) || defined(YYLTYPE_IS_DECLARED)
 #ifndef YY_NO_GET_LLOC
-   static YYLTYPE *yyget_lloc YY_PARAMS(( YY_PROTO_ONLY_ARG ));
+   static inline YYLTYPE *yyget_lloc YY_PARAMS(( YY_PROTO_ONLY_ARG ));
 #endif
 #ifndef YY_NO_SET_LLOC
-    static void yyset_lloc YY_PARAMS(( YYLTYPE * yyllocp YY_PROTO_LAST_ARG ));
+    static inline void yyset_lloc YY_PARAMS(( YYLTYPE * yyllocp YY_PROTO_LAST_ARG ));
 #endif
 #endif /* YYLTYPE */
 %endif
@@ -699,31 +707,31 @@ static void yyset_lval YY_PARAMS(( YYSTYPE * yylvalp YY_PROTO_LAST_ARG ));
  */
 
 #ifndef YY_SKIP_YYWRAP
-static int yywrap YY_PARAMS(( YY_PROTO_ONLY_ARG ));
+static inline int yywrap YY_PARAMS(( YY_PROTO_ONLY_ARG ));
 #endif
 
 %not-for-header
 #ifndef YY_NO_UNPUT
-static void yyunput YY_PARAMS(( int c, char *buf_ptr  YY_PROTO_LAST_ARG));
+static inline void yyunput YY_PARAMS(( int c, char *buf_ptr  YY_PROTO_LAST_ARG));
 #endif
 %ok-for-header
 %endif
 
 #ifndef yytext_ptr
-static void yy_flex_strncpy YY_PARAMS(( char *, yyconst char *, int YY_PROTO_LAST_ARG));
+static inline void yy_flex_strncpy YY_PARAMS(( char *, yyconst char *, int YY_PROTO_LAST_ARG));
 #endif
 
 #ifdef YY_NEED_STRLEN
-static int yy_flex_strlen YY_PARAMS(( yyconst char * YY_PROTO_LAST_ARG));
+static inline int yy_flex_strlen YY_PARAMS(( yyconst char * YY_PROTO_LAST_ARG));
 #endif
 
 #ifndef YY_NO_INPUT
 %if-c-only Standard (non-C++) definition
 %not-for-header
 #ifdef __cplusplus
-static int yyinput YY_PARAMS(( YY_PROTO_ONLY_ARG ));
+static inline int yyinput YY_PARAMS(( YY_PROTO_ONLY_ARG ));
 #else
-static int input YY_PARAMS(( YY_PROTO_ONLY_ARG ));
+static inline int input YY_PARAMS(( YY_PROTO_ONLY_ARG ));
 #endif
 %ok-for-header
 %endif
@@ -741,13 +749,13 @@ static int *yy_start_stack = 0;
 %endif
 
 #ifndef YY_NO_PUSH_STATE
-static void yy_push_state YY_PARAMS(( int new_state YY_PROTO_LAST_ARG));
+static inline void yy_push_state YY_PARAMS(( int new_state YY_PROTO_LAST_ARG));
 #endif
 #ifndef YY_NO_POP_STATE
-static void yy_pop_state YY_PARAMS(( YY_PROTO_ONLY_ARG ));
+static inline void yy_pop_state YY_PARAMS(( YY_PROTO_ONLY_ARG ));
 #endif
 #ifndef YY_NO_TOP_STATE
-static int yy_top_state YY_PARAMS(( YY_PROTO_ONLY_ARG ));
+static inline int yy_top_state YY_PARAMS(( YY_PROTO_ONLY_ARG ));
 #endif
 
 #else
