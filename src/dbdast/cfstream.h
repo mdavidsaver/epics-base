@@ -5,6 +5,7 @@
 
 #include <cstring>
 #include <istream>
+#include <ostream>
 #include <vector>
 
 class cfile_streambuf : public std::streambuf
@@ -36,6 +37,19 @@ private:
      */
     std::vector<char_type> readbuf, writebuf;
     char_type *endreadbuf, *endwritebuf;
+};
+
+/** An I/O stream backed by a C FILE*
+ */
+class iocfstream : public std::iostream
+{
+    cfile_streambuf filebuf;
+public:
+    explicit icfstream(size_t bufsize=1024)
+        :filebuf(bufsize) {}
+    explicit icfstream(FILE *fp, size_t bufsize=1024) :filebuf(fp, bufsize) {}
+
+    inline void setFile(FILE *fp) {filebuf.set(fp);}
 };
 
 #endif // CFSTREAM_H

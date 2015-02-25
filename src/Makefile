@@ -58,6 +58,9 @@ ca/client/perl_DEPEND_DIRS = ca/client
 
 # PDB Core
 
+DIRS += dbdast
+dbdast_DEPEND_DIRS = libCom
+
 DIRS += ioc
 ioc_DEPEND_DIRS = libCom ca/client
 

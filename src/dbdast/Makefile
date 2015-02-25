@@ -15,5 +15,10 @@ dbdast_LIBS += Com
 
 PROD_LIBS = Com
 
+dbdast_SRCS += cfstream.cpp
+dbdast_SRCS += macstream.cpp
+
+INC += cfstream.h
+INC += macstream.h
 
 include $(TOP)/configure/RULES
