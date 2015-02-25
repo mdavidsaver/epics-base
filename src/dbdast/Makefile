@@ -17,8 +17,12 @@ PROD_LIBS = Com
 
 dbdast_SRCS += cfstream.cpp
 dbdast_SRCS += macstream.cpp
+dbdast_SRCS += dbdlexer.cpp
+dbdast_SRCS += dbdparser.cpp
 
 INC += cfstream.h
 INC += macstream.h
+INC += dbdlexer.h
+INC += dbdparser.h
 
 include $(TOP)/configure/RULES
