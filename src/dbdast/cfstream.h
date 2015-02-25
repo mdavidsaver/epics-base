@@ -45,9 +45,10 @@ class iocfstream : public std::iostream
 {
     cfile_streambuf filebuf;
 public:
-    explicit icfstream(size_t bufsize=1024)
-        :filebuf(bufsize) {}
-    explicit icfstream(FILE *fp, size_t bufsize=1024) :filebuf(fp, bufsize) {}
+    explicit iocfstream(size_t bufsize=1024)
+        :std::iostream(&filebuf), filebuf(bufsize) {}
+    explicit iocfstream(FILE *fp, size_t bufsize=1024)
+        :std::iostream(&filebuf), filebuf(fp, bufsize) {}
 
     inline void setFile(FILE *fp) {filebuf.set(fp);}
 };

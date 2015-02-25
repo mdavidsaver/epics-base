@@ -61,6 +61,9 @@ ca/client/perl_DEPEND_DIRS = ca/client
 DIRS += dbdast
 dbdast_DEPEND_DIRS = libCom
 
+DIRS += dbdast/test
+dbdast/test_DEPEND_DIRS = dbdast
+
 DIRS += ioc
 ioc_DEPEND_DIRS = libCom ca/client
 

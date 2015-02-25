@@ -4,12 +4,13 @@
 #include "macstream.h"
 
 #define NPUTBACK 4
+#define BASESIZE 128
 
 macro_streambuf::macro_streambuf()
     :strm(0)
     ,macctxt(0)
-    ,linebuf(128)
-    ,outbuf(128)
+    ,linebuf(BASESIZE)
+    ,outbuf(BASESIZE)
 {
     setg(&outbuf[0],&outbuf[0],&outbuf[0]);
 }
@@ -17,11 +18,13 @@ macro_streambuf::macro_streambuf()
 macro_streambuf::macro_streambuf(std::istream &backing, MAC_HANDLE* ctxt)
     :strm(&backing)
     ,macctxt(ctxt)
-    ,linebuf(128)
-    ,outbuf(128)
+    ,linebuf(BASESIZE)
+    ,outbuf(BASESIZE)
 {
     setg(&outbuf[0],&outbuf[0],&outbuf[0]);
 }
+
+macro_streambuf::~macro_streambuf() {}
 
 void
 macro_streambuf::setBackingStream(std::istream &backing)
@@ -31,9 +34,9 @@ macro_streambuf::setBackingStream(std::istream &backing)
 }
 
 void
-macro_streambuf::setMacContext(MAC_HANDLE& c)
+macro_streambuf::setMacContext(MAC_HANDLE* c)
 {
-    ctxt = c;
+    macctxt = c;
     // don't clear the buffer
 }
 
@@ -51,45 +54,45 @@ macro_streambuf::underflow()
     // need to read in one line
     size_t i=NPUTBACK;
 
-    linebuf.resize(128);
+    linebuf.resize(BASESIZE);
 
-    while(strm.good()) {
-        assert(i<buf.size());
-        strm.getline(&linebuf[i], linebuf.size()-i);
-        i += strm.gcount();
+    while(strm->good()) {
+        assert(i<linebuf.size()-1);
+        strm->getline(&linebuf[i], linebuf.size()-i-1);
+        i += strm->gcount();
 
         // if only failbit set
-        if(strm.fail() && !strm.bad() && !strm.eof()) {
+        if(strm->fail() && !strm->bad() && !strm->eof()) {
             // buffer too short, retry
-            linebuf.resize(buf.size()+128);
-            strm.clear();
+            linebuf.resize(linebuf.size()+BASESIZE);
+            strm->clear();
             continue;
-        }
-        /* extra count for nil, normal EOF gives a count for the terminator
-         * which isn't stored.
-         */
-        if(strm.eof())
-            i++;
+        } else if(strm->good())
+            linebuf[i-1] = '\n'; // include the delimiter in the output
+
         break;
     }
-    buf.resize(i);// buf size includes trailing nil
+    linebuf.resize(i+1);
+    linebuf[i]='\0';
 
     if(!macctxt) {
         /* no macro expansion */
-        setg(&buf[0], &buf[NPUTBACK], &buf[buf.size()]);
-        return traits_type::to_int_type(buf[NPUTBACK]);
+        setg(&linebuf[0], &linebuf[NPUTBACK], &linebuf[linebuf.size()-1]); // exclude nil
+        return traits_type::to_int_type(linebuf[NPUTBACK]);
     }
 
-    outbuf.resize(buf.size()+128);
+    /* assume output will be approx. the same size as input */
+    outbuf.resize(linebuf.size()+16);
 
     long ret=0;
     while(true){
-        ret = macExpandString(macctxt, &buf[0], &outbuf[0], outbuf.size());
-        if(ret<(outbuf.size()-1)) {
-            outbuf.resize(ret); // exclude nil
+        size_t capacity = outbuf.size()-NPUTBACK;
+        ret = macExpandString(macctxt, &linebuf[NPUTBACK], &outbuf[NPUTBACK], capacity);
+        if((unsigned long)ret<(capacity-1)) {
+            outbuf.resize(ret+NPUTBACK); // exclude nil
             break;
         }
-        outbuf.resize(buf.size()+128);
+        outbuf.resize(outbuf.size()+BASESIZE);
     }
 
     setg(&outbuf[0], &outbuf[NPUTBACK], &outbuf[outbuf.size()]);

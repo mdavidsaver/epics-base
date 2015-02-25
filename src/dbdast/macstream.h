@@ -22,9 +22,28 @@ public:
     ~macro_streambuf();
 
     void setBackingStream(std::istream& backing);
-    void setMacContext(MAC_HANDLE& ctxt);
+    void setMacContext(MAC_HANDLE *ctxt);
 
     virtual int_type underflow();
+};
+
+/** An I/O stream backed by another std::istream.
+ * The backing stream is read line by line.
+ * Lines are expanded with macExpandString()
+ */
+class imacrostream : public std::istream
+{
+    macro_streambuf macbuf;
+public:
+    explicit imacrostream()
+        :std::istream(&macbuf), macbuf() {}
+    explicit imacrostream(std::istream& backing, MAC_HANDLE* ctxt=0)
+        :std::istream(&macbuf), macbuf(backing, ctxt) {}
+
+    inline void setBackingStream(std::istream& backing)
+    { macbuf.setBackingStream(backing); }
+    inline void setMacContext(MAC_HANDLE *ctxt)
+    { macbuf.setMacContext(ctxt); }
 };
 
 #endif // MACSTREAM_H
