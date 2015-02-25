@@ -19,10 +19,13 @@ dbdast_SRCS += cfstream.cpp
 dbdast_SRCS += macstream.cpp
 dbdast_SRCS += dbdlexer.cpp
 dbdast_SRCS += dbdparser.cpp
+dbdast_SRCS += astlib.c
+dbdast_SRCS += buildast.cpp
 
 INC += cfstream.h
 INC += macstream.h
 INC += dbdlexer.h
 INC += dbdparser.h
+INC += dbdast.h
 
 include $(TOP)/configure/RULES
