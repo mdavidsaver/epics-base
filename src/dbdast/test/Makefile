@@ -17,6 +17,10 @@ streamTest_SRCS += streamTest.cpp
 #testHarness_SRCS += streamTest.cpp
 TESTS += streamTest
 
+TESTPROD_HOST += lexTest
+lexTest_SRCS += lexTest.cpp
+#testHarness_SRCS += lexTest.cpp
+TESTS += lexTest
 
 # The testHarness runs all the test programs in a known working order.
 #testHarness_SRCS += epicsRunLibComTests.c

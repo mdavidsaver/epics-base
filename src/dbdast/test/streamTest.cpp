@@ -163,7 +163,7 @@ void macStream()
 
 MAIN(streamTest)
 {
-    testPlan(0);
+    testPlan(36);
     readLine();
     macStream();
     return testDone();
