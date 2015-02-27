@@ -88,9 +88,6 @@ void DBDShow(const DBDNode *node, FILE *fp, int indent)
         const DBDStatement *stmt=(DBDStatement*)node;
         fprintf(fp, "%s %s\n", stmt->cmd, stmt->arg);
     } break;
-    case DBDNodeValue:
-        fprintf(fp, "### bare value %s !!!\n", ((const DBDValue*)node)->value);
-        break;
     default:
         fprintf(fp, "### Unknown node type %d !!!\n", node->type);
     }

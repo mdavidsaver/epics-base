@@ -1,6 +1,10 @@
 #ifndef DBDAST_H
 #define DBDAST_H
 
+#ifdef __cplusplus
+#include <istream>
+#endif
+
 #include <stdio.h>
 
 #include <ellLib.h>
@@ -15,14 +19,12 @@ typedef struct DBDFile DBDFile;
 typedef struct DBDNest DBDNest;
 typedef struct DBDStatement DBDStatement;
 typedef struct DBDBlock DBDBlock;
-typedef struct DBDValue DBDValue;
 
 typedef enum {
     DBDNodeFile,
     DBDNodeNest,
     DBDNodeBlock,
-    DBDNodeStatement,
-    DBDNodeValue,
+    DBDNodeStatement
 } DBDNodeType;
 
 struct DBDNode {
@@ -62,14 +64,13 @@ struct DBDStatement {
     char _alloc[1]; /* buffer for name and arg */
 };
 
-struct DBDValue {
-    DBDNode common;
-    char value[1];
-};
-
 DBDFile *DBDParseFile(const char* fname);
 DBDFile *DBDParseFileP(FILE *, const char* fname);
 DBDFile *DBDParseMemory(const char *buf, const char *fname);
+
+#ifdef __cplusplus
+DBDFile *DBDParseStream(std::istream&, const char *fname);
+#endif
 
 /* free pointer to DBDFile, DBDNest, DBDBlock, DBDStatement, or DBDValue */
 #define DBDFree(pnode) DBDFreeNode(&(pnode)->common)

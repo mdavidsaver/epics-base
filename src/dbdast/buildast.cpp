@@ -153,29 +153,38 @@ public:
 
 }//namespace
 
-DBDFile *DBDParseFileP(FILE *fp, const char* fname)
+DBDFile *DBDParseStream(std::istream& istrm, const char *fname)
 {
     DBDFile *file = (DBDFile*)calloc(1, sizeof(*file)+strlen(fname));
     if(!file) {
-        fclose(fp);
         return NULL;
     }
     strcpy(file->name, fname);
 
     try{
-        cfile_streambuf isb(fp);
-        std::istream istrm(&isb);
         DBDASTParser P;
         P.lex(istrm);
-        errlogPrintf("Total alloc %lu", (unsigned long)P.totalalloc);
         ellConcat(&file->entries, &P.fakeroot->children);
     } catch(std::exception& e) {
         free(file);
-        file = NULL;
-        errlogPrintf("Parsing error: %s", e.what());
+        throw;
     }
 
     return file;
+
+}
+
+DBDFile *DBDParseFileP(FILE *fp, const char* fname)
+{
+    try{
+        // fp closed by cfile_streambuf dtor
+        cfile_streambuf isb(fp);
+        std::istream istrm(&isb);
+        return DBDParseStream(istrm, fname);
+    } catch(std::exception& e) {
+        errlogPrintf("Parsing error: %s", e.what());
+        return NULL;
+    }
 }
 
 DBDFile *DBDParseFile(const char* fname)
@@ -183,12 +192,17 @@ DBDFile *DBDParseFile(const char* fname)
     DBDFile *ret;
     FILE *fp=fopen(fname, "r");
     ret = DBDParseFileP(fp, fname);
-    if(!ret)
-        fclose(fp);
+    // fp closed by cfile_streambuf dtor
     return ret;
 }
 
 DBDFile *DBDParseMemory(const char *buf, const char *fname)
 {
-    return NULL;
+    try{
+        std::istringstream istrm(buf);
+        return DBDParseStream(istrm, fname);
+    } catch(std::exception& e) {
+        errlogPrintf("Parsing error: %s", e.what());
+        return NULL;
+    }
 }

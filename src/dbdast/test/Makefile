@@ -22,6 +22,11 @@ lexTest_SRCS += lexTest.cpp
 #testHarness_SRCS += lexTest.cpp
 TESTS += lexTest
 
+TESTPROD_HOST += parseTest
+parseTest_SRCS += parseTest.cpp
+#testHarness_SRCS += lexTest.cpp
+TESTS += parseTest
+
 # The testHarness runs all the test programs in a known working order.
 #testHarness_SRCS += epicsRunLibComTests.c
 
