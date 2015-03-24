@@ -13,6 +13,8 @@
 extern "C" {
 #endif
 
+typedef struct DBDContext DBDContext;
+
 typedef struct DBDNode DBDNode;
 
 typedef struct DBDFile DBDFile;
@@ -64,12 +66,28 @@ struct DBDStatement {
     char _alloc[1]; /* buffer for name and arg */
 };
 
-DBDFile *DBDParseFile(const char* fname);
-DBDFile *DBDParseFileP(FILE *, const char* fname);
-DBDFile *DBDParseMemory(const char *buf, const char *fname);
+void DBDPathSplit(const char *str,
+                  void (*cb)(void*, const char*, size_t),
+                  void* arg);
+
+#define DBDContext_NO_DEFAULT_PATH 1
+#define DBDContext_NO_INCLUDE 2
+
+DBDContext *DBDContextCreate(unsigned flags);
+void DBDContextDestroy(DBDContext*);
+
+void DBDContextSetPaths(DBDContext*, const char*);
+void DBDContextAddPath(DBDContext*, const char*);
+
+/* Returns a string which must be free'd */
+const char* DBDContextFindFile(DBDContext*, const char*);
+
+DBDFile *DBDParseFile(DBDContext *ctxt, const char* fname);
+DBDFile *DBDParseFileP(DBDContext *ctxt, FILE *, const char* fname);
+DBDFile *DBDParseMemory(DBDContext *ctxt, const char *buf, const char *fname);
 
 #ifdef __cplusplus
-DBDFile *DBDParseStream(std::istream&, const char *fname);
+DBDFile *DBDParseStream(DBDContext *ctxt, std::istream&, const char *fname);
 #endif
 
 /* free pointer to DBDFile, DBDNest, DBDBlock, DBDStatement, or DBDValue */

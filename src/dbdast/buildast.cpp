@@ -14,8 +14,9 @@ namespace {
 class DBDASTParser : public DBDParser
 {
 public:
-    DBDASTParser()
+    DBDASTParser(DBDContext* ctxt)
         :totalalloc(0)
+        ,ctxt(ctxt)
     {
         fakeroot = (DBDBlock*)calloc(1, sizeof(*fakeroot));
         if(!fakeroot)
@@ -149,11 +150,12 @@ public:
 
     DBDBlock *fakeroot;
     size_t totalalloc;
+    DBDContext *ctxt;
 };
 
 }//namespace
 
-DBDFile *DBDParseStream(std::istream& istrm, const char *fname)
+DBDFile *DBDParseStream(DBDContext *ctxt, std::istream& istrm, const char *fname)
 {
     DBDFile *file = (DBDFile*)calloc(1, sizeof(*file)+strlen(fname));
     if(!file) {
@@ -162,7 +164,7 @@ DBDFile *DBDParseStream(std::istream& istrm, const char *fname)
     strcpy(file->name, fname);
 
     try{
-        DBDASTParser P;
+        DBDASTParser P(ctxt);
         P.lex(istrm);
         ellConcat(&file->entries, &P.fakeroot->children);
     } catch(std::exception& e) {
@@ -174,33 +176,33 @@ DBDFile *DBDParseStream(std::istream& istrm, const char *fname)
 
 }
 
-DBDFile *DBDParseFileP(FILE *fp, const char* fname)
+DBDFile *DBDParseFileP(DBDContext *ctxt, FILE *fp, const char* fname)
 {
     try{
         // fp closed by cfile_streambuf dtor
         cfile_streambuf isb(fp);
         std::istream istrm(&isb);
-        return DBDParseStream(istrm, fname);
+        return DBDParseStream(ctxt, istrm, fname);
     } catch(std::exception& e) {
         errlogPrintf("Parsing error: %s", e.what());
         return NULL;
     }
 }
 
-DBDFile *DBDParseFile(const char* fname)
+DBDFile *DBDParseFile(DBDContext *ctxt, const char* fname)
 {
     DBDFile *ret;
     FILE *fp=fopen(fname, "r");
-    ret = DBDParseFileP(fp, fname);
+    ret = DBDParseFileP(ctxt, fp, fname);
     // fp closed by cfile_streambuf dtor
     return ret;
 }
 
-DBDFile *DBDParseMemory(const char *buf, const char *fname)
+DBDFile *DBDParseMemory(DBDContext *ctxt, const char *buf, const char *fname)
 {
     try{
         std::istringstream istrm(buf);
-        return DBDParseStream(istrm, fname);
+        return DBDParseStream(ctxt, istrm, fname);
     } catch(std::exception& e) {
         errlogPrintf("Parsing error: %s", e.what());
         return NULL;

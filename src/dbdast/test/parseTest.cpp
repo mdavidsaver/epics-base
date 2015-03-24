@@ -146,7 +146,7 @@ void doTest(const char *inp,
             const Node *out,
             const char *msg)
 {
-    DBDFile *file = DBDParseMemory(inp, "testfile");
+    DBDFile *file = DBDParseMemory(NULL, inp, "testfile");
     if(!file) {
         testFail("Failed to parse %s", msg);
         return;
