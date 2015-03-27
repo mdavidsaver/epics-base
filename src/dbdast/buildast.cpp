@@ -77,7 +77,7 @@ public:
     virtual void parse_comment(DBDToken& C){nest('#',C);}
     virtual void parse_code(DBDToken& C){nest('%',C);}
 
-    virtual void parse_block(DBDToken& name, blockarg_t& args)
+    virtual void parse_block(DBDToken& name, blockarg_t& args, bool hasbody)
     {
         assert(stack.size()==depth()+1);
         size_t nlen = name.value.size(), alen=nlen,
@@ -115,20 +115,13 @@ public:
         }
 
         ellAdd(&stack.back()->children, &stmt->common.node);
+
+        if(hasbody) {
+            stack.push_back(stmt);
+        }
     }
 
-    virtual void parse_block_body_start()
-    {
-        assert(stack.size()==depth()+1);
-        DBDBlock *stmt=stack.back();
-        assert(ellCount(&stmt->children)>0);
-        DBDNode *back=(DBDNode*)ellLast(&stmt->children);
-        assert(back->type==DBDNodeBlock);
-
-        stack.push_back((DBDBlock*)back);
-    }
-
-    virtual void parse_block_body_end()
+    virtual void parse_block_end()
     {
         stack.pop_back();
         assert(stack.size()==depth()+1);

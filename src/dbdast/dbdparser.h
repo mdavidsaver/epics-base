@@ -64,13 +64,11 @@ protected:
     //! code from tok
     virtual void parse_code(DBDToken&)=0;
 
-    //! Command name from CoBtoken and args from blockargs
-    virtual void parse_block(DBDToken& name, blockarg_t&)=0;
+    //! Block name and args, flag indicates whether this block has a body
+    virtual void parse_block(DBDToken& name, blockarg_t&, bool bodytofollow)=0;
 
-    //! Mark start of block body
-    virtual void parse_block_body_start()=0;
-    //! Mark start of block body
-    virtual void parse_block_body_end()=0;
+    //! Mark end of block body
+    virtual void parse_block_end()=0;
 
     virtual void parse_start();
     virtual void parse_eoi();
