@@ -62,6 +62,8 @@ static void invalidToken(const DBDToken& t, DBDParser::tokState_t state)
 
 #define THROW(MSG) throw DBDSyntaxError(this->tok, MSG)
 
+#define RETHROW() catch(DBDSyntaxError E) {E.add_frame("", this->tok); throw E;}
+
 void DBDParser::token(tokState_t tokState, DBDToken &tok)
 {
     if(parDebug)
@@ -81,14 +83,14 @@ void DBDParser::token(tokState_t tokState, DBDToken &tok)
          */
         // handle reduction of block now that we know if a body will follow.
         if(tokState==tokLit && tok.value.at(0)=='{') {
-            actions->parse_block(CoBtoken, blockargs, true);
+            try{actions->parse_block(CoBtoken, blockargs, true);}RETHROW()
             parState = parDBD;
             CoBtoken.reset();
             blockargs.clear();
             parDepth++;
             return;
         } else {
-            actions->parse_block(CoBtoken, blockargs, false);
+            try{actions->parse_block(CoBtoken, blockargs, false);}RETHROW()
             parState = parDBD;
             CoBtoken.reset();
             blockargs.clear();
@@ -107,7 +109,7 @@ void DBDParser::token(tokState_t tokState, DBDToken &tok)
         switch(tokState) {
         case tokEOI:
             if(parDepth==0) {
-                actions->parse_eoi();
+                try{actions->parse_eoi();}RETHROW()
                 return;
             } else
                 THROW("EOI before }");
@@ -121,12 +123,12 @@ void DBDParser::token(tokState_t tokState, DBDToken &tok)
 
         case tokComment:
             // reduce comment
-            actions->parse_comment(tok);
+            try{actions->parse_comment(tok);}RETHROW()
             parState = parDBD; break;
 
         case tokCode:
             // reduce code
-            actions->parse_code(tok);
+            try{actions->parse_code(tok);}RETHROW()
             parState = parDBD;break;
 
         case tokLit:
@@ -138,7 +140,7 @@ void DBDParser::token(tokState_t tokState, DBDToken &tok)
                 if(parDepth==0)
                     THROW("'}' without '{'");
                 parDepth--;
-                actions->parse_block_end();
+                try{actions->parse_block_end();}RETHROW()
                 parState = parDBD;
                 break;
             default:
@@ -163,7 +165,7 @@ void DBDParser::token(tokState_t tokState, DBDToken &tok)
         case tokBare:
         case tokQuote:
             // reduce command
-            actions->parse_command(CoBtoken, tok);
+            try{actions->parse_command(CoBtoken, tok);}RETHROW()
             CoBtoken.reset();
             parState = parDBD;
             break;

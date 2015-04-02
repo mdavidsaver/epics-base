@@ -101,13 +101,15 @@ public:
     struct Frame {
         std::string file;
         unsigned line, col;
-        Frame(unsigned line=0, unsigned col=0) :line(line), col(col) {}
-        Frame(const std::string& s, unsigned line=0, unsigned col=0) :file(s), line(line), col(col) {}
+        inline Frame(unsigned line=0, unsigned col=0) :line(line), col(col) {}
+        inline Frame(const std::string& s, unsigned line=0, unsigned col=0) :file(s), line(line), col(col) {}
+        inline Frame(const std::string& s, const DBDToken& t) :file(s), line(t.line), col(t.col) {}
     };
     typedef std::list<Frame> frames_t;
     frames_t frames;
 
-    DBDSyntaxError(const DBDToken& t, const std::string& msg)
+    inline DBDSyntaxError(const std::string& msg): std::runtime_error(msg) {}
+    inline DBDSyntaxError(const DBDToken& t, const std::string& msg)
         :std::runtime_error(msg)
     {
         frames.push_back(Frame(t.line, t.col));
@@ -116,9 +118,9 @@ public:
 
     void set_file(const std::string& s) {frames.front().file = s;}
 
-    void add_frame(const std::string& s, const DBDToken& t)
+    inline void add_frame(const std::string& s, const DBDToken& t)
     {
-        frames.push_back(Frame(s, t.line, t.col));
+        frames.push_back(Frame(s, t));
     }
 };
 
