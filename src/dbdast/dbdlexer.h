@@ -4,7 +4,9 @@
 #include <istream>
 #include <ostream>
 #include <string>
+#include <list>
 #include <algorithm>
+#include <stdexcept>
 
 struct DBDToken
 {
@@ -90,5 +92,34 @@ private:
     tokState_t tokState;
     unsigned line, col;
 };
+
+class DBDSyntaxError : public std::runtime_error
+{
+public:
+    struct Frame {
+        std::string file;
+        unsigned line, col;
+        Frame(unsigned line=0, unsigned col=0) :line(line), col(col) {}
+        Frame(const std::string& s, unsigned line=0, unsigned col=0) :file(s), line(line), col(col) {}
+    };
+    typedef std::list<Frame> frames_t;
+    frames_t frames;
+
+    DBDSyntaxError(const DBDToken& t, const std::string& msg)
+        :std::runtime_error(msg)
+    {
+        frames.push_back(Frame(t.line, t.col));
+    }
+    virtual ~DBDSyntaxError() throw() {}
+
+    void set_file(const std::string& s) {frames.front().file = s;}
+
+    void add_frame(const std::string& s, const DBDToken& t)
+    {
+        frames.push_back(Frame(s, t.line, t.col));
+    }
+};
+
+std::ostream& operator<<(std::ostream& strm, const DBDSyntaxError& e);
 
 #endif // DBDLEXER_HPP

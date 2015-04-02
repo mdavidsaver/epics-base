@@ -56,8 +56,10 @@ static void invalidToken(const DBDToken& t, DBDParser::tokState_t state)
 {
     std::ostringstream strm;
     strm<<"Invalid token: "<<DBDParser::tokStateName(state)<<" "<<t;
-    throw std::runtime_error(strm.str());
+    throw DBDSyntaxError(t, strm.str());
 }
+
+#define THROW(MSG) throw DBDSyntaxError(this->tok, MSG)
 
 void DBDParser::token(tokState_t tokState, DBDToken &tok)
 {
@@ -107,7 +109,7 @@ void DBDParser::token(tokState_t tokState, DBDToken &tok)
                 parse_eoi();
                 return;
             } else
-                throw std::runtime_error("EOI before }");
+                THROW("EOI before }");
             break;
 
         case tokBare:
@@ -133,13 +135,13 @@ void DBDParser::token(tokState_t tokState, DBDToken &tok)
             case '}':
                 // block ends
                 if(parDepth==0)
-                    throw std::runtime_error("'}' without '{'");
+                    THROW("'}' without '{'");
                 parDepth--;
                 parse_block_end();
                 parState = parDBD;
                 break;
             default:
-                throw std::runtime_error("Unexpected literal");
+                THROW("Unexpected literal");
             }
             break;
 
@@ -172,7 +174,7 @@ void DBDParser::token(tokState_t tokState, DBDToken &tok)
                 blockargs.clear();
                 parState = parArg;
             } else
-                throw std::runtime_error("Unexpected literal");
+                THROW("Unexpected literal");
             break;
 
         default:
@@ -201,7 +203,7 @@ void DBDParser::token(tokState_t tokState, DBDToken &tok)
                 // reduce blockargs
                 parState = parTail;
             } else
-                throw std::runtime_error("Unexpected literal");
+                THROW("Unexpected literal");
             break;
 
         default:
@@ -225,7 +227,7 @@ void DBDParser::token(tokState_t tokState, DBDToken &tok)
         case ',': parState = parArg; break;
         case ')': parState = parTail; break;
         default:
-            throw std::runtime_error("Unexpected literal");
+            THROW("Unexpected literal");
         }
         break;
 

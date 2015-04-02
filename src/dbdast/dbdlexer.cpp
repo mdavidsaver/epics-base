@@ -5,6 +5,22 @@
 
 #include "dbdlexer.h"
 
+std::ostream& operator<<(std::ostream& strm, const DBDSyntaxError& e)
+{
+    if(e.frames.size()==0) {
+        strm<<"DBDSyntaxError w/o stack!";
+    } else {
+        const DBDSyntaxError::Frame& inner = e.frames.front();
+        strm<<"In "<<inner.file<<" "<<inner.line<<":"<<inner.col<<"\n";
+        for(DBDSyntaxError::frames_t::const_iterator it=++e.frames.begin(), end=e.frames.end();
+            it!=end; ++it)
+        {
+            strm<<"From "<<it->file<<" "<<it->line<<":"<<it->col<<"\n";
+        }
+    }
+    return strm;
+}
+
 DBDLexer::DBDLexer()
     :lexDebug(false)
     ,tokState(tokInit)
@@ -46,14 +62,7 @@ const char* DBDLexer::tokStateName(tokState_t S)
     }
 }
 
-static
-std::string LexError(const DBDLexer& L, const char *msg)
-{
-    std::ostringstream strm;
-    strm<<"Lexer error at "<<L.tok.line<<":"<<L.tok.col<<" : "<<msg;
-    return strm.str();
-}
-#define THROW(msg) throw std::runtime_error(LexError(*this, msg))
+#define THROW(msg) throw DBDSyntaxError(this->tok, msg)
 
 std::string DBDLexer::InvalidChar(const DBDLexer& L, DBDLexer::tokState_t state, char c)
 {
