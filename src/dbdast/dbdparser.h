@@ -142,19 +142,19 @@ class DBDCParserActionsWrapper
     typedef DBDParserActions::blockarg_t blockarg_t;
 public:
     DBDCParserActionsWrapper(DBDCParserActions *a) : act(a) {}
-#define DDTHROW() throw std::runtime_error("User abort")
+#define DDTHROW(T) throw DBDSyntaxError("Action abort")
 
     virtual void parse_command(DBDToken& cmd, DBDToken& arg)
-    { if(act->parse_command && (*act->parse_command)(act, &cmd, &arg)) DDTHROW();}
+    { if(act->parse_command && (*act->parse_command)(act, &cmd, &arg)) DDTHROW(cmd);}
 
     virtual void parse_comment(DBDToken& t)
-    { if(act->parse_comment && (*act->parse_comment)(act, &t)) DDTHROW();}
+    { if(act->parse_comment && (*act->parse_comment)(act, &t)) DDTHROW(t);}
 
     virtual void parse_code(DBDToken& t)
-    { if(act->parse_code && (*act->parse_code)(act, &t)) DDTHROW();}
+    { if(act->parse_code && (*act->parse_code)(act, &t)) DDTHROW(t);}
 
     virtual void parse_block(DBDToken& name, blockarg_t& a, bool bodytofollow)
-    { if(act->parse_block && (*act->parse_block)(act, &name, &a, bodytofollow)) DDTHROW();}
+    { if(act->parse_block && (*act->parse_block)(act, &name, &a, bodytofollow)) DDTHROW(name);}
 
     virtual void parse_block_end()
     { if(act->parse_block_end && (*act->parse_block_end)(act)) DDTHROW();}
