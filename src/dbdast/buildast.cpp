@@ -11,10 +11,10 @@
 #include "cfstream.h"
 
 namespace {
-class DBDASTParser : public DBDParser
+class DBDASTActions : public DBDParserActions
 {
 public:
-    DBDASTParser(DBDContext* ctxt)
+    DBDASTActions(DBDContext* ctxt)
         :totalalloc(0)
         ,ctxt(ctxt)
     {
@@ -23,7 +23,7 @@ public:
             throw std::bad_alloc();
     }
 
-    virtual ~DBDASTParser()
+    virtual ~DBDASTActions()
     {
         DBDFreeNode(&fakeroot->common);
     }
@@ -32,8 +32,6 @@ public:
 
     virtual void parse_command(DBDToken& cmd, DBDToken& arg)
     {
-        assert(stack.size()==depth()+1);
-
         size_t clen = cmd.value.size(),
                alen =arg.value.size();
         if(clen>0xffffff||alen>0xffffff)
@@ -49,17 +47,17 @@ public:
         stmt->common.line = cmd.line;
         stmt->common.col = cmd.col;
         memcpy(stmt->cmd, cmd.value.c_str(), clen);
-        memcpy(stmt->arg, tok.value.c_str(), alen);
+        memcpy(stmt->arg, arg.value.c_str(), alen);
 
         ellAdd(&stack.back()->children, &stmt->common.node);
     }
 
     void nest(char type, DBDToken& C)
     {
-        assert(stack.size()==depth()+1);
-        size_t len = tok.value.size();
+        size_t len = C.value.size();
         if(len>0xffffff)
             throw std::bad_alloc();
+
         DBDNest *stmt=(DBDNest*)calloc(1, sizeof(*stmt)+len+1);
         totalalloc += sizeof(*stmt)+len+1;
         if(!stmt)
@@ -79,11 +77,11 @@ public:
 
     virtual void parse_block(DBDToken& name, blockarg_t& args, bool hasbody)
     {
-        assert(stack.size()==depth()+1);
         size_t nlen = name.value.size(), alen=nlen,
                bcnt = args.size();
         if(nlen>0xff || bcnt>DBDBlockMaxArgs)
             throw std::bad_alloc();
+
         for(unsigned i=0; i<bcnt; i++) {
             size_t esize = args[i].size()+1;
             if(size_t(-1)-alen<esize)
@@ -124,7 +122,6 @@ public:
     virtual void parse_block_end()
     {
         stack.pop_back();
-        assert(stack.size()==depth()+1);
     }
 
     virtual void parse_start()
@@ -157,9 +154,10 @@ DBDFile *DBDParseStream(DBDContext *ctxt, std::istream& istrm, const char *fname
     strcpy(file->name, fname);
 
     try{
-        DBDASTParser P(ctxt);
+        DBDASTActions actions(ctxt);
+        DBDParser P(actions);
         P.lex(istrm);
-        ellConcat(&file->entries, &P.fakeroot->children);
+        ellConcat(&file->entries, &actions.fakeroot->children);
     } catch(std::exception& e) {
         free(file);
         throw;

@@ -6,8 +6,17 @@
 
 #include "dbdparser.h"
 
-DBDParser::DBDParser()
+void DBDParserActions::parse_command(DBDToken&, DBDToken&){}
+void DBDParserActions::parse_comment(DBDToken&){}
+void DBDParserActions::parse_code(DBDToken&){}
+void DBDParserActions::parse_block(DBDToken&, blockarg_t&, bool){}
+void DBDParserActions::parse_block_end(){}
+void DBDParserActions::parse_start(){}
+void DBDParserActions::parse_eoi(){}
+
+DBDParser::DBDParser(DBDParserActions &actions)
     :parDebug(false)
+    ,actions(&actions)
     ,parState(parDBD)
     ,parDepth(0)
 {}
@@ -23,17 +32,9 @@ void DBDParser::reset()
 
 void DBDParser::lex(std::istream& s)
 {
-    parse_start();
+    actions->parse_start();
     DBDLexer::lex(s);
 }
-
-void DBDParser::parse_command(DBDToken&, DBDToken&){}
-void DBDParser::parse_comment(DBDToken&){}
-void DBDParser::parse_code(DBDToken&){}
-void DBDParser::parse_block(DBDToken&, blockarg_t&, bool){}
-void DBDParser::parse_block_end(){}
-void DBDParser::parse_start(){}
-void DBDParser::parse_eoi(){}
 
 const char* DBDParser::parStateName(parState_t S)
 {
@@ -80,14 +81,14 @@ void DBDParser::token(tokState_t tokState, DBDToken &tok)
          */
         // handle reduction of block now that we know if a body will follow.
         if(tokState==tokLit && tok.value.at(0)=='{') {
-            parse_block(CoBtoken, blockargs, true);
+            actions->parse_block(CoBtoken, blockargs, true);
             parState = parDBD;
             CoBtoken.reset();
             blockargs.clear();
             parDepth++;
             return;
         } else {
-            parse_block(CoBtoken, blockargs, false);
+            actions->parse_block(CoBtoken, blockargs, false);
             parState = parDBD;
             CoBtoken.reset();
             blockargs.clear();
@@ -106,7 +107,7 @@ void DBDParser::token(tokState_t tokState, DBDToken &tok)
         switch(tokState) {
         case tokEOI:
             if(parDepth==0) {
-                parse_eoi();
+                actions->parse_eoi();
                 return;
             } else
                 THROW("EOI before }");
@@ -120,12 +121,12 @@ void DBDParser::token(tokState_t tokState, DBDToken &tok)
 
         case tokComment:
             // reduce comment
-            parse_comment(tok);
+            actions->parse_comment(tok);
             parState = parDBD; break;
 
         case tokCode:
             // reduce code
-            parse_code(tok);
+            actions->parse_code(tok);
             parState = parDBD;break;
 
         case tokLit:
@@ -137,7 +138,7 @@ void DBDParser::token(tokState_t tokState, DBDToken &tok)
                 if(parDepth==0)
                     THROW("'}' without '{'");
                 parDepth--;
-                parse_block_end();
+                actions->parse_block_end();
                 parState = parDBD;
                 break;
             default:
@@ -162,7 +163,7 @@ void DBDParser::token(tokState_t tokState, DBDToken &tok)
         case tokBare:
         case tokQuote:
             // reduce command
-            parse_command(CoBtoken, tok);
+            actions->parse_command(CoBtoken, tok);
             CoBtoken.reset();
             parState = parDBD;
             break;

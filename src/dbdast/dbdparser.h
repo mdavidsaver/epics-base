@@ -6,6 +6,29 @@
 
 #include "dbdlexer.h"
 
+class DBDParserActions
+{
+public:
+    typedef std::vector<std::string> blockarg_t;
+
+    //! Command name from CoBtoken and arg from tok
+    virtual void parse_command(DBDToken& cmd, DBDToken& arg)=0;
+
+    //! comment from tok
+    virtual void parse_comment(DBDToken&)=0;
+    //! code from tok
+    virtual void parse_code(DBDToken&)=0;
+
+    //! Block name and args, flag indicates whether this block has a body
+    virtual void parse_block(DBDToken& name, blockarg_t&, bool bodytofollow)=0;
+
+    //! Mark end of block body
+    virtual void parse_block_end()=0;
+
+    virtual void parse_start();
+    virtual void parse_eoi();
+};
+
 /** @brief Parser for DB/DBD grammar
  *
  @code
@@ -37,7 +60,7 @@
 class DBDParser : public DBDLexer
 {
 public:
-    DBDParser();
+    DBDParser(DBDParserActions& actions);
     virtual ~DBDParser(){};
 
     virtual void reset();
@@ -53,28 +76,12 @@ public:
 
     bool parDebug;
 
-    typedef std::vector<std::string> blockarg_t;
-protected:
-
-    //! Command name from CoBtoken and arg from tok
-    virtual void parse_command(DBDToken& cmd, DBDToken& arg)=0;
-
-    //! comment from tok
-    virtual void parse_comment(DBDToken&)=0;
-    //! code from tok
-    virtual void parse_code(DBDToken&)=0;
-
-    //! Block name and args, flag indicates whether this block has a body
-    virtual void parse_block(DBDToken& name, blockarg_t&, bool bodytofollow)=0;
-
-    //! Mark end of block body
-    virtual void parse_block_end()=0;
-
-    virtual void parse_start();
-    virtual void parse_eoi();
+    typedef DBDParserActions::blockarg_t blockarg_t;
 
 private:
     virtual void token(tokState_t, DBDToken&);
+
+    DBDParserActions* actions;
 
     parState_t parState;
 
