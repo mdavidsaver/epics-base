@@ -236,3 +236,29 @@ void DBDParser::token(tokState_t tokState, DBDToken &tok)
         throw std::logic_error("Invalid parser state");
     }
 }
+
+
+const char* DBDToken_value(const DBDToken* t)
+{
+    return t->value.c_str();
+}
+
+unsigned DBDToken_line(const DBDToken* t)
+{
+    return t->line;
+}
+
+unsigned DBDToken_col(const DBDToken* t)
+{
+    return t->col;
+}
+
+size_t DBDBlockArgs_len(const DBDBlockArgs* a)
+{
+    return a->size();
+}
+
+const char* DBDBlockArgs_value(const DBDBlockArgs* a, size_t i)
+{
+    return (*a)[i].c_str();
+}

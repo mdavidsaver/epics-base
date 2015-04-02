@@ -1,6 +1,8 @@
 #ifndef DBDPARSER_H
 #define DBDPARSER_H
 
+#ifdef __cplusplus
+
 #include <vector>
 #include <list>
 
@@ -91,4 +93,80 @@ private:
     blockarg_t blockargs;
 };
 
-#endif // DBDPARSER_H
+#endif /* __cplusplus */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifdef __cplusplus
+typedef DBDParserActions::blockarg_t DBDBlockArgs;
+#else
+typedef struct DBDBlockArgs DBDBlockArgs;
+#endif
+
+const char* DBDToken_value(const DBDToken*);
+unsigned DBDToken_line(const DBDToken*);
+unsigned DBDToken_col(const DBDToken*);
+size_t DBDBlockArgs_len(const DBDBlockArgs*);
+const char* DBDBlockArgs_value(const DBDBlockArgs*, size_t);
+
+typedef struct DBDCParserActions {
+    int (*parse_command)(struct DBDCParserActions *self,
+                         const DBDToken* cmd, const DBDToken* arg);
+    //! comment from tok
+    int (*parse_comment)(struct DBDCParserActions *self,
+                         const DBDToken*);
+    //! code from tok
+    int (*parse_code)(struct DBDCParserActions *self,
+                      const DBDToken*);
+
+    //! Block name and args, flag indicates whether this block has a body
+    int (*parse_block)(struct DBDCParserActions *self,
+                       const DBDToken* name, const DBDBlockArgs*, int bodytofollow);
+
+    //! Mark end of block body
+    int (*parse_block_end)(struct DBDCParserActions *self);
+
+    int (*parse_start)(struct DBDCParserActions *self);
+    int (*parse_eoi)(struct DBDCParserActions *self);
+
+} DBDCParserActions;
+
+#ifdef __cplusplus
+}
+
+class DBDCParserActionsWrapper
+{
+    DBDCParserActions *act;
+    typedef DBDParserActions::blockarg_t blockarg_t;
+public:
+    DBDCParserActionsWrapper(DBDCParserActions *a) : act(a) {}
+#define DDTHROW() throw std::runtime_error("User abort")
+
+    virtual void parse_command(DBDToken& cmd, DBDToken& arg)
+    { if(act->parse_command && (*act->parse_command)(act, &cmd, &arg)) DDTHROW();}
+
+    virtual void parse_comment(DBDToken& t)
+    { if(act->parse_comment && (*act->parse_comment)(act, &t)) DDTHROW();}
+
+    virtual void parse_code(DBDToken& t)
+    { if(act->parse_code && (*act->parse_code)(act, &t)) DDTHROW();}
+
+    virtual void parse_block(DBDToken& name, blockarg_t& a, bool bodytofollow)
+    { if(act->parse_block && (*act->parse_block)(act, &name, &a, bodytofollow)) DDTHROW();}
+
+    virtual void parse_block_end()
+    { if(act->parse_block_end && (*act->parse_block_end)(act)) DDTHROW();}
+
+    virtual void parse_start()
+    { if(act->parse_start && (*act->parse_start)(act)) DDTHROW();}
+
+    virtual void parse_eoi()
+    { if(act->parse_eoi && (*act->parse_eoi)(act)) DDTHROW();}
+#undef DDTHROW
+};
+
+#endif /* __cplusplus */
+
+#endif /* DBDPARSER_H */

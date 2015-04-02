@@ -1,6 +1,8 @@
 #ifndef DBDLEXER_HPP
 #define DBDLEXER_HPP
 
+#ifdef __cplusplus
+
 #include <istream>
 #include <ostream>
 #include <string>
@@ -122,4 +124,6 @@ public:
 
 std::ostream& operator<<(std::ostream& strm, const DBDSyntaxError& e);
 
-#endif // DBDLEXER_HPP
+#endif /* __cplusplus */
+
+#endif /* DBDLEXER_HPP */
