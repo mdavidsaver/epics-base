@@ -53,6 +53,7 @@ database_item:	include
 	|	tokenRECORD record_head record_body
 	|	tokenGRECORD grecord_head record_body
 	|	alias
+	|	iocsh
 	|	define
 	|	unknown
 	;
@@ -265,6 +266,11 @@ alias: tokenALIAS '(' tokenSTRING ',' tokenSTRING ')'
 {
 	if(dbStaticDebug>2) printf("alias %s %s\n",$3,$5);
 	dbAlias($3,$5); dbmfFree($3); dbmfFree($5);
+};
+
+iocsh: tokenIOCSH '(' tokenSTRING ')'
+{
+    dbAddIocsh($3); dbmfFree($3);
 };
 
 define: tokenDEFINE '(' tokenSTRING ',' tokenSTRING ')'

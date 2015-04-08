@@ -44,6 +44,7 @@ static int yyreset(void)
 "grecord"	return(tokenGRECORD);
 "alias" 	return(tokenALIAS);
 "info"		return(tokenINFO);
+"iocsh" 	return(tokenIOCSH);
 "registrar"	return(tokenREGISTRAR);
 "function"	return(tokenFUNCTION);
 "variable"	return(tokenVARIABLE);
