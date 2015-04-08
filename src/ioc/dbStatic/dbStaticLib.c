@@ -457,6 +457,7 @@ void dbFreeBase(dbBase *pdbbase)
         free(pfilt);
         pfilt = pfiltNext;
     }
+    ellFree(&pdbbase->blockIgnoreList);
     gphFreeMem(pdbbase->pgpHash);
     dbPvdFreeMem(pdbbase);
     dbFreePath(pdbbase);

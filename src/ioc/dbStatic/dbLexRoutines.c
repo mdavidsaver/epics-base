@@ -1100,3 +1100,38 @@ static void dbRecordBody(void)
 	yyerrorAbort("dbRecordBody: tempList not empty");
     dbFreeEntry(pdbentry);
 }
+
+static int dbFindUnknown(const char *name)
+{
+    ELLNODE *node;
+    for(node=ellFirst(&pdbbase->blockIgnoreList); node; node=ellNext(node))
+    {
+        dbText *txt = CONTAINER(node, dbText, node);
+        if(strcmp(txt->text, name)==0) return 1;
+    }
+    return 0;
+}
+
+static void dbAddDefine(const char *dtype, const char *dname)
+{
+    if(strcmp(dtype, "block")!=0) {
+        errlogPrintf("Warning: define(\"%s\", \"%s\") not recognised.  Ignoring\n",
+                     dtype, dname);
+        yyerror(NULL);
+
+    } else if(dbFindUnknown(dname)) {
+        /* ignore duplicate define() */
+    } else {
+        dbText *node = dbCalloc(1, sizeof(*node)+strlen(dname)+1);
+        node->text = (char*)(node+1);
+        strcpy(node->text, dname);
+        ellAdd(&pdbbase->blockIgnoreList, &node->node);
+    }
+}
+
+static void dbCheckUnknown(const char *name)
+{
+    if(dbFindUnknown(name)) return;
+    errlogPrintf("Unknown keyword: \"%s\"\n", name);
+    yyerrorAbort(NULL);
+}

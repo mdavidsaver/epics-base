@@ -36,6 +36,7 @@ static int yyreset(void)
 "choice"	return(tokenCHOICE);
 "recordtype"	return(tokenRECORDTYPE);
 "field"		return(tokenFIELD);
+"define"	return(tokenDEFINE);
 "device"	return(tokenDEVICE);
 "driver"	return(tokenDRIVER);
 "breaktable"	return(tokenBREAKTABLE);

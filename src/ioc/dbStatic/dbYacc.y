@@ -53,6 +53,8 @@ database_item:	include
 	|	tokenRECORD record_head record_body
 	|	tokenGRECORD grecord_head record_body
 	|	alias
+	|	define
+	|	unknown
 	;
 
 include:	tokenINCLUDE tokenSTRING
@@ -92,7 +94,8 @@ choice:	tokenCHOICE '(' tokenSTRING ',' tokenSTRING ')'
 	if(dbStaticDebug>2) printf("choice %s %s\n",$3,$5);
 	dbMenuChoice($3,$5); dbmfFree($3); dbmfFree($5);
 } 
-	| include;
+	| include
+	| unknown;
 
 recordtype_head: '(' tokenSTRING ')'
 {
@@ -120,7 +123,8 @@ recordtype_field: tokenFIELD recordtype_field_head recordtype_field_body
 	if(dbStaticDebug>2) printf("recordtype_cdef %s", $1);
 	dbRecordtypeCdef($1); dbmfFree($1);
 }
-	| include ;
+	| include
+	| unknown;
 
 recordtype_field_head:	'(' tokenSTRING ',' tokenSTRING ')'
 {
@@ -254,7 +258,8 @@ record_field: tokenFIELD '(' tokenSTRING ',' tokenSTRING ')'
 	if(dbStaticDebug>2) printf("record_alias %s\n",$3);
 	dbRecordAlias($3); dbmfFree($3);
 }
-	| include ;
+	| include
+	| unknown;
 
 alias: tokenALIAS '(' tokenSTRING ',' tokenSTRING ')'
 {
@@ -262,6 +267,26 @@ alias: tokenALIAS '(' tokenSTRING ',' tokenSTRING ')'
 	dbAlias($3,$5); dbmfFree($3); dbmfFree($5);
 };
 
+define: tokenDEFINE '(' tokenSTRING ',' tokenSTRING ')'
+{
+        dbAddDefine($3, $5); dbmfFree($3); dbmfFree($5);
+};
+
+unknown : tokenSTRING '(' unknown_args ')' unknown_body
+{
+        dbCheckUnknown($1); dbmfFree($1);
+};
+
+unknown_args : unknown_args ',' tokenSTRING { dbmfFree($3);}
+             | tokenSTRING { dbmfFree($1);}
+             |;
+
+unknown_body :
+             | '{' '}'
+             | '{' unknown_dbd '}';
+
+unknown_dbd : unknown_dbd unknown
+            | unknown;
 
 %%
  
