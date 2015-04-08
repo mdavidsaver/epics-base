@@ -1,0 +1,18 @@
+# Test some of the usual syntax
+
+record(x, "recinst") {
+  field(VAL, "42")
+  field(UDF, "0")
+  info(foo, "bar")
+
+  alias("inst2")
+}
+
+alias("recinst", "othername")
+
+breaktable(myTbl) {
+  0.0 1.0
+  1.0 2.0
+  10.0 3.0
+}
+

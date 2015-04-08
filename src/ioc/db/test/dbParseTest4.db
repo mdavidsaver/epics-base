@@ -1,0 +1,11 @@
+# Parse failure
+# extension blocks can only contain
+# a defined extension block
+
+define(block, "xyz")
+
+record(x, "foo") {
+  block() {
+    field(VAL, "X") # fail
+  }
+}
