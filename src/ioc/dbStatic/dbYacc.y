@@ -243,7 +243,7 @@ record_body: /* empty */
 record_field_list:	record_field_list record_field
 	|	record_field;
 
-record_field: tokenFIELD '(' tokenSTRING ',' tokenSTRING ')'
+record_field: tokenFIELD '(' tokenSTRING ',' tokenSTRING ')' unknown_body
 {
 	if(dbStaticDebug>2) printf("record_field %s %s\n",$3,$5);
 	dbRecordField($3,$5); dbmfFree($3); dbmfFree($5);
