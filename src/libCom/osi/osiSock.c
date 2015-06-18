@@ -304,3 +304,33 @@ epicsShareFunc osiSockAddr epicsShareAPI osiLocalAddr (SOCKET socket)
 
     return result;
 }
+
+epicsShareFunc
+int osiGetInterfaceInfoSingle(const osiSockAddr *paddr, osiInterfaceInfo *presult)
+{
+    ELLLIST infolist = ELLLIST_INIT;
+    ELLNODE *cur;
+    int found = 0;
+
+    if(paddr->sa.sa_family!=AF_INET)
+        return -1;
+
+    if(osiGetInterfaceInfo(&infolist)) {
+        errlogPrintf ("osiGetInterfaceInfoSingle(): unable to fetch network interface configuration\n");
+        return -1;
+    }
+
+    for(cur=ellFirst(&infolist); cur; cur=ellNext(cur))
+    {
+        osiInterfaceInfo *info = CONTAINER(cur, osiInterfaceInfo, node);
+
+        if(info->address.ia.sin_addr.s_addr==paddr->ia.sin_addr.s_addr) {
+            *presult = *info;
+            found = 1;
+            break;
+        }
+    }
+
+    ellFree(&infolist);
+    return found ? 0 : -1;
+}

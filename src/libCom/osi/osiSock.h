@@ -220,6 +220,10 @@ epicsShareFunc void epicsShareAPI osiSockDiscoverBroadcastAddresses
  */
 epicsShareFunc osiSockAddr epicsShareAPI osiLocalAddr (SOCKET socket);
 
+
+epicsShareFunc
+int osiGetInterfaceInfoSingle(const osiSockAddr *paddr, osiInterfaceInfo *presult);
+
 #ifdef __cplusplus
 }
 #endif
