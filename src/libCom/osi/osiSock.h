@@ -157,12 +157,29 @@ typedef struct osiSockAddrNode {
     osiSockAddr addr;
 } osiSockAddrNode;
 
+typedef struct {
+    ELLNODE node;
+    unsigned int up:1;
+    unsigned int loopback:1;
+    unsigned int broadcast:1;
+    unsigned int multicast:1;
+    unsigned int point2point:1;
+    osiSockAddr address, netmask;
+    osiSockAddr endpoint; //!< broadcast or p2p destination address
+} osiInterfaceInfo;
+
 /*
  * sockAddrAreIdentical() 
  * (returns true if addresses are identical)
  */
 epicsShareFunc int epicsShareAPI sockAddrAreIdentical 
 			( const osiSockAddr * plhs, const osiSockAddr * prhs );
+
+/* Fills the provided list with osiInterfaceInfo nodes
+ * describing the network interfaces of the host machine
+ * at the time it is called (may change later).
+ */
+epicsShareFunc int osiGetInterfaceInfo(ELLLIST *pList);
 
 /*
  *  osiSockDiscoverBroadcastAddresses ()
