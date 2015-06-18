@@ -3,6 +3,8 @@
 *     National Laboratory.
 * Copyright (c) 2002 The Regents of the University of California, as
 *     Operator of Los Alamos National Laboratory.
+* Copyright (c) 2015 Brookhaven Science Associates as Operator of
+*     Brookhaven National Lab.
 * EPICS BASE Versions 3.13.7
 * and higher are distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution. 
@@ -17,12 +19,15 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define epicsExportSharedSymbols
 #include "epicsAssert.h"
 #include "epicsSignal.h"
 #include "epicsStdio.h"
+#include "dbDefs.h"
+#include "errlog.h"
 #include "osiSock.h"
 
 #define nDigitsDottedIP 4u
@@ -189,3 +194,113 @@ unsigned epicsShareAPI ipAddrToDottedIP (
     }
 }
 
+
+/*
+ * osiSockDiscoverBroadcastAddresses ()
+ */
+epicsShareFunc void epicsShareAPI osiSockDiscoverBroadcastAddresses
+     (ELLLIST *pList, SOCKET socket, const osiSockAddr *pMatchAddr)
+{
+    ELLLIST infolist = ELLLIST_INIT;
+    ELLNODE *cur;
+
+    if ( pMatchAddr->sa.sa_family == AF_INET  ) {
+        if ( pMatchAddr->ia.sin_addr.s_addr == htonl (INADDR_LOOPBACK) ) {
+            osiSockAddrNode *pNewNode = calloc (1, sizeof (*pNewNode) );
+            if ( pNewNode == NULL ) {
+                errlogPrintf ( "osiSockDiscoverBroadcastAddresses(): no memory available for configuration\n" );
+                return;
+            }
+            pNewNode->addr.ia.sin_family = AF_INET;
+            pNewNode->addr.ia.sin_port = htons ( 0 );
+            pNewNode->addr.ia.sin_addr.s_addr = htonl (INADDR_LOOPBACK);
+            ellAdd ( pList, &pNewNode->node );
+            return;
+        }
+    } else if ( pMatchAddr->sa.sa_family != AF_UNSPEC ) {
+        errlogPrintf("osiSockDiscoverBroadcastAddresses(): match address must be AF_INET or AF_UNSPEC.");
+        return;
+    }
+
+    if(osiGetInterfaceInfo(&infolist)) {
+        errlogPrintf ("osiSockDiscoverBroadcastAddresses(): unable to fetch network interface configuration\n");
+        return;
+    }
+
+    if(ellCount(&infolist)==0) {
+        errlogPrintf ("osiSockDiscoverBroadcastAddresses(): no network interfaces found\n");
+    }
+
+    for(cur=ellFirst(&infolist); cur; cur=ellNext(cur))
+    {
+        osiSockAddrNode *pNewNode;
+        osiInterfaceInfo *info = CONTAINER(cur, osiInterfaceInfo, node);
+
+        if(info->address.sa.sa_family!=AF_INET || !info->broadcast)
+            continue;
+
+        pNewNode = calloc(1, sizeof(*pNewNode));
+        if(!pNewNode)
+            break;
+
+        if(pMatchAddr->ia.sin_family==AF_INET &&
+           pMatchAddr->ia.sin_addr.s_addr != htonl(INADDR_ANY) &&
+           pMatchAddr->ia.sin_addr.s_addr != info->address.ia.sin_addr.s_addr)
+            continue;
+
+        pNewNode->addr.ia = info->endpoint.ia;
+
+        ellAdd(pList, &pNewNode->node);
+    }
+
+    ellFree(&infolist);
+}
+
+/*
+ * osiLocalAddr ()
+ */
+epicsShareFunc osiSockAddr epicsShareAPI osiLocalAddr (SOCKET socket)
+{
+    static osiSockAddr result;
+    static int init;
+
+    if(!init) {
+        ELLLIST infolist = ELLLIST_INIT;
+        ELLNODE *cur;
+        osiSockAddr      addr;
+        int found = 0;
+
+        memset ( (void *) &addr, '\0', sizeof ( addr ) );
+        addr.sa.sa_family = AF_UNSPEC;
+
+        if(osiGetInterfaceInfo(&infolist)) {
+            errlogPrintf ("osiLocalAddr(): unable to fetch network interface configuration\n");
+
+        } else {
+
+            for(cur=ellFirst(&infolist); cur; cur=ellNext(cur))
+            {
+                osiInterfaceInfo *info = CONTAINER(cur, osiInterfaceInfo, node);
+
+                if(info->address.sa.sa_family!=AF_INET || !info->up || info->loopback)
+                    continue;
+
+                addr.ia = info->address.ia;
+                found = 1;
+            }
+
+            ellFree(&infolist);
+        }
+
+        if(!found) {
+            addr.ia.sin_family = AF_INET;
+            addr.ia.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+            addr.ia.sin_port = 0;
+        }
+
+        result = addr;
+        init = 1;
+    }
+
+    return result;
+}
