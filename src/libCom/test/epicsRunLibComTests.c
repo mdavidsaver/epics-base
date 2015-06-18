@@ -30,6 +30,7 @@ int epicsMessageQueueTest(void);
 int epicsMMIOTest(void);
 int epicsMutexTest(void);
 int epicsSockResolveTest(void);
+int epicsNetIntfTest(void);
 int epicsSpinTest(void);
 int epicsStackTraceTest(void);
 int epicsStdioTest(void);
@@ -81,6 +82,7 @@ void epicsRunLibComTests(void)
     runTest(epicsMMIOTest);
     runTest(epicsMutexTest);
     runTest(epicsSockResolveTest);
+    runTest(epicsNetIntfTest);
     runTest(epicsSpinTest);
     runTest(epicsStackTraceTest);
     runTest(epicsStdioTest);
