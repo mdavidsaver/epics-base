@@ -116,12 +116,13 @@ static void clean_addrq(void)
 void cast_server(void *pParm)
 {
     osiSockAddrNode     *paddrNode;
-    struct sockaddr_in  sin;
+    struct sockaddr_in  sin, baddr;
     int                 status;
     int                 count=0;
     struct sockaddr_in  new_recv_addr;
     osiSocklen_t        recv_addr_size;
     osiSockIoctl_t      nchars;
+    epicsUInt32         acl_addr = 0, acl_mask = 0;
 
     recv_addr_size = sizeof(new_recv_addr);
 
@@ -170,14 +171,36 @@ void cast_server(void *pParm)
 
     memcpy(&sin, &paddrNode->addr.ia, sizeof (sin));
 
+    /* in order to receive broadcasts we must be bound to the wildcard address.
+     * So the restriction on received messages can't be delegated to the OS.
+     */
+    baddr.sin_family = AF_INET;
+    baddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    baddr.sin_port = sin.sin_port;
+
     /* get server's Internet address */
-    if( bind(IOC_cast_sock, (struct sockaddr *)&sin, sizeof (sin)) < 0){
+    if( bind(IOC_cast_sock, (struct sockaddr *)&baddr, sizeof (baddr)) < 0){
         char sockErrBuf[64];
         epicsSocketConvertErrnoToString ( 
             sockErrBuf, sizeof ( sockErrBuf ) );
         epicsPrintf ("CAS: UDP server port bind error was \"%s\"\n", sockErrBuf );
         epicsSocketDestroy ( IOC_cast_sock );
         epicsThreadSuspendSelf ();
+    }
+
+    assert(sin.sin_family==AF_INET);
+    if(sin.sin_addr.s_addr!=htonl(INADDR_ANY)){
+        osiInterfaceInfo info;
+        if(osiGetInterfaceInfoSingle(&sin, &info)) {
+            epicsPrintf("CAS: UDP failed to get information for interface 0x%08x\n",
+                        (unsigned)ntohl(sin.sin_addr.s_addr));
+        } else {
+            assert(info.address.sa.sa_family==AF_INET);
+            acl_addr = ntohl(info.address.ia.sin_addr.s_addr);
+            acl_mask = ntohl(info.netmask.ia.sin_addr.s_addr);
+            acl_addr &= acl_mask; /* contains the network address */
+            epicsPrintf("CAS: UDP filter 0x%08x 0x%08x\n", acl_addr, acl_mask);
+        }
     }
 
     /*
@@ -221,6 +244,11 @@ void cast_server(void *pParm)
             }
         }
         else if (casudp_ctl == ctlRun) {
+            epicsUInt32 srcaddr = ntohl(new_recv_addr.sin_addr.s_addr);
+            if((srcaddr&acl_mask)!=acl_addr) {
+                epicsPrintf("CAS: UDP ignore message from 0x%08x\n", (unsigned)srcaddr);
+                continue;
+            }
             prsrv_cast_client->recv.cnt = (unsigned) status;
             prsrv_cast_client->recv.stk = 0ul;
             epicsTimeGetCurrent(&prsrv_cast_client->time_at_last_recv);
