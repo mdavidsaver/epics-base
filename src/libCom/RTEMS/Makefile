@@ -15,6 +15,9 @@ INC += epicsMemFs.h
 ifeq ($(T_A),RTEMS-pc386)
 setBootConfigFromNVRAM_CPPFLAGS += -DUSE_MULTIBOOT
 endif
+ifeq ($(RTEMS_QEMU_FIXUPS),YES)
+rtems_init_CPPFLAGS += -DQEMU_FIXUPS
+endif
 
 rtemsCom_SRCS += rtems_init.c
 rtemsCom_SRCS += rtems_config.c
