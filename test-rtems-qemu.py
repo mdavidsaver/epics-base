@@ -28,14 +28,14 @@ def getargs():
     P.add_argument('--arch', metavar='ARCH', default='i386',
                    help='QEMU arch. name (default "i386")')
     P.add_argument('-t','--timeout', metavar='SECS', type=int, default=600,
-                   help='subprocess timeout interval')
+                   help='test timeout interval')
     P.add_argument('-D','--display', action='store_true',
                    help='Show the VGA console')
     P.add_argument('-n','--dry-run', action='store_true',
                    help="Don't start qemu, just print what would be done")
-    P.add_argument('-l','--level', metavar='NAME', default='WARN',
+    P.add_argument('-l','--level', metavar='NAME', default='INFO',
                    type=logging.getLevelName,
-                   help="Python log level (default WARN)")
+                   help="Python log level (default INFO)")
 
     return P.parse_args()
 
@@ -52,6 +52,115 @@ targetinfo = {
     }
 }
 
+class TapProc(object):
+    def __init__(self):
+        self.reset()
+        self.totaltest, self.totalpass = 0, 0
+        self.log = []
+        self._P = [
+            self._pass,
+            self._fail,
+            self._diag,
+            self._skip,
+            self._name,
+            self._plan,
+        ]
+        
+    def reset(self):
+        self.name = ''
+        self.expect = None
+        self.ntest = 0
+        self.npass = self.nfail = self.nskip = self.bonus = 0
+
+    def sum(self):
+        _log.info("Pass: %d Fail: %d Skip: %d Bonus: %d",
+                  self.npass, self.nfail, self.nskip, self.bonus)
+
+        T = self.npass + self.nfail + self.nskip + self.bonus
+        ok = self.nfail==0
+        if self.expect:
+            _log.info("Tests %d/%d", self.ntest, self.expect)
+            ok &= self.ntest==self.expect
+        elif T>0:
+            _log.info("Tests %d", self.ntest)
+        if ok:
+            self.totalpass += 1
+
+    def final(self):
+        if self.name:
+            self.sum()
+        _log.info("Total errors: %d", len(self.log))
+        for N,L in self.log:
+            _log.error(' %s: %s', N, L)
+        if self.totalpass==self.totaltest:
+            _log.info('Total Tests passing %d/%d', self.totalpass, self.totaltest)
+        else:
+            _log.error('Total Tests passing %d/%d', self.totalpass, self.totaltest)
+        self.result = self.totalpass == self.totaltest
+
+    def __call__(self, line):
+        for P in self._P:
+            M = P._re.match(line)
+            if M:
+                P(M)
+                sys.stdout.write(line)
+                sys.stdout.flush()
+                return
+        _log.debug("?: %s", line[:-1])
+
+    def _name(self, M):
+        if self.name:
+            _log.info("Leave %s", self.name)
+            self.sum()
+        self.reset()
+        self.name = M.group(1)
+        _log.info("Enter %s", self.name)
+        self.totaltest += 1
+    # '***** testname *****'
+    _name._re = re.compile(r'\*{5}\s+(\S+)\s+\*{5}')
+
+    def _plan(self, M):
+        A, B = map(int,M.groups())
+        assert A==1, (A,B)
+        self.expect = B
+    # '1..29'
+    _plan._re = re.compile(r'(\d+)\.\.(\d+)')
+
+    def _pass(self, M):
+        self.npass += 1
+        self.ntest += 1
+        if re.match(r'.*\s#\s+TODO\s.*', M.group(0)):
+            self.bonus += 1
+
+    # 'ok 42 - something'
+    # 'ok 42 - something' # TODO why not'
+    _pass._re = re.compile(r'ok\s+\d+\s+-\s.*')
+
+    def _fail(self, M):
+        if re.match(r'.*\s#\s+TODO\s.*', M.group(0)):
+            self.npass += 1
+            self.ntest += 1
+        else:
+            self.nfail += 1
+            self.ntest += 1
+            self.log.append((self.name, M.group(0)))
+
+    # 'not ok 42 - something'
+    # 'not ok 42 - something' # TODO why not'
+    _fail._re = re.compile(r'not\s+ok\s+\d+\s+-\s.*')
+
+    def _diag(self, M):
+        pass
+    # '# some text'
+    _diag._re = re.compile(r'#.*')
+
+    def _skip(self, M):
+        self.npass += 1
+        self.ntest += 1
+        self.nskip += 1
+    # 'ok 42 # SKIP why message
+    _skip._re = re.compile(r'ok\s+\d+\s+#\s+SKIP\s.*')
+
 def parsespec(spec):
     with open(spec, 'r') as FP:
         # Lines have the form
@@ -60,7 +169,7 @@ def parsespec(spec):
         # Return a dictionary of {'Key':'Value ...', ...}
         return dict([map(str.strip,L.split(':',1)) for L in FP.readlines()])
 
-def runspec(specfile, args):
+def runspec(specfile, proc, args):
     specdir = os.path.dirname(specfile)
     conf = parsespec(specfile)
 
@@ -101,7 +210,7 @@ def runspec(specfile, args):
         if not args.display:
             cmd += ['-display', 'none']
 
-        _log.info('Cmd: %s', cmd)
+        _log.debug('Cmd: %s', cmd)
 
         if args.dry_run:
             print(' '.join(cmd))
@@ -112,7 +221,7 @@ def runspec(specfile, args):
                     sys.exit(2)
                 signal.signal(signal.SIGALRM, timo)
                 signal.alarm(args.timeout)
-                _log.info("Start timeout of %f", args.timeout)
+                _log.debug("Start timeout of %f", args.timeout)
 
             P = Popen(cmd, stdin=DEVNULL, stderr=STDOUT, stdout=PIPE, universal_newlines=True)
 
@@ -120,29 +229,10 @@ def runspec(specfile, args):
                 for L in P.stdout:
                     if not L:
                         break
-                    if L[0]=='#':
-                        pass
-                    # "ok 1 -..."
-                    # "ok 1 #..."
-                    # "not ok 1 -..."
-                    # "not ok 1 #..."
-                    elif re.match(r'(?:not\s+)?ok\s+\d+\s+[-#].*', L):
-                        pass
-                    # "1..14"
-                    # "2..24 #..."
-                    elif re.match(r'\d+\.\.\d+(?:\s+#.*)?', L):
-                        pass
-                    elif L.startswith('***** '):
-                        pass
-                    elif L.startswith('Bail out!'):
-                        pass
-                    else:
-                        _log.info('X %s', L[:-1])
-                        continue
-                    sys.stdout.write(L)
-                    sys.stdout.flush()
+                    proc(L)
+
                 P.wait(10)
-                _log.info('Done')
+                _log.info('Done %s', specfile)
             except:
                 if P.returncode is None:
                     try:
@@ -150,7 +240,7 @@ def runspec(specfile, args):
                         P.terminate()
                         P.wait(10)
                     except:
-                        _log.err('Kill QEMU')
+                        _log.error('Kill QEMU')
                         P.kill()
                 raise
 
@@ -159,12 +249,16 @@ def runspec(specfile, args):
             return P.returncode
 
 def main(args):
-    for S in args.specs:
-        _log.info('Test %s', S)
-        runspec(S, args)
+    T = TapProc()
+    try:
+        for S in args.specs:
+            _log.info('Test %s', S)
+            runspec(S, T, args)
+    finally:
+        T.final()
 
 if __name__=='__main__':
     args = getargs()
     logging.basicConfig(level=args.level,
-                        format='%(levelname)s %(message)s')
+                        format='%(asctime)-15s %(levelname)s %(message)s')
     main(args)
