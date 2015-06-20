@@ -23,6 +23,10 @@ rtemsCom_SRCS += setBootConfigFromNVRAM.c
 rtemsCom_SRCS += epicsRtemsInitHookPre.c
 rtemsCom_SRCS += epicsRtemsInitHookPost.c
 
+ifeq ($(T_A),RTEMS-pc386)
+rtemsCom_SRCS += ne2kpci.c
+endif
+
 LIBRARY_RTEMS = rtemsCom
 
 include $(TOP)/configure/RULES
