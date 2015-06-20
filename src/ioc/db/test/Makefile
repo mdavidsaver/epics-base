@@ -45,7 +45,7 @@ dbPutLinkTest_SRCS += dbPutLinkTest.c
 dbPutLinkTest_SRCS += dbTestIoc_registerRecordDeviceDriver.cpp
 testHarness_SRCS += dbPutLinkTest.c
 TESTS += dbPutLinkTest
-TESTFILES += ../dbPutLinkTest.db
+TESTFILES += ../dbPutLinkTest.db ../dbBadLink.db
 
 TESTPROD_HOST += dbLockTest
 dbLockTest_SRCS += dbLockTest.c
@@ -79,7 +79,7 @@ dbCaStatsTest_SRCS += dbCaStatsTest.c
 dbCaStatsTest_SRCS += dbTestIoc_registerRecordDeviceDriver.cpp
 testHarness_SRCS += dbCaStatsTest.c
 TESTS += dbCaStatsTest
-TESTFILES += ../dbCaStatsTest.db
+TESTFILES += ../dbCaStats.db
 
 TARGETS += $(COMMON_DIR)/scanIoTest.dbd
 scanIoTest_DBD += menuGlobal.dbd
