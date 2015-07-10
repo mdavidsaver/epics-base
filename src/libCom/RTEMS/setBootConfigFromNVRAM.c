@@ -25,6 +25,7 @@ char *env_nfsServer;
 char *env_nfsPath;
 char *env_nfsMountPoint;
 int epics_initialized_environment;
+char *env_rtems_gdb_stub = NULL;
 
 /*
  * Split argument string of form nfs_server:nfs_export:<path>
@@ -216,6 +217,7 @@ setBootConfigFromNVRAM(void)
         rtems_bsdnet_config.ntp_server[0] = rtems_bsdnet_bootp_server_name;
     if ((cp = gev("epics-tz", nvp)) != NULL)
         epicsEnvSet("TZ", cp);
+    env_rtems_gdb_stub = gev("gdb-start", nvp);
     epics_initialized_environment = 1;
 }
 
@@ -359,6 +361,7 @@ setBootConfigFromNVRAM(void)
     splitNfsMountPath(env("NFSMOUNT", NULL));
     if ((cp1 = env("TZ", NULL)) != NULL)
         epicsEnvSet("TZ", cp1);
+    env_rtems_gdb_stub = env("GDBSTART", NULL);
     epics_initialized_environment = 1;
 }
 
@@ -378,6 +381,7 @@ bootpFallbackFromNVRAM(void)
     ENV2VAR("epics-client", rtems_bsdnet_config.hostname);
     ENV2VAR("epics-script", rtems_bsdnet_bootp_cmdline);
     ENV2VAR("epics-ntp",    rtems_bsdnet_config.ntp_server[0]);
+    ENV2VAR("gdb-start",    env_rtems_gdb_stub);
 #undef ENV2VAR
 
     if (rtems_bsdnet_config.ntp_server[0] == NULL)

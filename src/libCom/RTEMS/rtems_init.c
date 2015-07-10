@@ -604,6 +604,7 @@ exitHandler(void)
     rtems_shutdown_executive(0);
 }
 
+extern char *env_rtems_gdb_stub;
 extern int epics_initialized_environment;
 extern void setBootConfigFromNVRAM(void);
 extern void bootpFallbackFromNVRAM(void);
@@ -681,6 +682,19 @@ Init (rtems_task_argument ignored)
     printf("\n***** Setting up file system *****\n");
     initialize_remote_filesystem(argv, initialize_local_filesystem(argv));
     fixup_hosts();
+
+
+    if(env_rtems_gdb_stub) {
+#ifdef USE_GDBSTUB
+        char *arg = NULL;
+        if(strcmp(env_rtems_gdb_stub, "yes")!=0)
+            arg = env_rtems_gdb_stub;
+        printf("Start GDB server on %s\n", arg);
+        rtems_gdb_start(0,arg);
+#else
+        printf("GDB server support not enabled.\n");
+#endif
+    }
 
     /*
      * More environment: iocsh prompt and hostname
