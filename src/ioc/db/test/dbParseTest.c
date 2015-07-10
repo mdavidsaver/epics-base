@@ -45,7 +45,7 @@ static void testNormal(void)
     testdbReadDatabase("dbParseTest1.db", NULL, NULL);
 
     testIntEqual(12, ellCount(&pdbbase->menuList));
-    testIntEqual(1, ellCount(&pdbbase->recordTypeList));
+    testIntEqual(2, ellCount(&pdbbase->recordTypeList));
     testIntEqual(0, ellCount(&pdbbase->drvList));
     testIntEqual(0, ellCount(&pdbbase->registrarList));
     testIntEqual(0, ellCount(&pdbbase->functionList));
@@ -70,7 +70,7 @@ static void testExtendOk(void)
     testdbReadDatabase("dbParseTest2.db", NULL, NULL);
 
     testIntEqual(13, ellCount(&pdbbase->menuList));
-    testIntEqual(1, ellCount(&pdbbase->recordTypeList));
+    testIntEqual(2, ellCount(&pdbbase->recordTypeList));
     testIntEqual(0, ellCount(&pdbbase->drvList));
     testIntEqual(0, ellCount(&pdbbase->registrarList));
     testIntEqual(0, ellCount(&pdbbase->functionList));
