@@ -680,10 +680,14 @@ Init (rtems_task_argument ignored)
     epicsExit(0);
 }
 
-#ifdef QEMU_FIXUPS
+
+#if (__RTEMS_MAJOR__<4 || \
+   (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__<10)) && \
+   defined(QEMU_FIXUPS)
 /* Helper if BSP defaults aren't configured for running tests.
  * Ensure that stdio goes to serial (so it can be captured)
- * and reboot immediately when done
+ * and reboot immediately when done.
+ * RTEMS 4.9 only
  */
 
 #if defined(__i386__) && !USE_COM1_AS_CONSOLE
@@ -704,3 +708,5 @@ void bsp_cleanup(void)
 #endif
 
 #endif /* QEMU_FIXUPS */
+
+int cexpdebug __attribute__((weak));

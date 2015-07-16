@@ -429,7 +429,7 @@ setBootConfigFromNVRAM(void)
         *val++ = '\0';
 
         epicsEnvSet(tok, val);
-        printk("Set %s = %s\n", tok, val);
+        printk("Set '%s' = '%s'\n", tok, val);
     }
 
     free(store);
