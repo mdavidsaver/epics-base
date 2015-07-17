@@ -130,7 +130,9 @@ static void testIocsh(void)
 
     testIntEqual(testcnt, 0);
 
+    eltc(0);
     testdbReadDatabase("dbIocsh.db", NULL, NULL);
+    eltc(1);
 
     testIntEqual(testcnt, 3);
 
