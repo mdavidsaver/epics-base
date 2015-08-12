@@ -224,8 +224,8 @@ initialize_remote_filesystem(char **argv, int hasLocalFilesystem)
 #if __RTEMS_MAJOR__>4 || \
    (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__>9) || \
    (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__==9 && __RTEMS_REVISION__==99)
-    if(mount_and_make_target_path(NULL,
-                               "/TFTP",
+    if(mount_and_make_target_path("BOOTP_HOST:/",
+                               "/TFTP/BOOTP_HOST",
                                RTEMS_FILESYSTEM_TYPE_TFTPFS,
                                RTEMS_FILESYSTEM_READ_WRITE,
                                NULL)) {
