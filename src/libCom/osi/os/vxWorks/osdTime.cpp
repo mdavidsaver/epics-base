@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define EPICS_EXPOSE_LIBCOM_MONOTONIC_PRIVATE
 #include "epicsTime.h"
 #include "osiNTPTime.h"
 #include "osiClockTime.h"
@@ -38,6 +39,8 @@ static int timeRegister(void)
 
     NTPTime_Init(100); /* init NTP first so it can be used to sync SysTime */
     ClockTime_Init(CLOCKTIME_SYNC);
+
+    osdMonotonicInit();
     return 1;
 }
 static int done = timeRegister();
