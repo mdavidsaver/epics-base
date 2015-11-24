@@ -1,0 +1,16 @@
+sudo: false
+language: c
+compiler:
+  - clang
+  - gcc
+env:
+  - PROF=""
+  - PROF="-static-"
+addons:
+  apt:
+    packages:
+    - libreadline6-dev
+    - libncurses5-dev
+    - perl
+    - valgrind
+script: sh build-travis.sh
