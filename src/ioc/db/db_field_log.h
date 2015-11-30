@@ -90,6 +90,7 @@ typedef struct db_field_log {
     unsigned int     type:2;  /* type (union) selector */
     /* ctx is used for all types */
     unsigned int      ctx:1;  /* context (operation type) */
+    struct evSubscrip *psub;  /* for ctx==dbfl_context_event */
     /* the following are used for value and reference types */
     epicsTimeStamp     time;  /* Time stamp */
     unsigned short     stat;  /* Alarm Status */
