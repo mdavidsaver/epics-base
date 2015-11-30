@@ -50,7 +50,8 @@ epicsShareFunc int db_post_events (
     void *pRecord, void *pField, unsigned caEventMask );
 epicsShareFunc int db_resume_event_pre(struct evSubscrip *pevent,
                                        struct chFilter *filt,
-                                       struct db_field_log *pLog);
+                                       struct db_field_log *pLog,
+                                       unsigned opts);
 
 typedef void * dbEventCtx;
 
@@ -84,6 +85,7 @@ epicsShareFunc struct db_field_log* db_create_event_log (struct evSubscrip *peve
 epicsShareFunc struct db_field_log* db_create_read_log (struct dbChannel *chan);
 epicsShareFunc void db_delete_field_log (struct db_field_log *pfl);
 
+#define DB_EVENT_DROP 1
 #define DB_EVENT_OK 0
 #define DB_EVENT_ERROR (-1)
 

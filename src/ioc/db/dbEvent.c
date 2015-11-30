@@ -707,8 +707,10 @@ db_field_log* db_create_read_log (struct dbChannel *chan)
  *  DB_QUEUE_EVENT_LOG()
  *
  */
-static void db_queue_event_log (evSubscrip *pevent, db_field_log *pLog)
+static int db_queue_event_log (evSubscrip *pevent, db_field_log *pLog,
+                                unsigned qos)
 {
+    int ret = DB_EVENT_OK;
     struct event_que    *ev_que;
     int firstEventFlag;
     unsigned rngSpace;
@@ -730,9 +732,12 @@ static void db_queue_event_log (evSubscrip *pevent, db_field_log *pLog)
     if (pevent->npend > 0u &&
         (*pevent->pLastLog)->type == dbfl_type_rec &&
         pLog->type == dbfl_type_rec) {
-        db_delete_field_log(pLog);
+        if(qos&1)
+            ret = DB_EVENT_DROP;
+        else
+            db_delete_field_log(pLog);
         UNLOCKEVQUE (ev_que);
-        return;
+        return ret;
     }
 
     /*
@@ -747,6 +752,11 @@ static void db_queue_event_log (evSubscrip *pevent, db_field_log *pLog)
     rngSpace = ringSpace ( ev_que );
     if ( pevent->npend>0u &&
         (ev_que->evUser->flowCtrlMode || rngSpace<=EVENTSPERQUE) ) {
+        if (qos&1) {
+            ret = DB_EVENT_DROP;
+            UNLOCKEVQUE (ev_que);
+            return ret;
+        }
         /*
          * replace last event if no space is left
          */
@@ -801,14 +811,20 @@ static void db_queue_event_log (evSubscrip *pevent, db_field_log *pLog)
          */
         epicsEventSignal(ev_que->evUser->ppendsem);
     }
+    return ret;
 }
 
 /* resume processing with the filter following the provided. */
 int db_resume_event_pre(struct evSubscrip *pevent, chFilter *filt,
-                        db_field_log *pLog)
+                        db_field_log *pLog, unsigned opts)
 {
-    ELLNODE *node = ellNext(&filt->pre_node);
-    chFilter *fnext = CONTAINER(node, chFilter, pre_node);
+    ELLNODE *node;
+    chFilter *fnext = NULL;
+
+    if(filt) {
+        node = ellNext(&filt->pre_node);
+        fnext = node ? CONTAINER(node, chFilter, pre_node) : NULL;
+    }
     if(fnext && pLog)  {
         dbCommon *prec = dbChannelRecord(pevent->chan);
         dbScanLock(prec);
@@ -820,8 +836,10 @@ int db_resume_event_pre(struct evSubscrip *pevent, chFilter *filt,
         UNLOCKREC(prec);
         dbScanUnlock(prec);
     }
-    if(pLog) db_queue_event_log(pevent, pLog);
-    return DB_EVENT_OK;
+    if(pLog)
+        return db_queue_event_log(pevent, pLog, opts&0xffff);
+    else
+        return DB_EVENT_OK; /* filter consumed event */
 }
 
 /*
@@ -854,7 +872,7 @@ unsigned int    caEventMask
             (caEventMask & pevent->select)) {
             db_field_log *pLog = db_create_event_log(pevent);
             pLog = dbChannelRunPreChain(pevent->chan, pLog);
-            if (pLog) db_queue_event_log(pevent, pLog);
+            if (pLog) db_queue_event_log(pevent, pLog, 0);
         }
     }
 
@@ -876,7 +894,7 @@ void db_post_single_event (dbEventSubscription event)
 
     pLog = db_create_event_log(pevent);
     pLog = dbChannelRunPreChain(pevent->chan, pLog);
-    if(pLog) db_queue_event_log(pevent, pLog);
+    if(pLog) db_queue_event_log(pevent, pLog, 0);
 
     dbScanUnlock (prec);
 }
