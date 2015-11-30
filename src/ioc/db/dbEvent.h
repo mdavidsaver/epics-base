@@ -39,6 +39,8 @@ extern "C" {
 struct dbChannel;
 struct db_field_log;
 struct evSubscrip;
+struct chFilter;
+struct db_field_log;
 
 epicsShareFunc int db_event_list (
     const char *name, unsigned level);
@@ -46,6 +48,9 @@ epicsShareFunc int dbel (
     const char *name, unsigned level);
 epicsShareFunc int db_post_events (
     void *pRecord, void *pField, unsigned caEventMask );
+epicsShareFunc int db_resume_event_pre(struct evSubscrip *pevent,
+                                       struct chFilter *filt,
+                                       struct db_field_log *pLog);
 
 typedef void * dbEventCtx;
 

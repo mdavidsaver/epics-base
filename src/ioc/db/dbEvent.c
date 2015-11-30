@@ -665,6 +665,7 @@ db_field_log* db_create_event_log (struct evSubscrip *pevent)
         struct dbChannel *chan = pevent->chan;
         struct dbCommon  *prec = dbChannelRecord(chan);
         pLog->ctx = dbfl_context_event;
+        pLog->psub = pevent;
         if (pevent->useValque) {
             pLog->type = dbfl_type_val;
             pLog->stat = prec->stat;
@@ -800,6 +801,27 @@ static void db_queue_event_log (evSubscrip *pevent, db_field_log *pLog)
          */
         epicsEventSignal(ev_que->evUser->ppendsem);
     }
+}
+
+/* resume processing with the filter following the provided. */
+int db_resume_event_pre(struct evSubscrip *pevent, chFilter *filt,
+                        db_field_log *pLog)
+{
+    ELLNODE *node = ellNext(&filt->pre_node);
+    chFilter *fnext = CONTAINER(node, chFilter, pre_node);
+    if(fnext && pLog)  {
+        dbCommon *prec = dbChannelRecord(pevent->chan);
+        dbScanLock(prec);
+        LOCKREC(prec);
+        for(; node && pLog; node = ellNext(node)) {
+            chFilter *filter = CONTAINER(node, chFilter, pre_node);
+            pLog = filter->pre_func(filter->pre_arg, pevent->chan, pLog);
+        }
+        UNLOCKREC(prec);
+        dbScanUnlock(prec);
+    }
+    if(pLog) db_queue_event_log(pevent, pLog);
+    return DB_EVENT_OK;
 }
 
 /*
