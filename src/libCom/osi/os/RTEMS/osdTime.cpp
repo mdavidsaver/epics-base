@@ -11,6 +11,7 @@
  * Author: W. Eric Norum
  */
 
+#define EPICS_EXPOSE_LIBCOM_MONOTONIC_PRIVATE
 #include <epicsStdio.h>
 #include <rtems.h>
 #include <errno.h>
@@ -19,7 +20,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <rtems/rtems_bsdnet_internal.h>
-#define EPICS_EXPOSE_LIBCOM_MONOTONIC_PRIVATE
 #include "epicsTime.h"
 #include "osdTime.h"
 #include "osiNTPTime.h"
