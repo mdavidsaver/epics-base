@@ -14,10 +14,15 @@ PROD_LIBS += Com
 
 PROD_SRCS_RTEMS += rtemsTestData.c
 
+ifeq ($(EPICS_HOST_ARCH),$(T_A))
+# skip except for host arch due to custom .plt
+
 TESTPROD_HOST += epicsUnitTestTest
 epicsUnitTestTest_SRCS += epicsUnitTestTest.c
 # Not much point running this on vxWorks or RTEMS...
 TESTS += epicsUnitTestTest
+
+endif
 
 TESTPROD_HOST += epicsTypesTest
 epicsTypesTest_SRCS += epicsTypesTest.cpp
