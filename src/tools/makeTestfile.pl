@@ -27,7 +27,12 @@ my $exec;
 
 # Use WINE to run windows target executables on non-windows host
 if( $TA =~ /^win32-x86/ && $HA !~ /^win/ ) {
-  $exec = "wine32 $exe";
+  # new deb. derivatives have wine32 and wine64
+  # older have wine and wine64
+  # prefer wine32 if present
+  my $wine32 = "/usr/bin/wine32";
+  $wine32 = "/usr/bin/wine" if ! -x $wine32;
+  $exec = "$wine32 $exe";
 } elsif( $TA =~ /^windows-x64/ && $HA !~ /^win/ ) {
   $exec = "wine64 $exe";
 
