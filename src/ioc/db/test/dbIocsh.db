@@ -1,0 +1,4 @@
+
+iocsh("testCmd 1")
+
+iocsh("testCmd(2)")

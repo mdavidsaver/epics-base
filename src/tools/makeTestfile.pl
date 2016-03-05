@@ -15,17 +15,43 @@
 # If the script is given an argument -tap it sets HARNESS_ACTIVE in the
 # environment to make the epicsUnitTest code generate strict TAP output.
 
-# Usage: makeTestfile.pl target.t executable
+# Usage: makeTestfile.pl <target-arch> <host-arch> target.t executable
+#     target-arch and host-arch are EPICS build target names (eg. linux-x86)
 #     target.t is the name of the Perl script to generate
 #     executable is the name of the file the script runs
 
 use strict;
 
-my ($target, $exe) = @ARGV;
+my ($TA, $HA, $target, $exe) = @ARGV;
+my $exec;
+
+# Use WINE to run windows target executables on non-windows host
+if( $TA =~ /^win32-x86/ && $HA !~ /^win/ ) {
+  $exec = "wine32 $exe";
+} elsif( $TA =~ /^windows-x64/ && $HA !~ /^win/ ) {
+  $exec = "wine64 $exe";
+
+# Run pc386 test harness w/ QEMU
+} elsif( $TA =~ /^RTEMS-pc386$/ ) {
+  $exec = "qemu-system-i386 -m 64 -no-reboot -serial stdio -display none -kernel $exe";
+
+# Explicitly fail for other RTEMS targets
+} elsif( $TA =~ /^RTEMS-/ ) {
+  die "I don't know how to run tests for $TA on $HA";
+
+} else {
+  $exec = "./$exe";
+}
 
 # Use system on Windows, exec doesn't work the same there and
 # GNUmake thinks the test has finished as soon as Perl exits.
-my $exec = $^O eq 'MSWin32' ? "system('./$exe') == 0" : "exec './$exe'";
+if( $HA =~ /^win/ ) {
+  $exec = "system('$exec') == 0";
+
+# default to exec()
+} else {
+  $exec = "exec '$exec'";
+}
 
 open(my $OUT, '>', $target) or die "Can't create $target: $!\n";
 

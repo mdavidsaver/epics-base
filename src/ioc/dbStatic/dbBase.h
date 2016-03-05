@@ -167,6 +167,7 @@ typedef struct dbBase {
 	ELLLIST		variableList;
 	ELLLIST		bptList;
 	ELLLIST         filterList;
+	ELLLIST		blockIgnoreList;
 	void		*pathPvt;
 	struct dbPvd	*ppvd;
 	struct gphPvt	*pgpHash;

@@ -27,6 +27,7 @@
 #include "freeList.h"
 #include "gpHash.h"
 #include "macLib.h"
+#include "iocsh.h"
 
 #define epicsExportSharedSymbols
 #include "dbBase.h"
@@ -87,6 +88,8 @@ static void dbRecordHead(char *recordType,char*name,int visible);
 static void dbRecordField(char *name,char *value);
 static void dbRecordBody(void);
 
+static void dbExecIocsh(void);
+
 /*private declarations*/
 #define MY_BUFFER_SIZE 1024
 static char *my_buffer=NULL;
@@ -113,7 +116,9 @@ typedef struct tempListNode {
 static ELLLIST tempList = ELLLIST_INIT;
 static void *freeListPvt = NULL;
 static int duplicate = FALSE;
-
+
+static ELLLIST iocshCmdList = ELLLIST_INIT;
+
 static void yyerrorAbort(char *str)
 {
     yyerror(str);
@@ -295,6 +300,7 @@ static long dbReadCOM(DBBASE **ppdbbase,const char *filename, FILE *fp,
 	dbFinishEntry(pdbEntry);
     }
 cleanup:
+    dbExecIocsh();
     if(macHandle) macDeleteHandle(macHandle);
     macHandle = NULL;
     if(mac_input_buffer) free((void *)mac_input_buffer);
@@ -1103,4 +1109,59 @@ static void dbRecordBody(void)
     if(ellCount(&tempList))
 	yyerrorAbort("dbRecordBody: tempList not empty");
     dbFreeEntry(pdbentry);
+}
+
+static void dbAddIocsh(const char *cmd)
+{
+    dbText *node = dbCalloc(1, sizeof(*node)+strlen(cmd)+1);
+    node->text = (char*)(node+1);
+    strcpy(node->text, cmd);
+    ellAdd(&iocshCmdList, &node->node);
+}
+
+static void dbExecIocsh(void)
+{
+    ELLNODE *cur;
+    while((cur=ellGet(&iocshCmdList))!=NULL)
+    {
+        dbText *node = CONTAINER(cur, dbText, node);
+        errlogPrintf("%s\n", node->text);
+        iocshCmd(node->text);
+        free(node);
+    }
+}
+
+static int dbFindUnknown(const char *name)
+{
+    ELLNODE *node;
+    for(node=ellFirst(&pdbbase->blockIgnoreList); node; node=ellNext(node))
+    {
+        dbText *txt = CONTAINER(node, dbText, node);
+        if(strcmp(txt->text, name)==0) return 1;
+    }
+    return 0;
+}
+
+static void dbAddDefine(const char *dtype, const char *dname)
+{
+    if(strcmp(dtype, "block")!=0) {
+        errlogPrintf("Warning: define(\"%s\", \"%s\") not recognised.  Ignoring\n",
+                     dtype, dname);
+        yyerror(NULL);
+
+    } else if(dbFindUnknown(dname)) {
+        /* ignore duplicate define() */
+    } else {
+        dbText *node = dbCalloc(1, sizeof(*node)+strlen(dname)+1);
+        node->text = (char*)(node+1);
+        strcpy(node->text, dname);
+        ellAdd(&pdbbase->blockIgnoreList, &node->node);
+    }
+}
+
+static void dbCheckUnknown(const char *name)
+{
+    if(dbFindUnknown(name)) return;
+    errlogPrintf("Unknown keyword: \"%s\"\n", name);
+    yyerrorAbort(NULL);
 }

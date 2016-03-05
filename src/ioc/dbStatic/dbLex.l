@@ -36,6 +36,7 @@ static int yyreset(void)
 "choice"	return(tokenCHOICE);
 "recordtype"	return(tokenRECORDTYPE);
 "field"		return(tokenFIELD);
+"define"	return(tokenDEFINE);
 "device"	return(tokenDEVICE);
 "driver"	return(tokenDRIVER);
 "breaktable"	return(tokenBREAKTABLE);
@@ -43,6 +44,7 @@ static int yyreset(void)
 "grecord"	return(tokenGRECORD);
 "alias" 	return(tokenALIAS);
 "info"		return(tokenINFO);
+"iocsh" 	return(tokenIOCSH);
 "registrar"	return(tokenREGISTRAR);
 "function"	return(tokenFUNCTION);
 "variable"	return(tokenVARIABLE);

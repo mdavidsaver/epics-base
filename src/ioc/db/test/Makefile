@@ -55,6 +55,15 @@ testHarness_SRCS += dbPutLinkTest.c
 TESTS += dbPutLinkTest
 TESTFILES += ../dbPutLinkTest.db ../dbBadLink.db
 
+TESTPROD_HOST += dbParseTest
+dbParseTest_SRCS += dbParseTest.c
+dbParseTest_SRCS += dbTestIoc_registerRecordDeviceDriver.cpp
+#testHarness_SRCS += dbParseTest.c
+TESTS += dbParseTest
+TESTFILES += ../dbParseTest1.db ../dbParseTest2.db
+TESTFILES += ../dbParseTest3.db ../dbParseTest4.db
+TESTFILES += ../dbIocsh.db
+
 TESTPROD_HOST += dbLockTest
 dbLockTest_SRCS += dbLockTest.c
 dbLockTest_SRCS += dbTestIoc_registerRecordDeviceDriver.cpp
@@ -157,6 +166,8 @@ testHarness_SRCS += epicsRunDbTests.c
 dbTestHarness_SRCS += $(testHarness_SRCS)
 dbTestHarness_SRCS_RTEMS += rtemsTestHarness.c
 
+PROD_SRCS_RTEMS += rtemsTestData.c
+
 PROD_vxWorks = dbTestHarness
 PROD_RTEMS = dbTestHarness
 
@@ -164,6 +175,10 @@ TESTSPEC_vxWorks = dbTestHarness.munch; epicsRunDbTests
 TESTSPEC_RTEMS = dbTestHarness.boot; epicsRunDbTests
 
 TESTSCRIPTS_HOST += $(TESTS:%=%.t)
+ifeq ($(T_A),RTEMS-pc386)
+TESTPROD_RTEMS = $(TESTPROD_HOST)
+TESTSCRIPTS_RTEMS += $(TESTS:%=%.t)
+endif
 
 include $(TOP)/configure/RULES
 
@@ -175,3 +190,5 @@ devx$(DEP): $(COMMON_DIR)/xRecord.h
 scanIoTest$(DEP): $(COMMON_DIR)/xRecord.h
 xRecord$(DEP): $(COMMON_DIR)/xRecord.h
 
+rtemsTestData.c : $(TESTFILES) $(TOOLS)/epicsMakeMemFs.pl
+	$(PERL) $(TOOLS)/epicsMakeMemFs.pl $@ epicsRtemsFSImage $(TESTFILES)

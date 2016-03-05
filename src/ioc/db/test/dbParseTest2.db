@@ -1,0 +1,31 @@
+# Test grammar extension points
+
+record(x,  "foo") {
+  field(VAL, "14") { # empty
+  }
+}
+
+define(block, "group")
+
+group("hello", 42) { }
+
+group("world", 42) {
+  group("is anyone listening?") {}
+}
+
+define(block, "find")
+
+find() {
+   group() {
+    find() {}
+ }
+}
+
+record(x, "test") {
+  field(VAL, 42) { find(other) }
+}
+
+menu(test) {
+  choice(menutestOne, "One")
+  group() { find() }
+}
