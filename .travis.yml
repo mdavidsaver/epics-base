@@ -1,16 +1,15 @@
 sudo: false
 language: c
 compiler:
-  - clang
   - gcc
 env:
-  - PROF=""
-  - PROF="-static-"
+  - RTEMS=4.10
 addons:
   apt:
     packages:
     - libreadline6-dev
     - libncurses5-dev
     - perl
-    - valgrind
+    - clang
+    - qemu
 script: sh build-travis.sh
