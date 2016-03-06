@@ -1,9 +1,10 @@
-sudo: false
+sudo: required
+dist: trusty
 language: c
 compiler:
   - gcc
 env:
-  - RTEMS=4.10
+  - RTEMS=4.9
 addons:
   apt:
     packages:
@@ -11,5 +12,5 @@ addons:
     - libncurses5-dev
     - perl
     - clang
-    - qemu
+    - qemu-system-x86
 script: sh build-travis.sh

@@ -62,7 +62,7 @@ if [ -n "$RTEMS" ]
 then
   echo "Cross RTEMS${RTEMS} for pc386"
   install -d /home/travis/.cache
-  curl -L "https://github.com/mdavidsaver/rsb/releases/download/travis-20160306/rtems${RTEMS}-i386-precise-20160306.tar.bz2" \
+  curl -L "https://github.com/mdavidsaver/rsb/releases/download/travis-20160306-2/rtems${RTEMS}-i386-trusty-20190306-2.tar.gz" \
   | tar -C /home/travis/.cache -xj
 
   sed -i -e '/^RTEMS_VERSION/d' -e '/^RTEMS_BASE/d' configure/os/CONFIG_SITE.Common.RTEMS
@@ -75,12 +75,9 @@ CROSS_COMPILER_TARGET_ARCHS+=RTEMS-pc386
 EOF
 fi
 
-if ! make
-then
-  cd /home/travis/build/mdavidsaver/epics-base/src/ca/legacy/gdd/O.RTEMS-pc386
-  /home/travis/.cache/rtems4.10-i386/bin/i386-rtems4.10-g++ -B/home/travis/.cache/rtems4.10-i386/i386-rtems4.10/pc386/lib/ -specs bsp_specs -qrtems     -mtune=i386                 -DUNIX      -O2 -g -g   -Wall     -fno-strict-aliasing       -I. -I../O.Common -I. -I. -I.. -I../../../../../include/compiler/gcc -I../../../../../include/os/RTEMS -I../../../../../include         -S ../gdd.cc
-  cat gdd.s
-  exit 1
-fi
+make -j2 -C src libCom/test
 
-[ "$TEST" != "NO" ] && make -s runtests
+cd src/libCom/test/O.RTEMS-pc386/
+
+qemu-system-i386 -m 64 -no-reboot -serial stdio -display none -net none -kernel epicsTypesTest -d exec
+#[ "$TEST" != "NO" ] && make -s runtests
