@@ -75,9 +75,6 @@ CROSS_COMPILER_TARGET_ARCHS+=RTEMS-pc386
 EOF
 fi
 
-make -j2 -C src libCom/test
+make -j2
 
-cd src/libCom/test/O.RTEMS-pc386/
-
-qemu-system-i386 -m 64 -no-reboot -serial stdio -display none -net none -kernel epicsTypesTest -d exec
-#[ "$TEST" != "NO" ] && make -s runtests
+[ "$TEST" != "NO" ] && make -s runtests

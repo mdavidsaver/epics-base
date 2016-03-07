@@ -4,7 +4,10 @@ language: c
 compiler:
   - gcc
 env:
-  - RTEMS=4.9
+  - CMPLR=gcc
+  - CMPLR=gcc STATIC=YES
+  - CMPLR=clang
+  - CMPLR=clang STATIC=YES
 addons:
   apt:
     packages:
@@ -12,5 +15,4 @@ addons:
     - libncurses5-dev
     - perl
     - clang
-    - qemu-system-x86
 script: sh build-travis.sh
