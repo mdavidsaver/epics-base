@@ -13,6 +13,7 @@
 #include <string.h>
 #include <math.h>
 
+#define EPICS_DBCA_PRIVATE_API
 #include "epicsString.h"
 #include "dbUnitTest.h"
 #include "epicsThread.h"

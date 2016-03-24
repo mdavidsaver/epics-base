@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#define EPICS_DBCA_PRIVATE_API
 #include "alarm.h"
 #include "cantProceed.h"
 #include "cvtFast.h"

@@ -10,6 +10,9 @@
  *      Date:   28 Sept 2012
  */
 
+#include <string.h>
+
+#define EPICS_DBCA_PRIVATE_API
 #include "alarm.h"
 #include "dbAccess.h"
 #include "recGbl.h"
@@ -31,7 +34,7 @@ static long write_string(printfRecord *prec)
         len = 1;
     }
 
-    if (plink->type != CA_LINK)
+    if (plink->type != CA_LINK || strcmp(plink->value.pv_link.backend,"ca")!=0)
         return dbPutLink(plink, dtyp, prec->val, len);
 
     status = dbCaPutLinkCallback(plink, dtyp, prec->val, len,

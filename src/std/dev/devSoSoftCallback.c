@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#define EPICS_DBCA_PRIVATE_API
 #include "alarm.h"
 #include "dbDefs.h"
 #include "dbAccess.h"
@@ -52,7 +53,7 @@ static long write_stringout(stringoutRecord *prec)
 
     if (prec->pact) return 0;
 
-    if (plink->type != CA_LINK) {
+    if (plink->type != CA_LINK || strcmp(plink->value.pv_link.backend,"ca")!=0) {
         return dbPutLink(plink, DBR_STRING, &prec->val, 1);
     }
 

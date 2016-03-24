@@ -20,6 +20,8 @@ extern "C" {
 typedef void (*dbCaCallback)(void *userPvt);
 epicsShareFunc void dbCaCallbackProcess(void *usrPvt);
 
+#ifdef EPICS_DBCA_PRIVATE_API
+
 epicsShareFunc void dbCaLinkInit(void); /* internal initialization for iocBuild()  */
 epicsShareFunc void dbCaLinkInitIsolated(void); /* internal initialization for iocBuildIsolated()  */
 epicsShareFunc void dbCaRun(void);
@@ -47,7 +49,6 @@ epicsShareFunc long dbCaPutLink(struct link *plink,short dbrType,
 
 extern struct ca_client_context * dbCaClientContext;
 
-#ifdef EPICS_DBCA_PRIVATE_API
 epicsShareFunc void dbCaSync(void);
 epicsShareFunc void dbCaReportLink(const struct link *plink, dbLinkReportInfo *pinfo);
 epicsShareExtern void (*dbAddLinkHook)(struct link *link, short dbfType);

@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#define EPICS_DBCA_PRIVATE_API
 #include "alarm.h"
 #include "dbDefs.h"
 #include "dbLock.h"
@@ -55,7 +56,7 @@ static long write_bo(boRecord *prec)
     long status;
 
     if(prec->pact) return(0);
-    if(plink->type!=CA_LINK) {
+    if(plink->type!=CA_LINK || strcmp(plink->value.pv_link.backend,"ca")!=0) {
         status = dbPutLink(plink,DBR_USHORT,&prec->val,1);
         return(status);
     }

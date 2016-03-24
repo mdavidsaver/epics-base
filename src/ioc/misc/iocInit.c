@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <limits.h>
 
+#define EPICS_DBCA_PRIVATE_API
 #include "dbDefs.h"
 #include "ellLib.h"
 #include "envDefs.h"
