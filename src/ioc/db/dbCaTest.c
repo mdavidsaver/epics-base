@@ -95,7 +95,7 @@ void dbCaReportLink(const struct link *plink, dbLinkReportInfo *pinfo)
         }
     } else {
         if (pinfo->filter==dbLinkReportAll || pinfo->filter==dbLinkReportDisconnected) {
-            printf("%28s.%-4s --> %-28s  (%lu, %lu)\n",
+            printf(LSET_REPORT_INDENT "%28s.%-4s --> %-28s  (%lu, %lu)\n",
                 rname,
                 fname,
                 plink->value.pv_link.pvname,
