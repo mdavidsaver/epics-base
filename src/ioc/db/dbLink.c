@@ -449,9 +449,54 @@ static lset dbDb_lset = {
     dbDbScanFwdLink
 };
 
+static void dbBrokenReportLink(const struct link *plink, dbLinkReportInfo *pinfo)
+{
+    const char * fname = dbGetFieldName(pinfo->pentry),
+               * rname = dbGetRecordName(pinfo->pentry);
+
+    if (pinfo->filter==dbLinkReportAll || pinfo->filter==dbLinkReportDisconnected) {
+        printf("%28s.%-4s --> %-28s <invalid link type>\n",
+            rname,
+            fname,
+            plink->value.pv_link.pvname);
+    }
+}
+
+static void dbBrokenRemoveLink(dbLocker *locker, struct link *plink)
+{
+    assert(!plink->value.pv_link.pvt);
+    plink->value.pv_link.pvt = 0;
+    plink->value.pv_link.backend = NULL;
+    plink->value.pv_link.getCvt = 0;
+    plink->value.pv_link.pvlMask = 0;
+    plink->value.pv_link.lastGetdbrType = 0;
+    plink->type = PV_LINK;
+    plink->lset = NULL;
+}
+
+static lset broken_lset = {
+    LSET_API_VERSION,
+    dbBrokenReportLink,
+    dbBrokenRemoveLink
+};
+
 /***************************** Generic Link API *****************************/
 
-void (*dbAddLinkHook)(struct link *link, short dbfType);
+void dbSetBrokenLink(struct link *plink, short dbfType)
+{
+    plink->lset = &broken_lset;
+    plink->type = CA_LINK;
+    plink->value.pv_link.pvt = NULL;
+    plink->value.pv_link.backend = "invalid";
+}
+
+static
+void dbCaAddLinkHook(struct link *plink, short dbfType)
+{
+    dbCaAddLink(NULL, plink, dbfType);
+}
+
+void (*dbAddLinkHook)(struct link *link, short dbfType) = &dbCaAddLinkHook;
 
 /* initialize CA_LINK with possibly custom lset */
 static
@@ -475,12 +520,14 @@ void customlset(struct link *plink, short dbfType)
     {
         plink->lset = NULL;
         plink->type = PV_LINK;
-        plink->value.pv_link.pvt = NULL; // leaking
-        /* TODO, turn into CONSTANT? */
+        plink->value.pv_link.pvt = NULL; /* leaking */
     }
 
     if(!plink->lset)
-        dbCaAddLink(NULL, plink, dbfType);
+        dbSetBrokenLink(plink, dbfType); /* install "invalid" lset as fallback */
+    assert(plink->lset);
+    assert(plink->type==CA_LINK);
+    assert(plink->lset->version==LSET_API_VERSION);
 }
 
 void dbInitLink(struct link *plink, short dbfType)

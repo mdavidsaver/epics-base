@@ -49,7 +49,9 @@ extern struct ca_client_context * dbCaClientContext;
 
 #ifdef EPICS_DBCA_PRIVATE_API
 epicsShareFunc void dbCaSync(void);
-void dbCaReportLink(const struct link *plink, dbLinkReportInfo *pinfo);
+epicsShareFunc void dbCaReportLink(const struct link *plink, dbLinkReportInfo *pinfo);
+epicsShareExtern void (*dbAddLinkHook)(struct link *link, short dbfType);
+epicsShareFunc void dbSetBrokenLink(struct link *link, short dbfType);
 #endif
 
 /* These macros are for backwards compatibility */
