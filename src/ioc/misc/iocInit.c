@@ -688,13 +688,20 @@ static void doFreeRecord(dbRecordType *pdbRecordType, dbCommon *precord,
 int iocShutdown(void)
 {
     if (iocState == iocVirgin || iocState == iocStopped) return 0;
+    initHookAnnounce(initHookAtIocShutdown); // TODO: iterate hooks in reverse
     iterateRecords(doCloseLinks, NULL);
+    initHookAnnounce(initHookAfterCaLinkClose);
     if (iocBuildMode==buildIsolated) {
         /* stop and "join" threads */
         scanStop();
+        initHookAnnounce(initHookAfterScanShutdown);
         callbackStop();
+        initHookAnnounce(initHookAfterCallbackShutdown);
     }
     dbCaShutdown(); /* must be before dbFreeRecord and dbChannelExit */
+    initHookAnnounce(initHookAfterCaServerStopped);
+    /* placeholder, RSRV will eventually stop here */
+    initHookAnnounce(initHookAfterDatabaseStopped);
     if (iocBuildMode==buildIsolated) {
         /* free resources */
         scanCleanup();
@@ -708,6 +715,7 @@ int iocShutdown(void)
     }
     iocState = iocStopped;
     iocBuildMode = buildRSRV;
+    initHookAnnounce(initHookAfterIocShutdown);
     return 0;
 }
 
