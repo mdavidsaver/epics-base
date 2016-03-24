@@ -314,6 +314,7 @@ void dbCaAddLinkCallback(struct link *plink,
     plink->lset = &dbCa_lset;
     plink->type = CA_LINK;
     plink->value.pv_link.pvt = pca;
+    plink->value.pv_link.backend = "ca";
     addAction(pca, CA_CONNECT);
     epicsMutexUnlock(pca->lock);
 }
@@ -332,6 +333,7 @@ void dbCaRemoveLink(struct dbLocker *locker, struct link *plink)
     epicsMutexMustLock(pca->lock);
     pca->plink = 0;
     plink->value.pv_link.pvt = 0;
+    plink->value.pv_link.backend = NULL;
     plink->value.pv_link.pvlMask = 0;
     plink->type = PV_LINK;
     plink->lset = NULL;
