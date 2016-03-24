@@ -444,6 +444,8 @@ static lset dbDb_lset = {
 
 /***************************** Generic Link API *****************************/
 
+void (*dbAddLinkHook)(struct link *link, short dbfType);
+
 void dbInitLink(struct link *plink, short dbfType)
 {
     struct dbCommon *precord = plink->precord;
@@ -469,7 +471,17 @@ void dbInitLink(struct link *plink, short dbfType)
     if (dbfType == DBF_INLINK)
         plink->value.pv_link.pvlMask |= pvlOptInpNative;
 
-    dbCaAddLink(NULL, plink, dbfType);
+    plink->lset = NULL;
+    if(dbAddLinkHook)
+        (*dbAddLinkHook)(plink, dbfType);
+    if((plink->lset==NULL) ^ (plink->type==PV_LINK)) {
+        errlogPrintf("custom link types must set both type and lset.\n");
+        plink->lset = NULL;
+        plink->type = PV_LINK;
+        plink->value.pv_link.pvt = NULL; // leaking
+    }
+    if(!plink->lset)
+        dbCaAddLink(NULL, plink, dbfType);
     if (dbfType == DBF_FWDLINK) {
         char *pperiod = strrchr(plink->value.pv_link.pvname, '.');
 
@@ -508,7 +520,11 @@ void dbAddLink(dbLocker *locker, struct link *plink, short dbfType, DBADDR *ptar
     if (dbfType == DBF_INLINK)
         plink->value.pv_link.pvlMask |= pvlOptInpNative;
 
-    dbCaAddLink(locker, plink, dbfType);
+    plink->lset = NULL;
+    if(dbAddLinkHook)
+        (*dbAddLinkHook)(plink, dbfType);
+    if(!plink->lset)
+        dbCaAddLink(locker, plink, dbfType);
     if (dbfType == DBF_FWDLINK) {
         char *pperiod = strrchr(plink->value.pv_link.pvname, '.');
 
