@@ -49,6 +49,7 @@ typedef struct {
     unsigned readable:1;  /* would a dbGetLink() succeed at this moment */
     unsigned writable:1;  /* would a dbPutLink() succeed at this moment */
     /* callee fills in statistics */
+    unsigned nDisconnect; /* number of times this link has entered a not connected state */
     unsigned nEvents;     /* number of times new data has been received from the underlying data source */
     unsigned nWriteFail;  /* number of times dbPutLink() has failed for this link */
 } dbLinkReportInfo;

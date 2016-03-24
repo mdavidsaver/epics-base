@@ -65,6 +65,7 @@ void dbCaReportLink(const struct link *plink, dbLinkReportInfo *pinfo)
 
     pinfo->connected = ca_field_type(pca->chid) != TYPENOTCONN;
     pinfo->nWriteFail = pca->nNoWrite;
+    pinfo->nDisconnect = pca->nDisconnect;
 
     if (pinfo->connected) {
         pinfo->readable = ca_read_access(pca->chid);
@@ -161,7 +162,7 @@ long dbcar(char *precordname, int level)
                             linfo.detailLevel = level-2;
                         dbReportLink(plink, &linfo);
                         nconnected += linfo.connected;
-                        nDisconnect += !linfo.connected;
+                        nDisconnect += linfo.nDisconnect;
                         noReadAccess += !linfo.readable;
                         noWriteAccess += !linfo.writable;
                     }
