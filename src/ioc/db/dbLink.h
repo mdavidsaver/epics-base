@@ -26,8 +26,36 @@ extern "C" {
 #endif
 
 struct dbLocker;
+struct DBENTRY;
+
+#define LSET_API_VERSION 1
+#define LSET_REPORT_INDENT ""
+
+typedef enum {
+    dbLinkReportNone,
+    dbLinkReportAll,
+    dbLinkReportConnected,
+    dbLinkReportDisconnected,
+} dbLinkReportFilter;
+
+typedef struct {
+    /* from caller */
+    dbLinkReportFilter filter;
+    int detailLevel;
+    struct DBENTRY *pentry;
+    unsigned clearstats:1; /* after reporting, zero stat counters */
+    /* callee fills in current state */
+    unsigned connected:1; /* is this link connected to it's underlying data source */
+    unsigned readable:1;  /* would a dbGetLink() succeed at this moment */
+    unsigned writable:1;  /* would a dbPutLink() succeed at this moment */
+    /* callee fills in statistics */
+    unsigned nEvents;     /* number of times new data has been received from the underlying data source */
+    unsigned nWriteFail;  /* number of times dbPutLink() has failed for this link */
+} dbLinkReportInfo;
 
 typedef struct lset {
+    unsigned version; /* must be set to LSET_API_VERSION */
+    void (*reportLink)(const struct link *plink, dbLinkReportInfo *pinfo);
     void (*removeLink)(struct dbLocker *locker, struct link *plink);
     int (*isConnected)(const struct link *plink);
     int (*getDBFtype)(const struct link *plink);
@@ -57,6 +85,8 @@ epicsShareFunc void dbAddLink(struct dbLocker *locker, struct link *plink, short
 epicsShareFunc long dbLoadLink(struct link *plink, short dbrType,
         void *pbuffer);
 epicsShareFunc void dbRemoveLink(struct dbLocker *locker, struct link *plink);
+
+epicsShareFunc void dbReportLink(const struct link *plink, dbLinkReportInfo *pinfo);
 
 epicsShareFunc long dbGetNelements(const struct link *plink, long *nelements);
 epicsShareFunc int dbIsLinkConnected(const struct link *plink);

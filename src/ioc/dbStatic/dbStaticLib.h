@@ -47,7 +47,7 @@ extern "C" {
 
 typedef dbBase DBBASE;
 
-typedef struct{
+typedef struct DBENTRY {
     DBBASE       *pdbbase;
     dbRecordType *precordType;
     dbFldDes     *pflddes;

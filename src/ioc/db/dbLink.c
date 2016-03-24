@@ -139,6 +139,8 @@ static long dbConstGetValue(struct link *plink, short dbrType, void *pbuffer,
 }
 
 static lset dbConst_lset = {
+    LSET_API_VERSION,
+    NULL,
     NULL,
     NULL,
     NULL, dbConstGetNelements,
@@ -431,6 +433,8 @@ static void dbDbScanFwdLink(struct link *plink)
 }
 
 static lset dbDb_lset = {
+    LSET_API_VERSION,
+    NULL,
     dbDbRemoveLink,
     dbDbIsConnected,
     dbDbGetDBFtype, dbDbGetElements,
@@ -445,6 +449,36 @@ static lset dbDb_lset = {
 /***************************** Generic Link API *****************************/
 
 void (*dbAddLinkHook)(struct link *link, short dbfType);
+
+/* initialize CA_LINK with possibly custom lset */
+static
+void customlset(struct link *plink, short dbfType)
+{
+    int oops = 0;
+    plink->lset = NULL;
+    if(dbAddLinkHook)
+        (*dbAddLinkHook)(plink, dbfType);
+
+    if((plink->lset==NULL) ^ (plink->type==PV_LINK)) {
+        oops = 1;
+        errlogPrintf("custom link types must set both type and lset.\n");
+    }
+    if(plink->lset && plink->lset->version!=LSET_API_VERSION) {
+        oops = 1;
+        errlogPrintf("custom link types must set .version to LSET_API_VERSION (%u) not %u\n",
+                     LSET_API_VERSION, plink->lset->version);
+    }
+    if(oops)
+    {
+        plink->lset = NULL;
+        plink->type = PV_LINK;
+        plink->value.pv_link.pvt = NULL; // leaking
+        /* TODO, turn into CONSTANT? */
+    }
+
+    if(!plink->lset)
+        dbCaAddLink(NULL, plink, dbfType);
+}
 
 void dbInitLink(struct link *plink, short dbfType)
 {
@@ -471,17 +505,7 @@ void dbInitLink(struct link *plink, short dbfType)
     if (dbfType == DBF_INLINK)
         plink->value.pv_link.pvlMask |= pvlOptInpNative;
 
-    plink->lset = NULL;
-    if(dbAddLinkHook)
-        (*dbAddLinkHook)(plink, dbfType);
-    if((plink->lset==NULL) ^ (plink->type==PV_LINK)) {
-        errlogPrintf("custom link types must set both type and lset.\n");
-        plink->lset = NULL;
-        plink->type = PV_LINK;
-        plink->value.pv_link.pvt = NULL; // leaking
-    }
-    if(!plink->lset)
-        dbCaAddLink(NULL, plink, dbfType);
+    customlset(plink, dbfType);
     if (dbfType == DBF_FWDLINK) {
         char *pperiod = strrchr(plink->value.pv_link.pvname, '.');
 
@@ -520,11 +544,7 @@ void dbAddLink(dbLocker *locker, struct link *plink, short dbfType, DBADDR *ptar
     if (dbfType == DBF_INLINK)
         plink->value.pv_link.pvlMask |= pvlOptInpNative;
 
-    plink->lset = NULL;
-    if(dbAddLinkHook)
-        (*dbAddLinkHook)(plink, dbfType);
-    if(!plink->lset)
-        dbCaAddLink(locker, plink, dbfType);
+    customlset(plink, dbfType);
     if (dbfType == DBF_FWDLINK) {
         char *pperiod = strrchr(plink->value.pv_link.pvname, '.');
 
@@ -550,6 +570,15 @@ void dbRemoveLink(dbLocker *locker, struct link *plink)
         if (plset->removeLink)
             plset->removeLink(locker, plink);
         plink->lset = NULL;
+    }
+}
+
+void dbReportLink(const struct link *plink, dbLinkReportInfo *pinfo)
+{
+    lset *plset = plink->lset;
+
+    if (plset && plset->reportLink) {
+        plset->reportLink(plink, pinfo);
     }
 }
 

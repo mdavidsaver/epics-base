@@ -20,6 +20,7 @@
 #include <string.h>
 #include <errno.h>
 
+#define EPICS_DBCA_PRIVATE_API
 #include "dbDefs.h"
 #include "epicsEvent.h"
 #include "epicsPrint.h"
@@ -52,7 +53,60 @@
 #include "dbLock.h"
 #include "link.h"
 
-
+void dbCaReportLink(const struct link *plink, dbLinkReportInfo *pinfo)
+{
+    caLink * const pca = (caLink *)plink->value.pv_link.pvt;
+    const char * fname = dbGetFieldName(pinfo->pentry),
+               * rname = dbGetRecordName(pinfo->pentry);
+
+    assert(pca);
+    epicsMutexLock(pca->lock);
+    assert(pca->plink==plink);
+
+    pinfo->connected = ca_field_type(pca->chid) != TYPENOTCONN;
+    pinfo->nWriteFail = pca->nNoWrite;
+
+    if (pinfo->connected) {
+        pinfo->readable = ca_read_access(pca->chid);
+        pinfo->writable = ca_write_access(pca->chid);
+
+        if (pinfo->filter==dbLinkReportAll || pinfo->filter==dbLinkReportConnected) {
+            int rw = pinfo->readable |
+                     pinfo->writable << 1;
+            static const char *rights[4] = {
+                "No Access", "Read Only",
+                "Write Only", "Read/Write"
+            };
+            int mask = plink->value.pv_link.pvlMask;
+            printf(LSET_REPORT_INDENT "%28s.%-4s ==> %-28s  (%lu, %lu)\n",
+                rname,
+                fname,
+                plink->value.pv_link.pvname,
+                pca->nDisconnect,
+                pca->nNoWrite);
+            printf(LSET_REPORT_INDENT "%21s [%s%s%s%s] host %s, %s\n", "",
+                mask & pvlOptInpNative ? "IN" : "  ",
+                mask & pvlOptInpString ? "IS" : "  ",
+                mask & pvlOptOutNative ? "ON" : "  ",
+                mask & pvlOptOutString ? "OS" : "  ",
+                ca_host_name(pca->chid),
+                rights[rw]);
+        }
+    } else {
+        if (pinfo->filter==dbLinkReportAll || pinfo->filter==dbLinkReportDisconnected) {
+            printf("%28s.%-4s --> %-28s  (%lu, %lu)\n",
+                rname,
+                fname,
+                plink->value.pv_link.pvname,
+                pca->nDisconnect,
+                pca->nNoWrite);
+        }
+    }
+
+    epicsMutexUnlock(pca->lock);
+}
+
+
 long dbcar(char *precordname, int level)
 {
     DBENTRY             dbentry;
@@ -68,7 +122,7 @@ long dbcar(char *precordname, int level)
     int                 noWriteAccess=0;
     unsigned long       nDisconnect=0;
     unsigned long       nNoWrite=0;
-    caLink              *pca;
+
     int                 j;
 
     if (!precordname || precordname[0] == '\0' || !strcmp(precordname, "*")) {
@@ -90,50 +144,26 @@ long dbcar(char *precordname, int level)
                 dbScanLock(precord);
                 for (j=0; j<pdbRecordType->no_links; j++) {
                     pdbFldDes = pdbRecordType->papFldDes[pdbRecordType->link_ind[j]];
+                    pdbentry->pflddes = pdbFldDes;
                     plink = (DBLINK *)((char *)precord + pdbFldDes->offset);
                     if (plink->type == CA_LINK) {
                         ncalinks++;
-                        pca = (caLink *)plink->value.pv_link.pvt;
-                        if (pca
-                        && pca->chid
-                        && (ca_field_type(pca->chid) != TYPENOTCONN)) {
-                            nconnected++;
-                            nDisconnect += pca->nDisconnect;
-                            nNoWrite += pca->nNoWrite;
-                            if (!ca_read_access(pca->chid)) noReadAccess++;
-                            if (!ca_write_access(pca->chid)) noWriteAccess++;
-                            if (level>1) {
-                                int rw = ca_read_access(pca->chid) |
-                                         ca_write_access(pca->chid) << 1;
-                                static const char *rights[4] = {
-                                    "No Access", "Read Only",
-                                    "Write Only", "Read/Write"
-                                };
-                                int mask = plink->value.pv_link.pvlMask;
-                                printf("%28s.%-4s ==> %-28s  (%lu, %lu)\n",
-                                    precord->name,
-                                    pdbFldDes->name,
-                                    plink->value.pv_link.pvname,
-                                    pca->nDisconnect,
-                                    pca->nNoWrite);
-                                printf("%21s [%s%s%s%s] host %s, %s\n", "",
-                                    mask & pvlOptInpNative ? "IN" : "  ",
-                                    mask & pvlOptInpString ? "IS" : "  ",
-                                    mask & pvlOptOutNative ? "ON" : "  ",
-                                    mask & pvlOptOutString ? "OS" : "  ",
-                                    ca_host_name(pca->chid),
-                                    rights[rw]);
-                            }
-                        } else {
-                            if (level>0) {
-                                printf("%28s.%-4s --> %-28s  (%lu, %lu)\n",
-                                    precord->name,
-                                    pdbFldDes->name,
-                                    plink->value.pv_link.pvname,
-                                    pca->nDisconnect,
-                                    pca->nNoWrite);
-                            }
-                        }
+                        dbLinkReportInfo linfo;
+                        memset(&linfo, 0, sizeof(linfo));
+                        linfo.pentry = pdbentry;
+                        if(level==0)
+                            linfo.filter = dbLinkReportNone;
+                        else if(level==1)
+                            linfo.filter = dbLinkReportDisconnected;
+                        else
+                            linfo.filter = dbLinkReportAll;
+                        if(level>2)
+                            linfo.detailLevel = level-2;
+                        dbReportLink(plink, &linfo);
+                        nconnected += linfo.connected;
+                        nDisconnect += !linfo.connected;
+                        noReadAccess += !linfo.readable;
+                        noWriteAccess += !linfo.writable;
                     }
                 }
                 dbScanUnlock(precord);
@@ -190,7 +220,7 @@ void dbcaStats(int *pchans, int *pdiscon)
                     plink = (DBLINK *)((char *)precord + pdbFldDes->offset);
                     if (plink->type == CA_LINK) {
                         ncalinks++;
-                        if (dbCaIsLinkConnected(plink)) {
+                        if (dbIsLinkConnected(plink)) {
                             nconnected++;
                         }
                     }

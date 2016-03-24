@@ -709,6 +709,8 @@ static void scanLinkOnce(dbCommon *prec, caLink *pca) {
 }
 
 static lset dbCa_lset = {
+    LSET_API_VERSION,
+    dbCaReportLink,
     dbCaRemoveLink,
     isConnected,
     getDBFtype, getElements,
