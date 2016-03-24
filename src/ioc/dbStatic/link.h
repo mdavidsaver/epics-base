@@ -85,6 +85,7 @@ struct pv_link {
     LINKCVT	getCvt;		/* input conversion function */
     short	pvlMask;	/* Options mask */
     short	lastGetdbrType;	/* last dbrType for DB or CA get */
+    const char *backend;/* informational string describing the backend */
 };
 
 /* structure of a VME io channel */

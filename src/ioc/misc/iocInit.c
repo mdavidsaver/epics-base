@@ -641,8 +641,7 @@ static void doCloseLinks(dbRecordType *pdbRecordType, dbCommon *precord,
                 dbScanLock(precord);
                 locked = 1;
             }
-            if(plink->lset)
-                (*plink->lset->removeLink)(NULL, plink);
+            dbRemoveLink(NULL, plink);
 
         } else if (iocBuildMode==buildIsolated && plink->type == DB_LINK) {
             /* free link, but don't split lockset like dbDbRemoveLink() */
