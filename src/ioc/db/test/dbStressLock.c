@@ -43,7 +43,6 @@
 
 #include "xRecord.h"
 
-#if defined(CLOCK_REALTIME) && defined(CLOCK_MONOTONIC) && !defined(_WIN32)
 #define testIntOk1(A, OP, B) testOk((A) OP (B), "%s (%d) %s %s (%d)", #A, A, #OP, #B, B);
 #define testPtrOk1(A, OP, B) testOk((A) OP (B), "%s (%p) %s %s (%p)", #A, A, #OP, #B, B);
 
@@ -168,7 +167,6 @@ void worker(void *raw)
         epicsUInt64 after, before;
         double sel = getRand();
         double duration;
-#endif
 
         before = epicsMonotonicGet();
 
