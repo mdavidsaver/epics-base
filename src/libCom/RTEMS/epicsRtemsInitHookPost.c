@@ -17,3 +17,8 @@ epicsRtemsInitPostSetBootConfigFromNVRAM(struct rtems_bsdnet_config *config)
 {
     return 0;
 }
+
+
+
+void bootpFallbackFromNVRAM(void) __attribute__((weak));
+void bootpFallbackFromNVRAM(void) {}
