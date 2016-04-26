@@ -75,6 +75,9 @@ CROSS_COMPILER_TARGET_ARCHS+=RTEMS-pc386
 EOF
 fi
 
-make -j2
+make -j2 $EXTRA
 
-[ "$TEST" != "NO" ] && make -s runtests
+if [ "$TEST" != "NO" ]
+then
+   make -s runtests
+fi

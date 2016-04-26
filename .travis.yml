@@ -5,9 +5,13 @@ compiler:
   - gcc
 env:
   - CMPLR=gcc
+  - CMPLR=gcc EXTRA=CMD_CXXFLAGS=-std=c++11
   - CMPLR=gcc STATIC=YES
   - CMPLR=clang
   - CMPLR=clang STATIC=YES
+  - WINE=32 TEST=NO STATIC=YES
+  - RTEMS=4.9 TEST=NO
+  - RTEMS=4.10 TEST=NO
 addons:
   apt:
     packages:
@@ -15,4 +19,9 @@ addons:
     - libncurses5-dev
     - perl
     - clang
+    - g++-mingw-w64-i686
+    - bison
+    - flex
+    - texinfo
+    - install-info
 script: sh build-travis.sh
