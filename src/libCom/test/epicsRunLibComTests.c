@@ -44,6 +44,7 @@ int epicsThreadPrivateTest(void);
 int epicsThreadTest(void);
 int epicsTimerTest(void);
 int epicsTimeTest(void);
+int epicsTimeZoneTest(void);
 int epicsTypesTest(void);
 int epicsInlineTest(void);
 int macDefExpandTest(void);
@@ -94,6 +95,7 @@ void epicsRunLibComTests(void)
     runTest(epicsThreadPriorityTest);
     runTest(epicsThreadPrivateTest);
     runTest(epicsTimeTest);
+    runTest(epicsTimeZoneTest);
     runTest(epicsTypesTest);
     runTest(epicsInlineTest);
     runTest(macDefExpandTest);
