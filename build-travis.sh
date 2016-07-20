@@ -73,11 +73,26 @@ EOF
   cat << EOF >> configure/CONFIG_SITE
 CROSS_COMPILER_TARGET_ARCHS+=RTEMS-pc386
 EOF
+
+  # find local qemu-system-i386
+  export PATH="$HOME/.cache/qemu/usr/bin:$PATH"
+  echo -n "Using QEMU: "
+  type qemu-system-i386
+  EXTRA=RTEMS_QEMU_FIXUPS=YES
 fi
 
 make -j2 $EXTRA
 
 if [ "$TEST" != "NO" ]
 then
-   make -s runtests
+   if [ "$RTEMS" ]
+   then
+     ./test-rtems-qemu.py src/libCom/test/O.RTEMS-pc386/testspec
+     ./test-rtems-qemu.py src/ioc/db/test/O.RTEMS-pc386/testspec
+     ./test-rtems-qemu.py src/std/filters/test/O.RTEMS-pc386/testspec
+     ./test-rtems-qemu.py src/std/rec/test/O.RTEMS-pc386/testspec
+
+   else
+     make -s runtests
+   fi
 fi

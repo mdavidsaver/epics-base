@@ -10,8 +10,7 @@ env:
   - CMPLR=clang
   - CMPLR=clang STATIC=YES
   - WINE=32 TEST=NO STATIC=YES
-  - RTEMS=4.9 TEST=NO
-  - RTEMS=4.10 TEST=NO
+  - RTEMS=4.9 TEST=YES
 addons:
   apt:
     packages:
@@ -24,4 +23,8 @@ addons:
     - flex
     - texinfo
     - install-info
-script: sh build-travis.sh
+cache:
+  directories:
+   - $HOME/.cache
+install: sh prepare-travis.sh </dev/null
+script: sh build-travis.sh </dev/null
