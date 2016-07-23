@@ -87,7 +87,7 @@ if [ "$TEST" != "NO" ]
 then
    if [ "$RTEMS" ]
    then
-     ./test-rtems-qemu.py src/libCom/test/O.RTEMS-pc386/testspec
+     ./test-rtems-qemu.py --timeout 900 src/libCom/test/O.RTEMS-pc386/testspec
      ./test-rtems-qemu.py src/ioc/db/test/O.RTEMS-pc386/testspec
      ./test-rtems-qemu.py src/std/filters/test/O.RTEMS-pc386/testspec
      ./test-rtems-qemu.py src/std/rec/test/O.RTEMS-pc386/testspec

@@ -12,7 +12,7 @@ QDIR="$HOME/.cache/qemu"
 
 if [ -n "$RTEMS" ]
 then
-  git clone --branch vme --depth 10 https://github.com/mdavidsaver/qemu.git "$HOME/.build/qemu"
+  git clone --quiet --branch vme --depth 10 https://github.com/mdavidsaver/qemu.git "$HOME/.build/qemu"
   cd "$HOME/.build/qemu"
 
   HEAD=`git log -n1 --pretty=format:%H`
@@ -24,7 +24,7 @@ then
   if [ "$HEAD" != "$BUILT" ]
   then
     echo "Building QEMU"
-    git submodule update --init
+    git submodule --quiet update --init
 
     install -d "$HOME/.build/qemu/build"
     cd         "$HOME/.build/qemu/build"
