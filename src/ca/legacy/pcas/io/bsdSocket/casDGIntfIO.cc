@@ -417,7 +417,7 @@ void casDGIntfIO::sendBeaconIO ( char & msg, unsigned length,
         osiSockAddrNode	*pAddr = reinterpret_cast<osiSockAddrNode *>(pNode);
 
         ssize_t status = sendto(this->beaconSock, &msg, length, 0, &pAddr->addr.sa, sizeof(pAddr->addr.ia));
-        if ( status != length ) {
+        if ( status < 0 || (unsigned)status != length ) {
             char sockErrBuf[64], buf[64];
             epicsSocketConvertErrnoToString ( sockErrBuf, sizeof ( sockErrBuf ) );
             ipAddrToA ( &pAddr->addr.ia, buf, sizeof(buf) );
