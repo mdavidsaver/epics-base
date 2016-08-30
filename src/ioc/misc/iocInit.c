@@ -36,7 +36,7 @@
 
 #include "caeventmask.h"
 
-#define epicsExportSharedSymbols
+#include "epicsExport.h" /* defines epicsExportSharedSymbols */
 #include "alarm.h"
 #include "asDbLib.h"
 #include "callback.h"
@@ -93,6 +93,9 @@ static void exitDatabase(void *dummy);
 typedef void (*recIterFunc)(dbRecordType *rtyp, dbCommon *prec, void *user);
 
 static void iterateRecords(recIterFunc func, void *user);
+
+int dbThreadRealtimeLock = 1;
+epicsExportAddress(int, dbThreadRealtimeLock);
 
 /*
  *  Initialize EPICS on the IOC.
@@ -200,6 +203,10 @@ int iocBuild(void)
     rsrv_init();
 
     status = iocBuild_3();
+
+    if (dbThreadRealtimeLock)
+        epicsThreadRealtimeLock();
+
     if (!status) iocBuildMode = buildRSRV;
     return status;
 }
@@ -509,8 +516,7 @@ static void doResolveLinks(dbRecordType *pdbRecordType, dbCommon *precord,
             }
         }
 
-        if (plink->type == PV_LINK)
-            dbInitLink(precord, plink, pdbFldDes->field_type);
+        dbInitLink(plink, pdbFldDes->field_type);
     }
 }
 
@@ -635,13 +641,13 @@ static void doCloseLinks(dbRecordType *pdbRecordType, dbCommon *precord,
                 dbScanLock(precord);
                 locked = 1;
             }
-            dbCaRemoveLink(plink);
-            plink->type = PV_LINK;
+            dbCaRemoveLink(NULL, plink);
 
-        } else if (plink->type == DB_LINK) {
+        } else if (iocBuildMode==buildIsolated && plink->type == DB_LINK) {
             /* free link, but don't split lockset like dbDbRemoveLink() */
             free(plink->value.pv_link.pvt);
             plink->type = PV_LINK;
+            plink->lset = NULL;
         }
     }
 

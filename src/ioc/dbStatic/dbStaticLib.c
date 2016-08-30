@@ -135,7 +135,9 @@ void dbFreeLinkContents(struct link *plink)
     }
     if(parm && (parm != pNullString)) free((void *)parm);
     if(plink->text) free(plink->text);
-    memset((char *)plink,0,sizeof(struct link));
+    plink->lset = NULL;
+    plink->text = NULL;
+    memset(&plink->value, 0, sizeof(union value));
 }
 
 void dbFreePath(DBBASE *pdbbase)
@@ -618,7 +620,10 @@ DBENTRY * dbAllocEntry(dbBase *pdbbase)
 
 void dbFreeEntry(DBENTRY *pdbentry)
 {
-    if(pdbentry->message) free((void *)pdbentry->message);
+    if (!pdbentry)
+        return;
+    if (pdbentry->message)
+        free((void *)pdbentry->message);
     dbmfFree(pdbentry);
 }
 
@@ -2142,6 +2147,8 @@ long dbInitRecordLinks(dbRecordType *rtyp, struct dbCommon *prec)
         DBLINK *plink = (DBLINK *)(((char *)prec) + pflddes->offset);
         devSup *devsup = NULL;
 
+        plink->precord = prec;
+
         /* link fields are zero'd on allocation.
          * so are effectively CONSTANT, but with constantStr==NULL.
          * Here we initialize them to have the correct link type,
@@ -2498,7 +2505,10 @@ long dbPutString(DBENTRY *pdbentry,const char *pstring)
     switch (pflddes->field_type) {
     case DBF_STRING:
 	if(!pfield) return(S_dbLib_fieldNotFound);
-	strncpy((char *)pfield, pstring,pflddes->size);
+	if(strlen(pstring) >= (size_t)pflddes->size) return S_dbLib_strLen;
+	strncpy((char *)pfield, pstring, pflddes->size-1);
+        ((char *)pfield)[pflddes->size-1] = 0;
+
 	if((pflddes->special == SPC_CALC) && !stringHasMacro) {
 	    char  rpcl[RPCL_LEN];
 	    short err;
@@ -2509,7 +2519,6 @@ long dbPutString(DBENTRY *pdbentry,const char *pstring)
 			      calcErrorStr(err), pstring);
 	    }
 	}
-	if((short)strlen(pstring) >= pflddes->size) status = S_dbLib_strLen;
 	break;
 
     case DBF_CHAR:
@@ -3173,7 +3182,6 @@ long  dbCvtLinkToPvlink(DBENTRY *pdbentry)
 	plink->type = PV_LINK;
 	plink->value.pv_link.pvlMask = 0;
 	plink->value.pv_link.pvname = 0;
-	plink->value.pv_link.precord = pdbentry->precnode->precord;
 	return(0);
     default:
 	epicsPrintf("dbCvtLinkToPvlink called for non link field\n");
