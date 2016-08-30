@@ -99,6 +99,7 @@ epicsShareFunc long dbWriteDeviceFP(DBBASE *pdbbase, FILE *fp);
 epicsShareFunc long dbWriteDriver(DBBASE *pdbbase,
     const char *filename);
 epicsShareFunc long dbWriteDriverFP(DBBASE *pdbbase, FILE *fp);
+epicsShareFunc long dbWriteLinkFP(DBBASE *pdbbase, FILE *fp);
 epicsShareFunc long dbWriteRegistrarFP(DBBASE *pdbbase, FILE *fp);
 epicsShareFunc long dbWriteFunctionFP(DBBASE *pdbbase, FILE *fp);
 epicsShareFunc long dbWriteVariableFP(DBBASE *pdbbase, FILE *fp);
@@ -208,11 +209,12 @@ epicsShareFunc drvSup * dbFindDriver(dbBase *pdbbase,
     const char *name);
 epicsShareFunc char * dbGetRelatedField(DBENTRY *pdbentry);
 
+epicsShareFunc linkSup * dbFindLinkSup(dbBase *pdbbase,
+    const char *name);
+
 epicsShareFunc int  dbGetNLinks(DBENTRY *pdbentry);
 epicsShareFunc long dbGetLinkField(DBENTRY *pdbentry, int index);
 epicsShareFunc int  dbGetLinkType(DBENTRY *pdbentry);
-epicsShareFunc long dbCvtLinkToConstant(DBENTRY *pdbentry);
-epicsShareFunc long dbCvtLinkToPvlink(DBENTRY *pdbentry);
 
 /* Dump routines */
 epicsShareFunc void dbDumpPath(DBBASE *pdbbase);
@@ -227,6 +229,7 @@ epicsShareFunc void dbDumpField(DBBASE *pdbbase,
 epicsShareFunc void dbDumpDevice(DBBASE *pdbbase,
     const char *recordTypeName);
 epicsShareFunc void dbDumpDriver(DBBASE *pdbbase);
+epicsShareFunc void dbDumpLink(DBBASE *pdbbase);
 epicsShareFunc void dbDumpRegistrar(DBBASE *pdbbase);
 epicsShareFunc void dbDumpFunction(DBBASE *pdbbase);
 epicsShareFunc void dbDumpVariable(DBBASE *pdbbase);

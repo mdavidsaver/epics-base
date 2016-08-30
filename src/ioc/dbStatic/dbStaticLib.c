@@ -46,6 +46,7 @@
 #include "special.h"
 
 #include "dbCommon.h"
+#include "dbJLink.h"
 
 int dbStaticDebug = 0;
 static char *pNullString = "";
@@ -67,6 +68,7 @@ epicsShareDef maplinkType pamaplinkType[LINK_NTYPES] = {
 	{"GPIB_IO",GPIB_IO},
 	{"BITBUS_IO",BITBUS_IO},
 	{"MACRO_LINK",MACRO_LINK},
+	{"JSON_LINK",JSON_LINK},
         {"PN_LINK",PN_LINK},
 	{"DB_LINK",DB_LINK},
 	{"CA_LINK",CA_LINK},
@@ -121,6 +123,11 @@ void dbFreeLinkContents(struct link *plink)
 	case CONSTANT: free((void *)plink->value.constantStr); break;
 	case MACRO_LINK: free((void *)plink->value.macro_link.macroStr); break;
 	case PV_LINK: free((void *)plink->value.pv_link.pvname); break;
+	case JSON_LINK:
+	    if (plink->value.json.jlink)
+		plink->value.json.jlink->pif->free_jlink(plink->value.json.jlink);
+	    parm = plink->value.json.string;
+	    break;
 	case VME_IO: parm = plink->value.vmeio.parm; break;
 	case CAMAC_IO: parm = plink->value.camacio.parm; break;
 	case AB_IO: parm = plink->value.abio.parm; break;
@@ -456,6 +463,7 @@ void dbFreeBase(dbBase *pdbbase)
     dbVariableDef       *pvarNext;
     drvSup		*pdrvSup;
     drvSup		*pdrvSupNext;
+    linkSup		*plinkSup;
     brkTable		*pbrkTable;
     brkTable		*pbrkTableNext;
     chFilterPlugin      *pfilt;
@@ -555,6 +563,11 @@ void dbFreeBase(dbBase *pdbbase)
 	free((void *)pdrvSup->name);
 	free((void *)pdrvSup);
 	pdrvSup = pdrvSupNext;
+    }
+    while ((plinkSup = (linkSup *) ellGet(&pdbbase->linkList))) {
+        free(plinkSup->jlif_name);
+        free(plinkSup->name);
+        free(plinkSup);
     }
     ptext = (dbText *)ellFirst(&pdbbase->registrarList);
     while(ptext) {
@@ -1066,6 +1079,21 @@ long dbWriteDriverFP(DBBASE *pdbbase,FILE *fp)
 	fprintf(fp,"driver(%s)\n",pdrvSup->name);
     }
     return(0);
+}
+
+long dbWriteLinkFP(DBBASE *pdbbase, FILE *fp)
+{
+    linkSup *plinkSup;
+
+    if (!pdbbase) {
+	fprintf(stderr, "pdbbase not specified\n");
+	return -1;
+    }
+    for (plinkSup = (linkSup *) ellFirst(&pdbbase->linkList);
+        plinkSup; plinkSup = (linkSup *) ellNext(&plinkSup->node)) {
+	fprintf(fp, "link(%s,%s)\n", plinkSup->name, plinkSup->jlif_name);
+    }
+    return 0;
 }
 
 long dbWriteRegistrarFP(DBBASE *pdbbase,FILE *fp)
@@ -1920,6 +1948,9 @@ char * dbGetString(DBENTRY *pdbentry)
 		dbMsgCpy(pdbentry, "");
 	    }
 	    break;
+	case JSON_LINK:
+	    dbMsgCpy(pdbentry, plink->value.json.string);
+	    break;
         case PN_LINK:
             dbMsgPrint(pdbentry, "%s%s",
                    plink->value.pv_link.pvname ? plink->value.pv_link.pvname : "",
@@ -2014,6 +2045,9 @@ char * dbGetString(DBENTRY *pdbentry)
 		} else {
 		    dbMsgCpy(pdbentry, "");
 		}
+		break;
+	    case JSON_LINK:
+		dbMsgCpy(pdbentry, plink->value.json.string);
 		break;
 	    case PV_LINK:
 	    case CA_LINK:
@@ -2183,6 +2217,7 @@ long dbInitRecordLinks(dbRecordType *rtyp, struct dbCommon *prec)
          */
         case CONSTANT: plink->value.constantStr = NULL; break;
         case PV_LINK:  plink->value.pv_link.pvname = callocMustSucceed(1, 1, "init PV_LINK"); break;
+        case JSON_LINK: plink->value.json.string = pNullString; break;
         case VME_IO: plink->value.vmeio.parm = pNullString; break;
         case CAMAC_IO: plink->value.camacio.parm = pNullString; break;
         case AB_IO: plink->value.abio.parm = pNullString; break;
@@ -2249,6 +2284,12 @@ long dbParseLink(const char *str, short ftype, dbLinkInfo *pinfo)
     memcpy(pstr, str, len);
     pstr[len] = '\0';
 
+    /* Check for braces => JSON */
+    if (*str == '{' && str[len-1] == '}') {
+        pinfo->ltype = JSON_LINK;
+        return 0;
+    }
+
     /* Check for other HW link types */
     if (*pstr == '#') {
         int ret;
@@ -2311,6 +2352,13 @@ long dbParseLink(const char *str, short ftype, dbLinkInfo *pinfo)
         return 0;
     }
 
+    /* Link may be an array constant */
+    if (pstr[0] == '[' && pstr[len-1] == ']' &&
+        (strchr(pstr, ',') || strchr(pstr, '"'))) {
+        pinfo->ltype = CONSTANT;
+        return 0;
+    }
+
     pinfo->ltype = PV_LINK;
     pstr = strchr(pstr, ' '); /* find start of link modifiers (can't be seperated by tabs) */
     if (pstr) {
@@ -2350,16 +2398,18 @@ fail:
 long dbCanSetLink(DBLINK *plink, dbLinkInfo *pinfo, devSup *devsup)
 {
     /* consume allocated string pinfo->target on failure */
-
     int link_type = CONSTANT;
-    if(devsup)
+
+    if (devsup)
         link_type = devsup->link_type;
-    if(link_type==pinfo->ltype)
+    if (link_type == pinfo->ltype)
         return 0;
-    switch(pinfo->ltype) {
+
+    switch (pinfo->ltype) {
     case CONSTANT:
+    case JSON_LINK:
     case PV_LINK:
-        if(link_type==CONSTANT || link_type==PV_LINK)
+        if (link_type == CONSTANT || link_type == PV_LINK)
             return 0;
     default:
         free(pinfo->target);
@@ -2388,10 +2438,21 @@ void dbSetLinkPV(DBLINK *plink, dbLinkInfo *pinfo)
 }
 
 static
+void dbSetLinkJSON(DBLINK *plink, dbLinkInfo *pinfo)
+{
+    plink->type = JSON_LINK;
+    plink->value.json.string = pinfo->target;
+
+    pinfo->target = NULL;
+}
+
+static
 void dbSetLinkHW(DBLINK *plink, dbLinkInfo *pinfo)
 {
-
     switch(pinfo->ltype) {
+    case JSON_LINK:
+        plink->value.json.string = pinfo->target;
+        break;
     case INST_IO:
         plink->value.instio.string = pinfo->target;
         break;
@@ -2470,27 +2531,33 @@ long dbSetLink(DBLINK *plink, dbLinkInfo *pinfo, devSup *devsup)
     int ret = 0;
     int link_type = CONSTANT;
 
-    if(devsup)
+    if (devsup)
         link_type = devsup->link_type;
 
-    if(link_type==CONSTANT || link_type==PV_LINK) {
-        switch(pinfo->ltype) {
+    if (link_type == CONSTANT || link_type == PV_LINK) {
+        switch (pinfo->ltype) {
         case CONSTANT:
             dbFreeLinkContents(plink);
-            dbSetLinkConst(plink, pinfo); break;
+            dbSetLinkConst(plink, pinfo);
+            break;
         case PV_LINK:
             dbFreeLinkContents(plink);
-            dbSetLinkPV(plink, pinfo); break;
+            dbSetLinkPV(plink, pinfo);
+            break;
+        case JSON_LINK:
+            dbFreeLinkContents(plink);
+            dbSetLinkJSON(plink, pinfo);
+            break;
         default:
             errlogMessage("Warning: dbSetLink: forgot to test with dbCanSetLink() or logic error");
             goto fail; /* can't assign HW link */
         }
-
-    } else if(link_type==pinfo->ltype) {
+    }
+    else if (link_type == pinfo->ltype) {
         dbFreeLinkContents(plink);
         dbSetLinkHW(plink, pinfo);
-
-    } else
+    }
+    else
         goto fail;
 
     return ret;
@@ -2909,6 +2976,12 @@ char * dbGetRelatedField(DBENTRY *psave)
     return(rtnval);
 }
 
+linkSup* dbFindLinkSup(dbBase *pdbbase, const char *name) {
+    GPHENTRY *pgph = gphFind(pdbbase->pgpHash,name,&pdbbase->linkList);
+    if (!pgph) return NULL;
+    return (linkSup *) pgph->userPvt;
+}
+
 int  dbGetNLinks(DBENTRY *pdbentry)
 {
     dbRecordType	*precordType = pdbentry->precordType;
@@ -2959,67 +3032,6 @@ int  dbGetLinkType(DBENTRY *pdbentry)
 	}
     }
     return(-1);
-}
-
-long  dbCvtLinkToConstant(DBENTRY *pdbentry)
-{
-    dbFldDes	*pflddes;
-    DBLINK	*plink;
-
-    dbGetFieldAddress(pdbentry);
-    pflddes = pdbentry->pflddes;
-    if(!pflddes) return(-1);
-    plink = (DBLINK *)pdbentry->pfield;
-    if(!plink) return(-1);
-    switch (pflddes->field_type) {
-    case DBF_INLINK:
-    case DBF_OUTLINK:
-    case DBF_FWDLINK:
-	if(plink->type == CONSTANT) return(0);
-	if(plink->type != PV_LINK) return(S_dbLib_badLink);
-	free((void *)plink->value.pv_link.pvname);
-	plink->value.pv_link.pvname = NULL;
-	plink->type = CONSTANT;
-	if(pflddes->initial) {
-	    plink->value.constantStr =
-		dbCalloc(strlen(pflddes->initial)+1,sizeof(char));
-	    strcpy(plink->value.constantStr,pflddes->initial);
-	} else {
-	    plink->value.constantStr = NULL;
-	}
-	return(0);
-    default:
-	epicsPrintf("dbCvtLinkToConstant called for non link field\n");
-    }
-    return(S_dbLib_badLink);
-}
-
-long  dbCvtLinkToPvlink(DBENTRY *pdbentry)
-{
-    dbFldDes	*pflddes;
-    DBLINK	*plink;
-
-    dbGetFieldAddress(pdbentry);
-    pflddes = pdbentry->pflddes;
-    if(!pflddes) return(-1);
-    if(!pdbentry->precnode || !pdbentry->precnode->precord) return(-1);
-    plink = (DBLINK *)pdbentry->pfield;
-    if(!plink) return(-1);
-    switch (pflddes->field_type) {
-    case DBF_INLINK:
-    case DBF_OUTLINK:
-    case DBF_FWDLINK:
-	if(plink->type == PV_LINK) return(0);
-	if(plink->type != CONSTANT) return(S_dbLib_badLink);
-	free(plink->value.constantStr);
-	plink->type = PV_LINK;
-	plink->value.pv_link.pvlMask = 0;
-	plink->value.pv_link.pvname = 0;
-	return(0);
-    default:
-	epicsPrintf("dbCvtLinkToPvlink called for non link field\n");
-    }
-    return(S_dbLib_badLink);
 }
 
 void  dbDumpPath(DBBASE *pdbbase)
@@ -3260,6 +3272,15 @@ void  dbDumpDriver(DBBASE *pdbbase)
 	return;
     }
     dbWriteDriverFP(pdbbase,stdout);
+}
+
+void  dbDumpLink(DBBASE *pdbbase)
+{
+    if(!pdbbase) {
+	fprintf(stderr,"pdbbase not specified\n");
+	return;
+    }
+    dbWriteLinkFP(pdbbase,stdout);
 }
 
 void  dbDumpRegistrar(DBBASE *pdbbase)

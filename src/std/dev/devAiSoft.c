@@ -51,21 +51,9 @@ epicsExportAddress(dset, devAiSoft);
 
 static long init_record(aiRecord *prec)
 {
-    /* INP must be CONSTANT, PV_LINK, DB_LINK or CA_LINK*/
-    switch (prec->inp.type) {
-    case CONSTANT:
-        if (recGblInitConstantLink(&prec->inp, DBF_DOUBLE, &prec->val))
-            prec->udf = FALSE;
-        break;
-    case PV_LINK:
-    case DB_LINK:
-    case CA_LINK:
-        break;
-    default:
-        recGblRecordError(S_db_badField, (void *)prec,
-            "devAiSoft (init_record) Illegal INP field");
-        return S_db_badField;
-    }
+    if (recGblInitConstantLink(&prec->inp, DBF_DOUBLE, &prec->val))
+        prec->udf = FALSE;
+
     return 0;
 }
 
@@ -73,7 +61,7 @@ static long read_ai(aiRecord *prec)
 {
     double val;
 
-    if (prec->inp.type == CONSTANT)
+    if (dbLinkIsConstant(&prec->inp))
         return 2;
 
     if (!dbGetLink(&prec->inp, DBR_DOUBLE, &val, 0, 0)) {
@@ -87,7 +75,7 @@ static long read_ai(aiRecord *prec)
         prec->udf = FALSE;
         prec->dpvt = &devAiSoft;        /* Any non-zero value */
 
-        if (prec->tsel.type == CONSTANT &&
+        if (dbLinkIsConstant(&prec->tsel) &&
             prec->tse == epicsTimeEventDeviceTime)
             dbGetTimeStamp(&prec->inp, &prec->time);
     } else {

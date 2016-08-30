@@ -48,21 +48,9 @@ epicsExportAddress(dset, devLiSoft);
 
 static long init_record(longinRecord *prec)
 {
-    /* INP must be CONSTANT, PV_LINK, DB_LINK or CA_LINK*/
-    switch (prec->inp.type) {
-    case CONSTANT:
-        if (recGblInitConstantLink(&prec->inp, DBF_LONG, &prec->val))
-            prec->udf = FALSE;
-        break;
-    case PV_LINK:
-    case DB_LINK:
-    case CA_LINK:
-        break;
-    default:
-        recGblRecordError(S_db_badField, (void *)prec,
-            "devLiSoft (init_record) Illegal INP field");
-        return S_db_badField;
-    }
+    if (recGblInitConstantLink(&prec->inp, DBF_LONG, &prec->val))
+        prec->udf = FALSE;
+
     return 0;
 }
 
@@ -72,7 +60,7 @@ static long read_longin(longinRecord *prec)
 
     status = dbGetLink(&prec->inp, DBR_LONG, &prec->val, 0, 0);
     if (!status &&
-        prec->tsel.type == CONSTANT &&
+        dbLinkIsConstant(&prec->tsel) &&
         prec->tse == epicsTimeEventDeviceTime)
         dbGetTimeStamp(&prec->inp, &prec->time);
     return status;

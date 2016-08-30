@@ -1,0 +1,111 @@
+=head1 JSON Links
+
+JSON Links are an extensible mechanism for adding new kinds of database link,
+using JSON for the link address.
+The following link types are available in this release:
+
+=over
+
+=item * L<Constant|/"Constant Link const">
+
+=item * L<Database|/"Database Link db">
+
+=item * L<Channel Access|/"Channel Access Link ca">
+
+=item * L<Calc|/"Calculation Link calc">
+
+=back
+
+=head2 Using Links
+
+...
+must appear inside a pair of braces C< {} > expressed as a JSON
+(L<JavaScript Object Notation|http://www.json.org/>) object, which allows link
+parameters to be defined as needed.
+
+
+=head2 Link Type Reference
+
+=cut
+
+link(const, lnkConstIf)
+
+=head3 Constant Link C<"const">
+
+Constant links provide one or more values at link initalization time, but do not return
+any data when their C<getValue()> routine is called. Most record types support the use of
+constant links by calling C<recGblInitConstantLink()> at initialization, which results in
+the constant value being loaded into the target field at that time.
+
+=head4 Parameters
+
+A const link takes a parameter which may be an integer, double or string, or an array of
+those types. If an array contains both integers and double values the integers will be
+promoted to doubles. Mixing strings and numbers in an array will result in an error.
+
+=head4 Examples
+
+ {const: 3.14159265358979}
+ {const: "Pi"}
+ {const: [1, 2.718281828459, 3.14159265358979]}
+ {const: ["One", "e", "Pi"]}
+
+=cut
+
+#link(db, lnkDbIf)
+
+=head3 Database Link C<"db">
+
+...
+
+=head4 Parameters
+
+...
+
+=head4 Example
+
+ ...
+
+=cut
+
+#link(ca, lnkCaIf)
+
+=head3 Channel Access Link C<"ca">
+
+...
+
+=head4 Parameters
+
+...
+
+=over
+
+=item ...
+
+...
+
+=back
+
+...
+
+=head4 Example
+
+ ...
+
+=cut
+
+#link(calc, lnkCalcIf)
+
+=head3 Calculation Link C<"calc">
+
+...
+
+=head4 Parameters
+
+...
+
+=head4 Example
+
+ ...
+
+=cut

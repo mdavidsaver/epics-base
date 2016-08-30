@@ -48,30 +48,16 @@ epicsExportAddress(dset, devBiSoft);
 
 static long init_record(biRecord *prec)
 {
-    /* INP must be CONSTANT, PV_LINK, DB_LINK or CA_LINK*/
-    switch (prec->inp.type) {
-    case CONSTANT:
-        if (recGblInitConstantLink(&prec->inp, DBF_ENUM, &prec->val))
-            prec->udf = FALSE;
-        break;
-    case PV_LINK:
-    case DB_LINK:
-    case CA_LINK:
-        break;
-    default:
-        recGblRecordError(S_db_badField, (void *)prec,
-            "devBiSoft (init_record) Illegal INP field");
-        return S_db_badField;
-    }
+    if (recGblInitConstantLink(&prec->inp, DBF_ENUM, &prec->val))
+        prec->udf = FALSE;
     return 0;
 }
 
 static long read_bi(biRecord *prec)
 {
     if (!dbGetLink(&prec->inp, DBR_USHORT, &prec->val, 0, 0)) {
-        if (prec->inp.type != CONSTANT)
-            prec->udf = FALSE;
-        if (prec->tsel.type == CONSTANT &&
+        prec->udf = FALSE;
+        if (dbLinkIsConstant(&prec->tsel) &&
             prec->tse == epicsTimeEventDeviceTime)
             dbGetTimeStamp(&prec->inp, &prec->time);
     }

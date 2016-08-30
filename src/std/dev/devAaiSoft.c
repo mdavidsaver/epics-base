@@ -22,6 +22,7 @@
 #include "alarm.h"
 #include "dbDefs.h"
 #include "dbAccess.h"
+#include "dbConstLink.h"
 #include "recGbl.h"
 #include "devSup.h"
 #include "cantProceed.h"
@@ -52,19 +53,24 @@ epicsExportAddress(dset,devAaiSoft);
 
 static long init_record(aaiRecord *prec)
 {
-    /* INP must be a CONSTANT or a PV_LINK or a DB_LINK or a CA_LINK*/
-    switch (prec->inp.type) {
-    case CONSTANT:
-        prec->nord = 0;
-        break;
-    case PV_LINK:
-    case DB_LINK:
-    case CA_LINK:
-	break;
-    default :
-	recGblRecordError(S_db_badField, (void *)prec,
-	    "devAaiSoft (init_record) Illegal INP field");
-	return(S_db_badField);
+    if (prec->inp.type == CONSTANT) {
+        long nRequest = prec->nelm;
+        long status;
+
+        /* Allocate a buffer, record support hasn't done that yet */
+        if (!prec->bptr) {
+            prec->bptr = callocMustSucceed(nRequest, dbValueSize(prec->ftvl),
+                "devAaiSoft: buffer calloc failed");
+        }
+
+        /* This is pass 0 so link hasn't been initialized either */
+        dbConstInitLink(&prec->inp);
+
+        status = dbLoadLinkArray(&prec->inp, prec->ftvl, prec->bptr, &nRequest);
+        if (!status && nRequest > 0) {
+            prec->nord = nRequest;
+            prec->udf = FALSE;
+        }
     }
     return 0;
 }
@@ -72,16 +78,16 @@ static long init_record(aaiRecord *prec)
 static long read_aai(aaiRecord *prec)
 {
     long nRequest = prec->nelm;
+    long status = dbGetLink(prec->simm == menuYesNoYES ? &prec->siol :
+        &prec->inp, prec->ftvl, prec->bptr, 0, &nRequest);
 
-    dbGetLink(prec->simm == menuYesNoYES ? &prec->siol : &prec->inp,
-        prec->ftvl, prec->bptr, 0, &nRequest);
-    if (nRequest > 0) {
+    if (!status && nRequest > 0) {
         prec->nord = nRequest;
-        prec->udf=FALSE;
-        if (prec->tsel.type == CONSTANT &&
+        prec->udf = FALSE;
+
+        if (dbLinkIsConstant(&prec->tsel) &&
             prec->tse == epicsTimeEventDeviceTime)
             dbGetTimeStamp(&prec->inp, &prec->time);
     }
-
-    return 0;
+    return status;
 }
