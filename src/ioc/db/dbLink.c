@@ -79,7 +79,7 @@ void dbInitLink(struct link *plink, short dbfType)
     }
 
     if (plink->type == JSON_LINK) {
-        dbJLinkInit(plink, dbfType);
+        dbJLinkInit(plink);
         return;
     }
 
@@ -131,7 +131,7 @@ void dbAddLink(struct dbLocker *locker, struct link *plink, short dbfType,
          * FIXME: Can't create DB links as dbJLink types yet,
          * dbLock.c doesn't have any way to find/track them.
          */
-        dbJLinkInit(plink, dbfType);
+        dbJLinkInit(plink);
         return;
     }
 
@@ -202,6 +202,17 @@ long dbLoadLink(struct link *plink, short dbrType, void *pbuffer)
 
     if (plset && plset->loadScalar)
         return plset->loadScalar(plink, dbrType, pbuffer);
+
+    return S_db_noLSET;
+}
+
+long dbLoadLinkLS(struct link *plink, char *pbuffer, epicsUInt32 size,
+    epicsUInt32 *plen)
+{
+    lset *plset = plink->lset;
+
+    if (plset && plset->loadLS)
+        return plset->loadLS(plink, pbuffer, size, plen);
 
     return S_db_noLSET;
 }
@@ -399,20 +410,6 @@ void dbScanFwdLink(struct link *plink)
 }
 
 /* Helper functions for long string support */
-
-long dbLoadLinkLS(struct link *plink, char *pbuffer, epicsUInt32 size,
-    epicsUInt32 *plen)
-{
-    if (plink->type == CONSTANT &&
-        plink->value.constantStr) {
-        strncpy(pbuffer, plink->value.constantStr, --size);
-        pbuffer[size] = 0;
-        *plen = (epicsUInt32) strlen(pbuffer) + 1;
-        return 0;
-    }
-
-    return S_db_noLSET;
-}
 
 long dbGetLinkLS(struct link *plink, char *pbuffer, epicsUInt32 size,
     epicsUInt32 *plen)
