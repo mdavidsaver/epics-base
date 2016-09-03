@@ -27,7 +27,7 @@ typedef enum {
 typedef enum {
     jlif_key_stop = jlif_stop,
     jlif_key_continue = jlif_continue,
-    jlif_key_embed_link
+    jlif_key_child_link
 } jlif_key_result;
 
 struct link;
@@ -44,7 +44,6 @@ typedef struct jlif {
     const char *name;
     jlink* (*alloc_jlink)(short dbfType);
     void (*free_jlink)(jlink *);
-    jlif_result (*start_parse)(jlink *);
     jlif_result (*parse_null)(jlink *);
     jlif_result (*parse_boolean)(jlink *, int val);
     jlif_result (*parse_integer)(jlink *, long num);
@@ -55,14 +54,16 @@ typedef struct jlif {
     jlif_result (*parse_end_map)(jlink *);
     jlif_result (*parse_start_array)(jlink *);
     jlif_result (*parse_end_array)(jlink *);
-    jlif_result (*end_parse)(jlink *);
-    struct lset* (*get_lset)(const jlink *, struct link *);
+    void (*end_child)(jlink *parent, jlink *child);
+    struct lset* (*get_lset)(const jlink *);
     void (*report)(const jlink *);
 } jlif;
 
 epicsShareFunc long dbJLinkParse(const char *json, size_t len, short dbfType,
     jlink **ppjlink);
 epicsShareFunc long dbJLinkInit(struct link *plink);
+
+epicsShareFunc void dbJLinkFree(jlink *);
 
 #ifdef __cplusplus
 }

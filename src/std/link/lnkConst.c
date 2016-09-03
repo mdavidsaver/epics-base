@@ -13,6 +13,7 @@
 #include "dbDefs.h"
 #include "errlog.h"
 #include "epicsAssert.h"
+#include "epicsString.h"
 #include "epicsTypes.h"
 #include "dbAccessDefs.h"
 #include "dbConvertFast.h"
@@ -200,45 +201,29 @@ static jlif_result lnkConst_string(jlink *pjlink, const char *val, size_t len) {
         printf("lnkConst_string(const@%p, \"%.*s\")\n", clink, (int) len, val);
 
     switch (clink->type) {
-        char *buf, **vec;
+        char **vec;
         int nElems;
 
     case s0:
-        buf = malloc(len + 1);
-        if (!buf)
-            return jlif_stop;
-
-        strncpy(buf, val, len);
-        buf[len] = '\0';
-
         clink->nElems = 1;
         clink->type = sc40;
-        clink->value.scalar_string = buf;
+        clink->value.scalar_string = epicsStrnDup(val, len);
         break;
 
     case a0:
         clink->type = ac40;
         /* fall thorough */
     case ac40:
-        if (len > MAX_STRING_SIZE)
-            len = MAX_STRING_SIZE;
-
-        buf = malloc(len + 1);
-        if (!buf)
-            return jlif_stop;
-
-        strncpy(buf, val, len);
-        buf[len] = '\0';
-
         nElems = clink->nElems + 1;
 
         vec = realloc(clink->value.pmem, nElems * sizeof(char *));
-        if (!vec) {
-            free(buf);
+        if (!vec)
             break;
-        }
 
-        vec[clink->nElems++] = buf;
+        if (len >= MAX_STRING_SIZE)
+            len = MAX_STRING_SIZE - 1;
+
+        vec[clink->nElems++] = epicsStrnDup(val, len);
         clink->value.pstrings = vec;
         break;
 
@@ -275,9 +260,9 @@ static jlif_result lnkConst_end_array(jlink *pjlink) {
     return jlif_continue;
 }
 
-static struct lset* lnkConst_get_lset(const jlink *pjlink, struct link *plink) {
+static struct lset* lnkConst_get_lset(const jlink *pjlink) {
     IFDEBUG(10)
-        printf("lnkConst_get_lset(const@%p, %p)\n", pjlink, plink);
+        printf("lnkConst_get_lset(const@%p)\n", pjlink);
 
     return &lnkConst_lset;
 }
@@ -466,7 +451,8 @@ static long lnkConst_getValue(struct link *plink, short dbrType, void *pbuffer,
 
 static lset lnkConst_lset = {
     1, 0, /* Constant, not Volatile */
-    NULL, lnkConst_loadScalar, lnkConst_loadLS, lnkConst_loadArray, NULL,
+    NULL, NULL,
+    lnkConst_loadScalar, lnkConst_loadLS, lnkConst_loadArray, NULL,
     NULL, lnkConst_getNelements, lnkConst_getValue,
     NULL, NULL, NULL,
     NULL, NULL,
@@ -476,7 +462,7 @@ static lset lnkConst_lset = {
 };
 
 static jlif lnkConstIf = {
-    "const", lnkConst_alloc, lnkConst_free, NULL,
+    "const", lnkConst_alloc, lnkConst_free,
     NULL, lnkConst_boolean, lnkConst_integer, lnkConst_double, lnkConst_string,
     NULL, NULL, NULL, lnkConst_start_array, lnkConst_end_array,
     NULL, lnkConst_get_lset, lnkConst_report
