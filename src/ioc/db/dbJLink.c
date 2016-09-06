@@ -10,6 +10,8 @@
 #include <string.h>
 
 #include "epicsAssert.h"
+#include "dbmf.h"
+#include "dbStaticLib.h"
 #include "errlog.h"
 #include "yajl_alloc.h"
 #include "yajl_parse.h"
@@ -19,6 +21,7 @@
 #include "dbCommon.h"
 #include "dbLink.h"
 #include "dbJLink.h"
+#include "dbLock.h"
 #include "dbStaticLib.h"
 #include "link.h"
 
@@ -40,22 +43,19 @@ typedef struct parseContext {
     jlink *product;
     short dbfType;
     short jsonDepth;
-    short linkDepth;
     unsigned key_is_link:1;
 } parseContext;
 
 #define CALL_OR_STOP(routine) !(routine) ? jlif_stop : (routine)
 
-void dbJLinkFree(jlink *pjlink) {
-    if (pjlink)
-        pjlink->pif->free_jlink(pjlink);
-}
-
 static int dbjl_return(parseContext *parser, jlif_result result) {
     jlink *pjlink = parser->pjlink;
 
-    IFDEBUG(10)
-        printf("dbjl_return(%s@%p, %d)\n", pjlink->pif->name, pjlink, result);
+    IFDEBUG(10) {
+        printf("dbjl_return(%s@%p, %d)\t", pjlink->pif->name, pjlink, result);
+        printf("    jsonDepth=%d, parseDepth=%d, key_is_link=%d\n",
+            parser->jsonDepth, pjlink->parseDepth, parser->key_is_link);
+    }
 
     if (result == jlif_stop && pjlink) {
         jlink *parent;
@@ -75,12 +75,12 @@ static int dbjl_value(parseContext *parser, jlif_result result) {
     jlink *parent;
 
     IFDEBUG(10) {
-        printf("dbjl_value(%s@%p, %d)\n", pjlink->pif->name, pjlink, result);
-        printf("    jsonDepth=%d, linkDepth=%d, key_is_link=%d\n",
-            parser->jsonDepth, parser->linkDepth, parser->key_is_link);
+        printf("dbjl_value(%s@%p, %d)\t", pjlink->pif->name, pjlink, result);
+        printf("    jsonDepth=%d, parseDepth=%d, key_is_link=%d\n",
+            parser->jsonDepth, pjlink->parseDepth, parser->key_is_link);
     }
 
-    if (result == jlif_stop || parser->linkDepth > 0)
+    if (result == jlif_stop || pjlink->parseDepth > 0)
         return dbjl_return(parser, result);
 
     parent = pjlink->parent;
@@ -160,13 +160,13 @@ static int dbjl_string(void *ctx, const unsigned char *val, unsigned len) {
 static int dbjl_start_map(void *ctx) {
     parseContext *parser = (parseContext *) ctx;
     jlink *pjlink = parser->pjlink;
-    jlif_key_result result;
+    int result;
 
     if (!pjlink) {
         IFDEBUG(10) {
-            printf("dbjl_start_map(NULL)\n");
-            printf("    jsonDepth=%d, linkDepth=%d, key_is_link=%d\n",
-                parser->jsonDepth, parser->linkDepth, parser->key_is_link);
+            printf("dbjl_start_map(NULL)\t");
+            printf("    jsonDepth=%d, parseDepth=00, key_is_link=%d\n",
+                parser->jsonDepth, parser->key_is_link);
         }
 
         assert(parser->jsonDepth == 0);
@@ -176,12 +176,12 @@ static int dbjl_start_map(void *ctx) {
     }
 
     IFDEBUG(10) {
-        printf("dbjl_start_map(%s@%p)\n", pjlink->pif->name, pjlink);
-        printf("    jsonDepth=%d, linkDepth=%d, key_is_link=%d\n",
-            parser->jsonDepth, parser->linkDepth, parser->key_is_link);
+        printf("dbjl_start_map(%s@%p)\t", pjlink->pif->name, pjlink);
+        printf("    jsonDepth=%d, parseDepth=%d, key_is_link=%d\n",
+            parser->jsonDepth, pjlink->parseDepth, parser->key_is_link);
     }
 
-    parser->linkDepth++;
+    pjlink->parseDepth++;
     parser->jsonDepth++;
 
     result = CALL_OR_STOP(pjlink->pif->parse_start_map)(pjlink);
@@ -199,8 +199,7 @@ static int dbjl_start_map(void *ctx) {
 static int dbjl_map_key(void *ctx, const unsigned char *key, unsigned len) {
     parseContext *parser = (parseContext *) ctx;
     jlink *pjlink = parser->pjlink;
-    char link_name[MAX_LINK_NAME + 1];
-    size_t lnlen = len;
+    char *link_name;
     linkSup *linkSup;
     jlif *pjlif;
 
@@ -212,33 +211,31 @@ static int dbjl_map_key(void *ctx, const unsigned char *key, unsigned len) {
         }
 
         IFDEBUG(10) {
-            printf("dbjl_map_key(%s@%p, \"%.*s\")\n",
+            printf("dbjl_map_key(%s@%p, \"%.*s\")\t",
                 pjlink->pif->name, pjlink, len, key);
-            printf("    jsonDepth=%d, linkDepth=%d, key_is_link=%d\n",
-                parser->jsonDepth, parser->linkDepth, parser->key_is_link);
+            printf("    jsonDepth=%d, parseDepth=%d, key_is_link=%d\n",
+                parser->jsonDepth, pjlink->parseDepth, parser->key_is_link);
         }
 
-        assert(parser->linkDepth > 0);
+        assert(pjlink->parseDepth > 0);
         return dbjl_return(parser,
             CALL_OR_STOP(pjlink->pif->parse_map_key)(pjlink,
                 (const char *) key, len));
     }
 
     IFDEBUG(10) {
-        printf("dbjl_map_key(NULL, \"%.*s\")\n", len, key);
-        printf("    jsonDepth=%d, linkDepth=%d, key_is_link=%d\n",
-            parser->jsonDepth, parser->linkDepth, parser->key_is_link);
+        printf("dbjl_map_key(NULL, \"%.*s\")\t", len, key);
+        printf("    jsonDepth=%d, parseDepth=00, key_is_link=%d\n",
+            parser->jsonDepth, parser->key_is_link);
     }
 
-    if (lnlen > MAX_LINK_NAME)
-        lnlen = MAX_LINK_NAME;
-    strncpy(link_name, (const char *) key, lnlen);
-    link_name[lnlen] = '\0';
+    link_name = dbmfStrndup((const char *) key, len);
 
     linkSup = dbFindLinkSup(pdbbase, link_name);
     if (!linkSup) {
         errlogPrintf("dbJLinkInit: Link type '%s' not found\n",
             link_name);
+        dbmfFree(link_name);
         return dbjl_return(parser, jlif_stop);
     }
 
@@ -246,8 +243,11 @@ static int dbjl_map_key(void *ctx, const unsigned char *key, unsigned len) {
     if (!pjlif) {
         errlogPrintf("dbJLinkInit: Support for Link type '%s' not loaded\n",
             link_name);
+        dbmfFree(link_name);
         return dbjl_return(parser, jlif_stop);
     }
+
+    dbmfFree(link_name);
 
     pjlink = pjlif->alloc_jlink(parser->dbfType);
     if (!pjlink) {
@@ -275,15 +275,16 @@ static int dbjl_end_map(void *ctx) {
     jlif_result result;
 
     IFDEBUG(10) {
-        printf("dbjl_end_map(%s@%p)\n",
+        printf("dbjl_end_map(%s@%p)\t",
             pjlink ? pjlink->pif->name : "NULL", pjlink);
-        printf("    jsonDepth=%d, linkDepth=%d, key_is_link=%d\n",
-            parser->jsonDepth, parser->linkDepth, parser->key_is_link);
+        printf("    jsonDepth=%d, parseDepth=%d, key_is_link=%d\n",
+            parser->jsonDepth, pjlink ? pjlink->parseDepth : 0,
+            parser->key_is_link);
     }
 
     parser->jsonDepth--;
-    if (parser->linkDepth > 0) {
-        parser->linkDepth--;
+    if (pjlink) {
+        pjlink->parseDepth--;
 
         result = dbjl_value(parser,
             CALL_OR_STOP(pjlink->pif->parse_end_map)(pjlink));
@@ -299,13 +300,13 @@ static int dbjl_start_array(void *ctx) {
     jlink *pjlink = parser->pjlink;
 
     IFDEBUG(10) {
-        printf("dbjl_start_array(%s@%p)\n", pjlink->pif->name, pjlink);
-        printf("    jsonDepth=%d, linkDepth=%d, key_is_link=%d\n",
-            parser->jsonDepth, parser->linkDepth, parser->key_is_link);
+        printf("dbjl_start_array(%s@%p)\t", pjlink->pif->name, pjlink);
+        printf("    jsonDepth=%d, parseDepth=%d, key_is_link=%d\n",
+            parser->jsonDepth, pjlink->parseDepth, parser->key_is_link);
     }
 
     assert(pjlink);
-    parser->linkDepth++;
+    pjlink->parseDepth++;
     parser->jsonDepth++;
 
     return dbjl_return(parser,
@@ -317,13 +318,13 @@ static int dbjl_end_array(void *ctx) {
     jlink *pjlink = parser->pjlink;
 
     IFDEBUG(10) {
-        printf("dbjl_end_array(%s@%p)\n", pjlink->pif->name, pjlink);
-        printf("    jsonDepth=%d, linkDepth=%d, key_is_link=%d\n",
-            parser->jsonDepth, parser->linkDepth, parser->key_is_link);
+        printf("dbjl_end_array(%s@%p)\t", pjlink->pif->name, pjlink);
+        printf("    jsonDepth=%d, parseDepth=%d, key_is_link=%d\n",
+            parser->jsonDepth, pjlink->parseDepth, parser->key_is_link);
     }
 
     assert(pjlink);
-    parser->linkDepth--;
+    pjlink->parseDepth--;
     parser->jsonDepth--;
 
     return dbjl_value(parser,
@@ -356,12 +357,11 @@ long dbJLinkParse(const char *json, size_t jlen, short dbfType,
     parser->product = NULL;
     parser->dbfType = dbfType;
     parser->jsonDepth = 0;
-    parser->linkDepth = 0;
     parser->key_is_link = 0;
 
     IFDEBUG(10)
-        printf("dbJLinkInit: jsonDepth=%d, linkDepth=%d, key_is_link=%d\n",
-            parser->jsonDepth, parser->linkDepth, parser->key_is_link);
+        printf("dbJLinkInit: jsonDepth=%d, key_is_link=%d\n",
+            parser->jsonDepth, parser->key_is_link);
 
     yajl_set_default_alloc_funcs(&dbjl_allocs);
     yh = yajl_alloc(&dbjl_callbacks, &dbjl_config, &dbjl_allocs, parser);
@@ -406,4 +406,135 @@ long dbJLinkInit(struct link *plink)
 
     dbLinkOpen(plink);
     return 0;
+}
+
+void dbJLinkFree(jlink *pjlink)
+{
+    if (pjlink)
+        pjlink->pif->free_jlink(pjlink);
+}
+
+void dbJLinkReport(jlink *pjlink, int level, int indent) {
+    if (pjlink && pjlink->pif->report)
+        pjlink->pif->report(pjlink, level, indent);
+}
+
+long dbJLinkMapChildren(struct link *plink, jlink_map_fn rtn, void *ctx)
+{
+    jlink *pjlink;
+    long status;
+
+    if (!plink || plink->type != JSON_LINK)
+        return 0;
+
+    pjlink = plink->value.json.jlink;
+    if (!pjlink)
+        return 0;
+
+    status = rtn(pjlink, ctx);
+    if (!status && pjlink->pif->map_children)
+        status = pjlink->pif->map_children(pjlink, rtn, ctx);
+
+    return status;
+}
+
+long dbjlr(const char *recname, int level)
+{
+    DBENTRY dbentry;
+    DBENTRY * const pdbentry = &dbentry;
+    long status;
+
+    if (!recname || recname[0] == '\0' || !strcmp(recname, "*")) {
+        recname = NULL;
+        printf("JSON links in all records\n\n");
+    }
+    else
+        printf("JSON links in record '%s'\n\n", recname);
+
+    dbInitEntry(pdbbase, pdbentry);
+    for (status = dbFirstRecordType(pdbentry);
+         status == 0;
+         status = dbNextRecordType(pdbentry)) {
+        for (status = dbFirstRecord(pdbentry);
+             status == 0;
+             status = dbNextRecord(pdbentry)) {
+            dbRecordType *pdbRecordType = pdbentry->precordType;
+            dbCommon *precord = pdbentry->precnode->precord;
+            char *prec = (char *) precord;
+            int i;
+
+            if (recname && strcmp(recname, dbGetRecordName(pdbentry)))
+                continue;
+            if (dbIsAlias(pdbentry))
+                continue;
+
+            printf("  %s record '%s':\n", pdbRecordType->name, precord->name);
+
+            dbScanLock(precord);
+            for (i = 0; i < pdbRecordType->no_links; i++) {
+                int idx = pdbRecordType->link_ind[i];
+                dbFldDes *pdbFldDes = pdbRecordType->papFldDes[idx];
+                DBLINK *plink = (DBLINK *) (prec + pdbFldDes->offset);
+
+                if (plink->type != JSON_LINK)
+                    continue;
+                if (!dbLinkIsDefined(plink))
+                    continue;
+
+                printf("    Link field '%s':\n", pdbFldDes->name);
+                dbJLinkReport(plink->value.json.jlink, level, 6);
+            }
+            dbScanUnlock(precord);
+            if (recname)
+                goto done;
+        }
+    }
+done:
+    return 0;
+}
+
+long dbJLinkMapAll(char *recname, jlink_map_fn rtn, void *ctx)
+{
+    DBENTRY dbentry;
+    DBENTRY * const pdbentry = &dbentry;
+    long status;
+
+    if (recname && (recname[0] = '\0' || !strcmp(recname, "*")))
+        recname = NULL;
+
+    dbInitEntry(pdbbase, pdbentry);
+    for (status = dbFirstRecordType(pdbentry);
+         status == 0;
+         status = dbNextRecordType(pdbentry)) {
+        for (status = dbFirstRecord(pdbentry);
+             status == 0;
+             status = dbNextRecord(pdbentry)) {
+            dbRecordType *pdbRecordType = pdbentry->precordType;
+            dbCommon *precord = pdbentry->precnode->precord;
+            char *prec = (char *) precord;
+            int i;
+
+            if (recname && strcmp(recname, dbGetRecordName(pdbentry)))
+                continue;
+            if (dbIsAlias(pdbentry))
+                continue;
+
+            dbScanLock(precord);
+            for (i = 0; i < pdbRecordType->no_links; i++) {
+                int idx = pdbRecordType->link_ind[i];
+                dbFldDes *pdbFldDes = pdbRecordType->papFldDes[idx];
+                DBLINK *plink = (DBLINK *) (prec + pdbFldDes->offset);
+
+                status = dbJLinkMapChildren(plink, rtn, ctx);
+                if (status)
+                    goto unlock;
+            }
+unlock:
+            dbScanUnlock(precord);
+            if (status || recname)
+                goto done;
+        }
+    }
+done:
+    return status;
 }
