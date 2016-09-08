@@ -2249,7 +2249,6 @@ long dbInitRecordLinks(dbRecordType *rtyp, struct dbCommon *prec)
     return 0;
 }
 
-static
 void dbFreeLinkInfo(dbLinkInfo *pinfo)
 {
     if (pinfo->ltype == JSON_LINK) {
@@ -2296,12 +2295,11 @@ long dbParseLink(const char *str, short ftype, dbLinkInfo *pinfo)
 
     /* Check for braces => JSON */
     if (*str == '{' && str[len-1] == '}') {
-        long status = dbJLinkParse(str, len, ftype, &pinfo->jlink);
+        if (dbJLinkParse(str, len, ftype, &pinfo->jlink))
+            goto fail;
 
-        if (!status)
-            pinfo->ltype = JSON_LINK;
-
-        return status;
+        pinfo->ltype = JSON_LINK;
+        return 0;
     }
 
     /* Check for other HW link types */
