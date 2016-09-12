@@ -11,12 +11,11 @@
 
 #include "epicsAssert.h"
 #include "dbmf.h"
-#include "dbStaticLib.h"
 #include "errlog.h"
 #include "yajl_alloc.h"
 #include "yajl_parse.h"
 
-#define epicsExportSharedSybols
+#define epicsExportSharedSymbols
 #include "dbAccessDefs.h"
 #include "dbCommon.h"
 #include "dbLink.h"
@@ -255,6 +254,8 @@ static int dbjl_map_key(void *ctx, const unsigned char *key, unsigned len) {
         return dbjl_return(parser, jlif_stop);
     }
     pjlink->pif = pjlif;
+    pjlink->parent = NULL;
+    pjlink->parseDepth = 0;
 
     if (parser->pjlink) {
         /* We're starting a child link, save its parent */
