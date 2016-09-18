@@ -370,8 +370,13 @@ epicsShareFunc int dbIsDefaultValue(DBENTRY *pdbentry)
 
 long dbPutStringNum(DBENTRY *pdbentry, const char *pstring)
 {
+    long status;
     dbFldDes *pflddes = pdbentry->pflddes;
     void *pfield = pdbentry->pfield;
+    union {
+        epicsUInt64 u64;
+        epicsInt64 i64;
+    } ival;
 
     if (!pfield)
         return S_dbLib_fieldNotFound;
@@ -382,29 +387,38 @@ long dbPutStringNum(DBENTRY *pdbentry, const char *pstring)
 
     switch (pflddes->field_type) {
     case DBF_CHAR:
-        return epicsParseInt8(pstring, pfield, 0, NULL);
+    case DBF_SHORT:
+    case DBF_LONG:
+    case DBF_INT64:
+        status = epicsParseInt64(pstring, &ival.i64, 0, NULL);
+        if(!status) {
+            switch (pflddes->field_type) {
+            case DBF_CHAR:  *(epicsInt8 *)pfield = (epicsInt8) ival.i64; break;
+            case DBF_SHORT: *(epicsInt16*)pfield = (epicsInt16)ival.i64; break;
+            case DBF_LONG:  *(epicsInt32*)pfield = (epicsInt32)ival.i64; break;
+            case DBF_INT64: *(epicsInt64*)pfield = (epicsInt64)ival.i64; break;
+            default: break;
+            }
+        }
+        return status;
 
     case DBF_UCHAR:
-        return epicsParseUInt8(pstring, pfield, 0, NULL);
-
-    case DBF_SHORT:
-        return epicsParseInt16(pstring, pfield, 0, NULL);
-
-    case DBF_USHORT:
     case DBF_ENUM:
-        return epicsParseUInt16(pstring, pfield, 0, NULL);
-
-    case DBF_LONG:
-        return epicsParseInt32(pstring, pfield, 0, NULL);
-
+    case DBF_USHORT:
     case DBF_ULONG:
-        return epicsParseUInt32(pstring, pfield, 0, NULL);
-
-    case DBF_INT64:
-        return epicsParseInt64(pstring, pfield, 0, NULL);
-
     case DBF_UINT64:
-        return epicsParseUInt64(pstring, pfield, 0, NULL);
+        status = epicsParseUInt64(pstring, &ival.u64, 0, NULL);
+        if(!status) {
+            switch (pflddes->field_type) {
+            case DBF_UCHAR:  *(epicsUInt8 *)pfield = (epicsInt8) ival.u64; break;
+            case DBF_ENUM:
+            case DBF_USHORT: *(epicsUInt16*)pfield = (epicsInt16)ival.u64; break;
+            case DBF_ULONG:  *(epicsUInt32*)pfield = (epicsInt32)ival.u64; break;
+            case DBF_UINT64: *(epicsUInt64*)pfield = (epicsInt64)ival.u64; break;
+            default: break;
+            }
+        }
+        return status;
 
     case DBF_FLOAT:
         return epicsParseFloat32(pstring, pfield, NULL);
