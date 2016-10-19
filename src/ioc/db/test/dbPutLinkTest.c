@@ -24,8 +24,10 @@
 #include "osiFileName.h"
 #include "dbmf.h"
 #include "errlog.h"
+#include <epicsAtomic.h>
 
 #include "xRecord.h"
+#include "jlinkz.h"
 
 #include "testMain.h"
 
@@ -520,6 +522,50 @@ static void testLinkFail(void)
     testdbCleanup();
 }
 
+static
+void testNumZ(int expect)
+{
+    int numz = epicsAtomicGetIntT(&numzalloc);
+    testOk(numz==expect, "numzalloc==%d (%d)", expect, numz);
+}
+
+static
+void testJLink(void)
+{
+    testDiag("Test json link setup/retarget");
+
+    testNumZ(0);
+
+    testDiag("Link parsing failures");
+    testdbPrepare();
+
+    testdbReadDatabase("dbTestIoc.dbd", NULL, NULL);
+
+    dbTestIoc_registerRecordDeviceDriver(pdbbase);
+
+    testdbReadDatabase("dbPutLinkTest.db", NULL, NULL);
+
+    testNumZ(2);
+
+    eltc(0);
+    testIocInitOk();
+    eltc(1);
+
+    testNumZ(2);
+
+    testdbPutFieldOk("j1.PROC", DBF_LONG, 1);
+    testdbPutFieldOk("j2.PROC", DBF_LONG, 1);
+    testdbPutFieldOk("j3.PROC", DBF_LONG, 1);
+
+    testNumZ(2);
+
+    testIocShutdownOk();
+
+    testNumZ(0);
+
+    testdbCleanup();
+}
+
 MAIN(dbPutLinkTest)
 {
     testPlan(269);
@@ -530,5 +576,6 @@ MAIN(dbPutLinkTest)
     testHWMod();
     testLinkInitFail();
     testLinkFail();
+    testJLink();
     return testDone();
 }

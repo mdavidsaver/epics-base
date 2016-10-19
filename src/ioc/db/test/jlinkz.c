@@ -14,19 +14,15 @@
 #include <dbJLink.h>
 #include <dbDefs.h>
 #include <dbConvertFast.h>
-#include <epicsAtomic.h>
 #include <epicsMutex.h>
+#include <epicsAtomic.h>
 #include <epicsUnitTest.h>
 
-int numzalloc;
+#define epicsExportSharedSymbols
 
-typedef struct {
-    jlink base;
-    epicsMutexId lock;
-    unsigned isset:1;
-    unsigned isopen:1;
-    epicsInt32 value;
-} zpriv;
+#include "jlinkz.h"
+
+int numzalloc;
 
 
 static
@@ -53,6 +49,7 @@ void z_remove(struct dbLocker *locker, struct link *plink)
 
     epicsAtomicDecrIntT(&numzalloc);
 
+    epicsMutexDestroy(priv->lock);
     free(priv);
     plink->value.json.jlink = NULL; /* paranoia */
 }
@@ -153,11 +150,18 @@ jlink* z_alloc(short dbfType)
 {
     zpriv *priv;
     priv = calloc(1, sizeof(*priv));
-    if(!priv) return NULL;
+    if(!priv) goto fail;
+
+    priv->lock = epicsMutexCreate();
+    if(!priv->lock) goto fail;
 
     epicsAtomicIncrIntT(&numzalloc);
 
     return &priv->base;
+fail:
+    if(priv && priv->lock) epicsMutexDestroy(priv->lock);
+    free(priv);
+    return NULL;
 }
 
 static
@@ -170,6 +174,7 @@ void z_free(jlink *pj)
 
     epicsAtomicDecrIntT(&numzalloc);
 
+    epicsMutexDestroy(priv->lock);
     free(priv);
 }
 
