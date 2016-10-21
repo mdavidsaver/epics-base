@@ -544,20 +544,40 @@ void testJLink(void)
     dbTestIoc_registerRecordDeviceDriver(pdbbase);
 
     testdbReadDatabase("dbPutLinkTest.db", NULL, NULL);
+    testdbReadDatabase("dbPutLinkTestJ.db", NULL, NULL);
 
-    testNumZ(2);
+    testNumZ(0);
 
     eltc(0);
     testIocInitOk();
     eltc(1);
 
-    testNumZ(2);
+    testNumZ(3);
 
     testdbPutFieldOk("j1.PROC", DBF_LONG, 1);
     testdbPutFieldOk("j2.PROC", DBF_LONG, 1);
     testdbPutFieldOk("j3.PROC", DBF_LONG, 1);
 
-    testNumZ(2);
+    testdbGetFieldEqual("j1.INP", DBF_STRING, "{\"z\":{\"good\":1}}");
+    testdbGetFieldEqual("j1.VAL", DBF_LONG, 1);
+    testdbGetFieldEqual("j2.VAL", DBF_LONG, 2);
+    testdbGetFieldEqual("j3.VAL", DBF_LONG, 3);
+
+    testNumZ(3);
+
+    testdbPutFieldOk("j1.INP", DBF_STRING, "{\"z\":{\"good\":4}}");
+    testdbPutFieldOk("j1.PROC", DBF_LONG, 1);
+    testdbGetFieldEqual("j1.VAL", DBF_LONG, 4);
+
+    testNumZ(3);
+
+    testdbPutFieldFail(S_dbLib_badField, "j1.INP", DBF_STRING, "{\"z\":{\"fail\":5}}");
+    testdbPutFieldOk("j1.PROC", DBF_LONG, 1);
+    testdbGetFieldEqual("j1.VAL", DBF_LONG, 4);
+    /* put failure in parsing stage doesn't modify link */
+    testdbGetFieldEqual("j1.INP", DBF_STRING, "{\"z\":{\"good\":4}}");
+
+    testNumZ(3);
 
     testIocShutdownOk();
 
@@ -568,7 +588,7 @@ void testJLink(void)
 
 MAIN(dbPutLinkTest)
 {
-    testPlan(269);
+    testPlan(290);
     testLinkParse();
     testLinkFailParse();
     testCADBSet();

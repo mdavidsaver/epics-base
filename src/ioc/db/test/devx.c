@@ -150,8 +150,7 @@ static long xsoft_read(xRecord *prec)
 {
     if(prec->inp.type==CONSTANT)
         return 0;
-    dbGetLink(&prec->inp, DBR_DOUBLE, &prec->val, NULL, NULL);
-    return 0;
+    return dbGetLink(&prec->inp, DBF_LONG, &prec->val, NULL, NULL);
 }
 
 static struct xdset devxSoft = {

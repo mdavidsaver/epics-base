@@ -33,6 +33,7 @@ void z_open(struct link *plink)
     if(priv->isopen)
         testDiag("lsetZ re-open");
     priv->isopen = 1;
+    testDiag("Open jlinkz %p", priv);
 }
 
 static
@@ -46,6 +47,8 @@ void z_remove(struct dbLocker *locker, struct link *plink)
         testDiag("lsetZ remove without open");
 
     epicsMutexUnlock(priv->lock);
+
+    testDiag("Remove/free jlinkz %p", priv);
 
     epicsAtomicDecrIntT(&numzalloc);
 
@@ -157,6 +160,8 @@ jlink* z_alloc(short dbfType)
 
     epicsAtomicIncrIntT(&numzalloc);
 
+    testDiag("Alloc jlinkz %p", priv);
+
     return &priv->base;
 fail:
     if(priv && priv->lock) epicsMutexDestroy(priv->lock);
@@ -170,7 +175,9 @@ void z_free(jlink *pj)
     zpriv *priv = CONTAINER(pj, zpriv, base);
 
     if(priv->isopen)
-        testDiag("lsetZ jlink free after open()\n");
+        testDiag("lsetZ jlink free after open()");
+
+    testDiag("Free jlinkz %p", priv);
 
     epicsAtomicDecrIntT(&numzalloc);
 
@@ -198,8 +205,14 @@ jlif_key_result z_start(jlink *pj)
 static
 jlif_result z_key(jlink *pj, const char *key, size_t len)
 {
-    if(strcmp(key,"fail")==0) return jlif_stop;
-    else                      return jlif_continue;
+    zpriv *priv = CONTAINER(pj, zpriv, base);
+
+    if(len==4 && strncmp(key,"fail", len)==0) {
+        testDiag("Found fail key jlinkz %p", priv);
+        return jlif_stop;
+    } else {
+        return jlif_continue;
+    }
 }
 
 static
