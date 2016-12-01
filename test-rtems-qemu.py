@@ -162,7 +162,7 @@ class TapProc(object):
     _skip._re = re.compile(r'ok\s+\d+\s+#\s+SKIP\s.*')
 
 def parsespec(spec):
-    with open(spec, 'r') as FP:
+    with open(spec, 'r', encoding='ascii') as FP:
         # Lines have the form
         #  Key: Value with spaces
         # Split on ':' then strip key and value
@@ -223,13 +223,13 @@ def runspec(specfile, proc, args):
                 signal.alarm(args.timeout)
                 _log.debug("Start timeout of %f", args.timeout)
 
-            P = Popen(cmd, stdin=DEVNULL, stderr=STDOUT, stdout=PIPE, universal_newlines=True)
+            P = Popen(cmd, stdin=DEVNULL, stderr=STDOUT, stdout=PIPE)
 
             try:
                 for L in P.stdout:
                     if not L:
                         break
-                    proc(L)
+                    proc(L.decode('ascii', 'replace'))
 
                 P.wait(10)
                 _log.info('Done %s', specfile)
