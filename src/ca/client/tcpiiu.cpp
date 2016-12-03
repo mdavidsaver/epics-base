@@ -26,6 +26,9 @@
 
 #include <stdexcept>
 #include <string>
+
+#include <stdlib.h>
+
 #include "errlog.h"
 
 #define epicsExportSharedSymbols
@@ -1045,11 +1048,14 @@ tcpiiu :: ~tcpiiu ()
 
     // free message body cache
     if ( this->pCurData ) {
-        if ( this->curDataMax == MAX_TCP ) {
+        if ( this->curDataMax <= MAX_TCP ) {
             this->cacRef.releaseSmallBufferTCP ( this->pCurData );
         }
-        else {
+        else if ( this->curDataMax <= cacRef.largeBufferSizeTCP()) {
             this->cacRef.releaseLargeBufferTCP ( this->pCurData );
+        }
+        else {
+            free ( this->pCurData );
         }
     }
 }
@@ -1219,18 +1225,44 @@ bool tcpiiu::processIncoming (
         // make sure we have a large enough message body cache
         //
         if ( this->curMsg.m_postsize > this->curDataMax ) {
-            if ( this->curDataMax == MAX_TCP && 
-                    this->cacRef.largeBufferSizeTCP() >= this->curMsg.m_postsize ) {
-                char * pBuf = this->cacRef.allocateLargeBufferTCP ();
-                if ( pBuf ) {
+            assert (this->curMsg.m_postsize > MAX_TCP);
+
+            char * newbuf = NULL;
+            arrayElementCount newsize;
+
+            if ( this->curMsg.m_postsize <= this->cacRef.largeBufferSizeTCP() ) {
+                newbuf = this->cacRef.allocateLargeBufferTCP ();
+                newsize = this->cacRef.largeBufferSizeTCP();
+            }
+#ifndef NO_HUGE
+            else {
+                // round size up to multiple of 4K
+                newsize = ((this->curMsg.m_postsize-1)|0xfff)+1;
+
+                if (this->curDataMax > this->cacRef.largeBufferSizeTCP()) {
+                    // expand existing huge buffer
+                    newbuf = (char*)realloc(this->pCurData, newsize);
+                } else {
+                    // trade up from small or large
+                    newbuf = (char*)malloc(newsize);
+                }
+            }
+#endif
+
+            if ( newbuf) {
+                if (this->curDataMax <= MAX_TCP) {
                     this->cacRef.releaseSmallBufferTCP ( this->pCurData );
-                    this->pCurData = pBuf;
-                    this->curDataMax = this->cacRef.largeBufferSizeTCP ();
+                } else if (this->curDataMax <= this->cacRef.largeBufferSizeTCP()) {
+                    this->cacRef.releaseLargeBufferTCP ( this->pCurData );
+                } else {
+                    // called realloc()
                 }
-                else {
-                    this->printFormated ( mgr.cbGuard,
-                        "CAC: not enough memory for message body cache (ignoring response message)\n");
-                }
+                this->pCurData = newbuf;
+                this->curDataMax = newsize;
+
+            } else {
+                this->printFormated ( mgr.cbGuard,
+                    "CAC: not enough memory for message body cache (ignoring response message)\n");
             }
         }
 
@@ -1448,7 +1480,7 @@ void tcpiiu::readNotifyRequest ( epicsGuard < epicsMutex > & guard,
     }
     arrayElementCount maxBytes;
     if ( CA_V49 ( this->minorProtocolVersion ) ) {
-        maxBytes = this->cacRef.largeBufferSizeTCP ();
+        maxBytes = 0xfffffff0;
     }
     else {
         maxBytes = MAX_TCP;
@@ -1559,7 +1591,7 @@ void tcpiiu::subscriptionRequest (
         guard, CA_V413(this->minorProtocolVersion) );
     arrayElementCount maxBytes;
     if ( CA_V49 ( this->minorProtocolVersion ) ) {
-        maxBytes = this->cacRef.largeBufferSizeTCP ();
+        maxBytes = 0xfffffff0;
     }
     else {
         maxBytes = MAX_TCP;
@@ -1606,7 +1638,7 @@ void tcpiiu::subscriptionUpdateRequest (
         guard, CA_V413(this->minorProtocolVersion) );
     arrayElementCount maxBytes;
     if ( CA_V49 ( this->minorProtocolVersion ) ) {
-        maxBytes = this->cacRef.largeBufferSizeTCP ();
+        maxBytes = 0xfffffff0;
     }
     else {
         maxBytes = MAX_TCP;
