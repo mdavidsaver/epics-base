@@ -58,6 +58,7 @@ extern "C" { static void varCallFunc(const iocshArgBuf *); }
 static epicsMutexId iocshTableMutex;
 static epicsThreadOnceId iocshOnceId = EPICS_THREAD_ONCE_INIT;
 static epicsThreadPrivateId iocshMacroHandleId;
+static epicsThreadPrivateId iocshIfStackId;
 
 /*
  * I/O redirection
@@ -71,6 +72,17 @@ struct iocshRedirect {
     int         mustRestore;
 };
 
+#define MAX_IF_DEPTH 10
+/* conditional tracking */
+typedef struct {
+    /* each frame is either 0 - false,
+     *                      1 - true,
+     *                      2 - ignored (an outer frame is false)
+     */
+    unsigned depth;
+    unsigned char stack[MAX_IF_DEPTH];
+} iocshIfStack;
+
 /*
  * Set up module variables
  */
@@ -78,6 +90,7 @@ static void iocshOnce (void *)
 {
     iocshTableMutex = epicsMutexMustCreate ();
     iocshMacroHandleId = epicsThreadPrivateCreate();
+    iocshIfStackId = epicsThreadPrivateCreate();
 }
 
 static void iocshInit (void)
@@ -506,8 +519,10 @@ iocshBody (const char *pathname, const char *commandLine, const char *macros)
     int wasOkToBlock;
     static const char * pairs[] = {"", "environ", NULL, NULL};
     MAC_HANDLE *handle;
+    iocshIfStack *ifstack = NULL;
     char ** defines = NULL;
-    
+    bool myifstack = false;
+
     iocshInit();
 
     /*
@@ -579,6 +594,15 @@ iocshBody (const char *pathname, const char *commandLine, const char *macros)
         epicsThreadPrivateSet(iocshMacroHandleId, (void *) handle);
     }
     
+    if ((ifstack=(iocshIfStack*)epicsThreadPrivateGet(iocshIfStackId))==NULL) {
+        ifstack = (iocshIfStack*)callocMustSucceed(1, sizeof(*ifstack), "iocshIfStack");
+        ifstack->depth = 0;
+        ifstack->stack[0] = 1;
+        myifstack = true; /* we are outer-most invokation of iocshBody(), so free ifstack when done */
+
+        epicsThreadPrivateSet(iocshIfStackId, (void *) ifstack);
+    }
+
     macPushScope(handle);
     macInstallMacros(handle, defines);
     
@@ -635,6 +659,56 @@ iocshBody (const char *pathname, const char *commandLine, const char *macros)
          */
         while ((c = line[icin]) && isspace(c)) {
             icin++;
+        }
+
+        const bool isif = strncmp(&line[icin], "if", 2)==0;
+        const unsigned curdepth = ifstack->depth;
+
+        if (ifstack->stack[ifstack->depth]!=1) {
+            /* some conditional is false, prefix with #??? */
+            unsigned i;
+            putchar('#');
+            for(i=0; i<ifstack->depth; i++)
+                putchar('?');
+            putchar(' ');
+
+            if (isif) {
+                /* ignore conditional command, but track depth */
+                puts(line);
+                if(ifstack->depth>=MAX_IF_DEPTH-1) {
+                    fprintf(epicsGetStderr(), "iocsh conditional depth exceeded! (%u)\n", ifstack->depth);
+                    /* TODO: anything sane to do here? */
+                } else {
+                    ifstack->stack[++ifstack->depth] = 2;
+                }
+                continue;
+            }
+        }
+
+        if (strncmp(&line[icin], "else", 4)==0) {
+            puts(line);
+            if (ifstack->stack[ifstack->depth]==2) {
+                /* no op */
+            } else if (ifstack->depth==0) {
+                printf("conditional error.  else w/o corresponding if\n");
+            } else {
+                ifstack->stack[ifstack->depth] ^= 1u;
+            }
+            continue;
+
+        } else if (strncmp(&line[icin], "endif", 5)==0) {
+            puts(line);
+            if (ifstack->depth==0) {
+                printf("unbalenced conditional.  endif w/o corresponding if\n");
+            } else {
+                ifstack->depth--;
+            }
+            continue;
+
+        } else if (ifstack->stack[ifstack->depth]!=1) {
+            /* some conditional is false */
+            puts(line);
+            continue;
         }
 
         /*
@@ -854,12 +928,30 @@ iocshBody (const char *pathname, const char *commandLine, const char *macros)
             }
         }
         stopRedirect(filename, lineno, redirects);
+
+        if(isif && curdepth==ifstack->depth) {
+            fprintf(epicsGetStderr(), "Condition command did not start a new condition!\n"
+                                      "Assume false.\n");
+            iocshBeginConditional(0);
+        } else if(!isif && curdepth!=ifstack->depth) {
+            fprintf(epicsGetStderr(), "Non-condition command tried to started a new condition!\n"
+                                      "All conditional command names must start with 'if'.\n");
+            ifstack->depth = curdepth;
+        }
+
     }
     macPopScope(handle);
     
     if (handle->level == 0) {
         macDeleteHandle(handle);
         epicsThreadPrivateSet(iocshMacroHandleId, NULL);
+    }
+    if (myifstack) {
+        if (ifstack->depth!=0) {
+            fprintf(epicsGetStderr(), "unbalenced conditional. %u if's' w/o corresponding endif", ifstack->depth);
+        }
+        free(ifstack);
+        epicsThreadPrivateSet(iocshIfStackId, NULL);
     }
     if (fp && (fp != stdin))
         fclose (fp);
@@ -935,6 +1027,24 @@ iocshEnvClear(const char *name)
             macPutValue(handle, name, NULL);
         }
     }
+}
+
+epicsShareFunc void epicsShareAPI iocshBeginConditional(unsigned c)
+{
+    iocshIfStack *ifstack = (iocshIfStack*)epicsThreadPrivateGet(iocshIfStackId);
+
+    if(!ifstack) {
+        fprintf(epicsGetStderr(), "ignoring call to iocshBeginConditional(%u) outside of iocsh.\n", c);
+        return;
+    }
+
+    if(ifstack->depth>=MAX_IF_DEPTH-1) {
+        fprintf(epicsGetStderr(), "iocsh conditional depth exceeded! (%u)\n", ifstack->depth);
+        /* TODO: anything sane to do here? */
+        return;
+    }
+
+    ifstack->stack[++ifstack->depth] = !!c;
 }
 
 /*
@@ -1058,6 +1168,31 @@ static void exitCallFunc(const iocshArgBuf *)
 {
 }
 
+/* conditionals */
+
+static const iocshArg iocshEqArg0 = { "lhs",iocshArgString};
+static const iocshArg iocshEqArg1 = { "rhs", iocshArgString};
+static const iocshArg *iocshEqArgs[2] = {&iocshEqArg0, &iocshEqArg1};
+static const iocshFuncDef iocshIfEqDef  = {"ifeq",2,iocshEqArgs};
+static const iocshFuncDef iocshIfNEqDef = {"ifneq",2,iocshEqArgs};
+static void iocshIfEqCallFunc(const iocshArgBuf *args)
+{
+    /* treat NULL=="" */
+    const char *lhs = args[0].sval ? args[0].sval : "",
+               *rhs = args[1].sval ? args[1].sval : "";
+
+    iocshBeginConditional(strcmp(lhs, rhs)==0);
+}
+static void iocshIfNEqCallFunc(const iocshArgBuf *args)
+{
+    /* treat NULL=="" */
+    const char *lhs = args[0].sval ? args[0].sval : "",
+               *rhs = args[1].sval ? args[1].sval : "";
+
+    iocshBeginConditional(strcmp(lhs, rhs)!=0);
+}
+
+
 static void localRegister (void)
 {
     iocshRegister(&commentFuncDef,commentCallFunc);
@@ -1066,6 +1201,8 @@ static void localRegister (void)
     iocshRegister(&iocshCmdFuncDef,iocshCmdCallFunc);
     iocshRegister(&iocshLoadFuncDef,iocshLoadCallFunc);
     iocshRegister(&iocshRunFuncDef,iocshRunCallFunc);
+    iocshRegister(&iocshIfEqDef ,iocshIfEqCallFunc);
+    iocshRegister(&iocshIfNEqDef,iocshIfNEqCallFunc);
 }
 
 } /* extern "C" */

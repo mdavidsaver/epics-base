@@ -76,6 +76,8 @@ epicsShareFunc int epicsShareAPI iocshRun(const char *cmd, const char* macros);
 /* Makes macros that shadow environment variables work correctly with epicsEnvSet */
 epicsShareFunc void epicsShareAPI iocshEnvClear(const char *name);
 
+epicsShareFunc void epicsShareAPI iocshBeginConditional(unsigned c);
+
 /* 'weak' link to pdbbase */
 epicsShareExtern struct dbBase **iocshPpdbbase;
 
