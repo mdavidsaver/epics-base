@@ -11,6 +11,8 @@
 /* Heavily modified by Eric Norum   Date: 03MAY2000 */
 /* Adapted to C++ by Eric Norum   Date: 18DEC2000 */
 
+#include <new>
+
 #include <stddef.h>
 #include <string.h>
 #include <stdio.h>
@@ -73,14 +75,31 @@ struct iocshRedirect {
 
 #define MAX_IF_DEPTH 10
 /* conditional tracking */
-typedef struct {
+struct iocshIfStack {
+    struct Frame {
+        bool condition; // value of most recent if/elif
+        bool ignored;   // is some outer frame false
+        bool anytrue;   // has any if/elif been true?
+        bool hadelse;
+    };
+    bool condset;
+
     /* each frame is either 0 - false,
      *                      1 - true,
      *                      2 - ignored (an outer frame is false)
      */
     unsigned depth;
-    unsigned char stack[MAX_IF_DEPTH];
-} iocshIfStack;
+    Frame stack[MAX_IF_DEPTH];
+
+    iocshIfStack() :condset(false), depth(0) {
+        stack[0].condition = true;
+        stack[0].ignored = false;
+        stack[0].anytrue = true;
+        stack[0].hadelse = true;
+    }
+
+    Frame& back() { return stack[depth]; }
+};
 
 /*
  * Set up module variables
@@ -612,9 +631,11 @@ iocshBody (const char *pathname, const char *commandLine, const char *macros)
     }
     
     if ((ifstack=(iocshIfStack*)epicsThreadPrivateGet(iocshIfStackId))==NULL) {
-        ifstack = (iocshIfStack*)callocMustSucceed(1, sizeof(*ifstack), "iocshIfStack");
-        ifstack->depth = 0;
-        ifstack->stack[0] = 1;
+        ifstack = new (std::nothrow) iocshIfStack;
+        if(!ifstack) {
+            cantProceed("iocsh ifstack alloc value\n");
+        }
+
         myifstack = true; /* we are outer-most invokation of iocshBody(), so free ifstack when done */
 
         epicsThreadPrivateSet(iocshIfStackId, (void *) ifstack);
@@ -678,51 +699,83 @@ iocshBody (const char *pathname, const char *commandLine, const char *macros)
             icin++;
         }
 
-        const bool isif = strncmp(&line[icin], "if", 2)==0;
-        const unsigned curdepth = ifstack->depth;
+        bool isif = strncmp(&line[icin], "if", 2)==0;
+        ifstack->condset = false;
 
-        if (ifstack->stack[ifstack->depth]!=1) {
+        if (ifstack->back().ignored || !ifstack->back().condition) {
             /* some conditional is false, prefix with #??? */
             unsigned i;
             putchar('#');
             for(i=0; i<ifstack->depth; i++)
                 putchar('?');
             putchar(' ');
-
-            if (isif) {
-                /* ignore conditional command, but track depth */
-                puts(line);
-                if(ifstack->depth>=MAX_IF_DEPTH-1) {
-                    fprintf(epicsGetStderr(), "iocsh conditional depth exceeded! (%u)\n", ifstack->depth);
-                    /* TODO: anything sane to do here? */
-                } else {
-                    ifstack->stack[++ifstack->depth] = 2;
-                }
-                continue;
-            }
         }
 
-        if (strncmp(&line[icin], "else", 4)==0) {
+        if (isif && ifstack->depth>=MAX_IF_DEPTH-1) {
             puts(line);
-            if (ifstack->stack[ifstack->depth]==2) {
+            fprintf(epicsGetStderr(), "iocsh conditional error: depth exceeded! (at %u)\n", ifstack->depth);
+            break;
+        }
+        else if (isif) {
+            /* start conditional command, track depth */
+
+            bool ignore = ifstack->back().ignored || !ifstack->back().condition;
+            ifstack->depth++;
+            ifstack->back().condition = false;
+            ifstack->back().anytrue = false;
+            ifstack->back().ignored = ignore;
+            ifstack->back().hadelse = false;
+            if (ignore) {
+                puts(line);
+                continue;
+            }
+            // process command
+        }
+        else if (strncmp(&line[icin], "elif", 4)==0) {
+
+            if (ifstack->back().hadelse) {
+                puts(line);
+                fprintf(epicsGetStderr(), "iocsh conditional error: elif after else! (at %u)\n", ifstack->depth);
+                break;
+            } else if(ifstack->back().ignored) {
+                puts(line);
+                continue;
+            } else if(ifstack->back().anytrue) {
+                puts(line);
+                ifstack->back().condition = false;
+                continue;
+            }
+
+            isif = true;
+            icin += 2; // process with command of "if..."
+        }
+        else if (strncmp(&line[icin], "else", 4)==0) {
+            puts(line);
+            if (ifstack->back().ignored) {
                 /* no op */
             } else if (ifstack->depth==0) {
-                printf("conditional error.  else w/o corresponding if\n");
+                fprintf(epicsGetStderr(), "iocsh conditional error: else w/o corresponding if\n");
+                break;
+            } else if (ifstack->back().hadelse) {
+                fprintf(epicsGetStderr(), "iocsh conditional error: else after previous else\n");
+                break;
             } else {
-                ifstack->stack[ifstack->depth] ^= 1u;
+                ifstack->back().condition = !ifstack->back().anytrue;
             }
+            ifstack->back().hadelse = true;
             continue;
-
-        } else if (strncmp(&line[icin], "endif", 5)==0) {
+        }
+        else if (strncmp(&line[icin], "endif", 5)==0) {
             puts(line);
             if (ifstack->depth==0) {
-                printf("unbalenced conditional.  endif w/o corresponding if\n");
+                printf("iocsh conditional error: endif w/o corresponding if\n");
+                break;
             } else {
                 ifstack->depth--;
             }
             continue;
-
-        } else if (ifstack->stack[ifstack->depth]!=1) {
+        }
+        else if (ifstack->back().ignored || !ifstack->back().condition) {
             /* some conditional is false */
             puts(line);
             continue;
@@ -946,14 +999,14 @@ iocshBody (const char *pathname, const char *commandLine, const char *macros)
         }
         stopRedirect(filename, lineno, redirects);
 
-        if(isif && curdepth==ifstack->depth) {
+        if(isif && !ifstack->condset) {
             fprintf(epicsGetStderr(), "Condition command did not start a new condition!\n"
                                       "Assume false.\n");
-            iocshBeginConditional(0);
-        } else if(!isif && curdepth!=ifstack->depth) {
-            fprintf(epicsGetStderr(), "Non-condition command tried to started a new condition!\n"
+            ifstack->back().condition = false;
+        } else if(!isif && ifstack->condset) {
+            fprintf(epicsGetStderr(), "Non-condition command sets condition!\n"
                                       "All conditional command names must start with 'if'.\n");
-            ifstack->depth = curdepth;
+            ifstack->back().condition = false;
         }
 
     }
@@ -1055,13 +1108,9 @@ epicsShareFunc void epicsShareAPI iocshBeginConditional(unsigned c)
         return;
     }
 
-    if(ifstack->depth>=MAX_IF_DEPTH-1) {
-        fprintf(epicsGetStderr(), "iocsh conditional depth exceeded! (%u)\n", ifstack->depth);
-        /* TODO: anything sane to do here? */
-        return;
-    }
-
-    ifstack->stack[++ifstack->depth] = !!c;
+    ifstack->back().condition = c;
+    ifstack->back().anytrue |= c;
+    ifstack->condset = true;
 }
 
 /*
