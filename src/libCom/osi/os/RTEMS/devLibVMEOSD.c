@@ -351,6 +351,10 @@ static void unsolicitedHandlerEPICS(int vectorNumber)
         );
 }
 
+#else
+
+devLibVME *pdevLibVME;
+
 #endif /* defined(__PPC__) && defined(mpc750) */
 
 /*
