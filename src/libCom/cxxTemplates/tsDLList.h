@@ -53,6 +53,7 @@ class tsDLList {
 public:
     tsDLList (); // create empty list
     unsigned count () const; // number of items on list
+    void swap ( tsDLList & otherList );
     void add ( T & item ); // add item to end of list
     void add ( tsDLList<T> & addList ); // add to end of list - addList left empty
     void push ( T & item ); // add item to beginning of list
@@ -181,6 +182,20 @@ template <class T>
 inline unsigned tsDLList<T>::count () const
 {
     return this->itemCount; 
+}
+
+template <class T>
+inline void tsDLList<T>::swap ( tsDLList & otherList )
+{
+    T *S = pFirst;
+    pFirst = otherList.pFirst;
+    otherList.pFirst = S;
+    S = pLast;
+    pLast = otherList.pLast;
+    otherList.pLast = S;
+    unsigned I = itemCount;
+    itemCount = otherList.itemCount;
+    otherList.itemCount = I;
 }
 
 //
