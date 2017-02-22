@@ -333,8 +333,14 @@ cac::~cac ()
 
     this->ipToAEngine.release ();
 
+    tsDLList < msgForMultiplyDefinedPV > tempList;
+    {
+        epicsGuard<epicsMutex> G(this->mutex);
+        tempList.swap(this->msgMultiPVList);
+    }
+
     // clean-up the list of un-notified msg objects
-    while ( msgForMultiplyDefinedPV * msg = this->msgMultiPVList.get() ) {
+    while ( msgForMultiplyDefinedPV * msg = tempList.get() ) {
         msg->~msgForMultiplyDefinedPV ();
         this->mdpvFreeList.release ( msg );
     }
@@ -1304,9 +1310,11 @@ void cac::pvMultiplyDefinedNotify ( msgForMultiplyDefinedPV & mfmdpv,
         callbackManager mgr ( this->notify, this->cbMutex );
         epicsGuard < epicsMutex > guard ( this->mutex );
         this->exception ( mgr.cbGuard, guard, ECA_DBLCHNL, buf, __FILE__, __LINE__ );
+
+        // remove from the list under lock
+        this->msgMultiPVList.remove ( mfmdpv );
     }
-    // remove from the list and delete msg object
-    this->msgMultiPVList.remove ( mfmdpv );
+    // delete msg object
     mfmdpv.~msgForMultiplyDefinedPV ();
     this->mdpvFreeList.release ( & mfmdpv );
 }
