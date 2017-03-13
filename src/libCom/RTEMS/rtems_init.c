@@ -31,6 +31,12 @@
 #include <rtems/rtems_bsdnet.h>
 #include <rtems/imfs.h>
 #include <librtemsNfs.h>
+#if __RTEMS_MAJOR__>4 || \
+   (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__>11) || \
+   (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__==11 && __RTEMS_REVISION__==99)
+#include <rtems/libio.h>
+#include <sys/stat.h>
+#endif
 #include <bsp.h>
 
 #include "epicsThread.h"
@@ -44,6 +50,13 @@
 #include "osdTime.h"
 
 #include "epicsRtemsInitHooks.h"
+#if __RTEMS_MAJOR__>4 || \
+   (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__>11) || \
+   (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__==11 && __RTEMS_REVISION__==99)
+#include <rtems/malloc.h>
+#include <rtems/score/heap.h>
+#include <pthread.h>
+#endif
 
 /*
  * Prototypes for some functions not in header files
@@ -51,6 +64,41 @@
 void tzset(void);
 int fileno(FILE *);
 int main(int argc, char **argv);
+
+#if __RTEMS_MAJOR__>4 || \
+   (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__>11) || \
+   (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__==11 && __RTEMS_REVISION__==99)
+
+//Helper function must be made useful
+/*
+ * Just map osi 0 to 99 into RTEMS 199 to 100
+ * For RTEMS lower number means higher priority
+ * RTEMS = 100 + (99 - osi)
+ *       = 199 - osi
+ *   osi =  199 - RTEMS
+ */
+int epicsThreadGetOsiPriorityValue(int ossPriority)
+{
+  if (ossPriority < 100) {
+    return epicsThreadPriorityMax;
+  }
+  else if (ossPriority > 199) {
+    return epicsThreadPriorityMin;
+  }
+  else {
+    return (199u - (unsigned int)ossPriority);
+  }
+}
+int epicsThreadGetOssPriorityValue(unsigned int osiPriority)
+{
+  if (osiPriority > 99) {
+    return 100;
+  }
+  else {
+    return (199 - (signed int)osiPriority);
+  }
+}
+#endif
 
 static void
 logReset (void)
@@ -61,10 +109,10 @@ logReset (void)
     if (fp) {
         char buf[80];
         fp(buf, sizeof buf);
-        errlogPrintf ("Startup after %s.\n", buf);
+        printk /*errlogPrintf*/ ("Startup after %s.\n", buf);
     }
     else {
-        errlogPrintf ("Startup.\n");
+        printk /*errlogPrintf*/ ("Startup.\n");
     }
 }
 
@@ -79,9 +127,14 @@ logReset (void)
 static void
 delayedPanic (const char *msg)
 {
+#if __RTEMS_MAJOR__>4 || \
+   (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__>11) || \
+   (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__==11 && __RTEMS_REVISION__==99)
+    rtems_task_wake_after (rtems_clock_get_ticks_per_second());
+#else
     extern rtems_interval rtemsTicksPerSecond;
-
     rtems_task_wake_after (rtemsTicksPerSecond);
+#endif
     rtems_panic (msg);
 }
 
@@ -187,6 +240,15 @@ nfsMount(char *uidhost, char *path, char *mntpoint)
     }
     sprintf(dev, "%s:%s", uidhost, path);
     printf("Mount %s on %s\n", dev, mntpoint);
+#if __RTEMS_MAJOR__>4 || \
+   (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__>11) || \
+   (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__==11 && __RTEMS_REVISION__==99)
+   rval = mount_and_make_target_path (
+        dev, mntpoint, RTEMS_FILESYSTEM_TYPE_NFS,
+        RTEMS_FILESYSTEM_READ_WRITE, NULL );
+   if(rval)
+      perror("mount failed");
+#else
     if (rtems_mkdir(mntpoint, S_IRWXU | S_IRWXG | S_IRWXO))
         printf("Warning -- unable to make directory \"%s\"\n", mntpoint);
     if (mount(dev, mntpoint, RTEMS_FILESYSTEM_TYPE_NFS,
@@ -196,6 +258,7 @@ nfsMount(char *uidhost, char *path, char *mntpoint)
     else {
         rval = 0;
     }
+#endif
     free(dev);
     return rval;
 }
@@ -246,6 +309,7 @@ initialize_remote_filesystem(char **argv, int hasLocalFilesystem)
     printf ("***** Initializing NFS *****\n");
     NFS_INIT
     if (env_nfsServer && env_nfsPath && env_nfsMountPoint) {
+        printf(" bin in environment kram ...\n");
         server_name = env_nfsServer;
         server_path = env_nfsPath;
         mount_point = env_nfsMountPoint;
@@ -332,9 +396,10 @@ initialize_remote_filesystem(char **argv, int hasLocalFilesystem)
             argv[1] = abspath;
         }
     }
-    errlogPrintf("nfsMount(\"%s\", \"%s\", \"%s\")\n",
+    // errlogPrintf still not working ???
+    printf("nfsMount(\"%s\", \"%s\", \"%s\")\n",
                  server_name, server_path, mount_point);
-    nfsMount(server_name, server_path, mount_point);
+    nfsMount(server_name, server_path, server_path /*mount_point*/);
 #endif
 }
 
@@ -357,7 +422,6 @@ void fixup_hosts(void)
         perror("error: fixup_hosts stat /etc/hosts");
         return;
     }
-
     ret = mkdir("/etc", 0775);
     if(ret!=0 && errno!=EEXIST)
     {
@@ -374,7 +438,6 @@ void fixup_hosts(void)
     {
         perror("error: failed to write /etc/hosts");
     }
-
     fclose(fp);
 }
 
@@ -444,11 +507,21 @@ static void netStatCallFunc(const iocshArgBuf *args)
 static const iocshFuncDef heapSpaceFuncDef = {"heapSpace",0,NULL};
 static void heapSpaceCallFunc(const iocshArgBuf *args)
 {
+#if __RTEMS_MAJOR__>4 || \
+   (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__>11) || \
+   (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__==11 && __RTEMS_REVISION__==99)
+    Heap_Information_block info;
+    double x;
+
+    malloc_info (&info);
+    x = info.Stats.size - (unsigned long)(info.Stats.lifetime_allocated - info.Stats.lifetime_freed);
+#else
     rtems_malloc_statistics_t s;
     double x;
 
     malloc_get_statistics(&s);
     x = s.space_available - (unsigned long)(s.lifetime_allocated - s.lifetime_freed);
+#endif
     if (x >= 1024*1024)
         printf("Heap space: %.1f MB\n", x / (1024 * 1024));
     else
@@ -513,13 +586,18 @@ initConsole (void)
  * Ensure that the configuration object files
  * get pulled in from the library
  */
-extern rtems_configuration_table Configuration;
+#if __RTEMS_MAJOR__>4 || \
+   (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__>11) || \
+   (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__==11 && __RTEMS_REVISION__==99)
+//extern rtems_configuration_table Configuration;                      
+#else
+extern rtems_configuration_table Configuration;                      
 extern struct rtems_bsdnet_config rtems_bsdnet_config;
 const void *rtemsConfigArray[] = {
     &Configuration,
     &rtems_bsdnet_config
 };
-
+#endif
 /*
  * Hook to ensure that BSP cleanup code gets run on exit
  */
@@ -532,13 +610,18 @@ exitHandler(void)
 /*
  * RTEMS Startup task
  */
+#if __RTEMS_MAJOR__>4 || \
+   (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__>11) || \
+   (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__==11 && __RTEMS_REVISION__==99)
+void * EPICS_WITH_POSIX_Init (void *argument)
+#else
 rtems_task
 Init (rtems_task_argument ignored)
+#endif
 {
     int                 i;
     char               *argv[3]         = { NULL, NULL, NULL };
     char               *cp;
-    rtems_task_priority newpri;
     rtems_status_code   sc;
     rtems_time_of_day   now;
 
@@ -562,11 +645,25 @@ Init (rtems_task_argument ignored)
     /*
      * Override RTEMS configuration
      */
+#if __RTEMS_MAJOR__>4 || \
+   (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__>11) || \
+   (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__==11 && __RTEMS_REVISION__==99)
+
+    int policy;
+    struct sched_param param;
+
+    if (pthread_getschedparam(pthread_self(), &policy, &param) != 0)
+      delayedPanic("pthread_getschedparam failed");
+    param.sched_priority = epicsThreadPriorityIocsh;
+    if (pthread_setschedparam(pthread_self(), policy, &param) != 0)
+      delayedPanic("pthread_setschedparam failed");
+#else
+    rtems_task_priority newpri;
     rtems_task_set_priority (
                      RTEMS_SELF,
                      epicsThreadGetOssPriorityValue(epicsThreadPriorityIocsh),
                      &newpri);
-
+#endif
     /*
      * Create a reasonable environment
      */
@@ -579,6 +676,13 @@ Init (rtems_task_argument ignored)
      */
     printf("\n***** RTEMS Version: %s *****\n",
         rtems_get_version_string());
+
+#if __RTEMS_MAJOR__>4 || \
+   (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__>11) || \
+   (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__==11 && __RTEMS_REVISION__==99)
+    /* this overrides taskInfoBlock, was already written bei *createImplicit during static initialization */
+    epicsThreadSetPriority(epicsThreadGetId("_main_"), epicsThreadPriorityIocsh);
+#endif
 
     /*
      * Start network
@@ -616,12 +720,18 @@ Init (rtems_task_argument ignored)
      * It is very likely that other time synchronization facilities in EPICS
      * will soon override this value.
      */
+#if __RTEMS_MAJOR__>4 || \
+   (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__>11) || \
+   (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__==11 && __RTEMS_REVISION__==99)
+    if (rtems_clock_get_tod(&now) != RTEMS_SUCCESSFUL) {
+#else
     if (rtems_clock_get(RTEMS_CLOCK_GET_TOD,&now) != RTEMS_SUCCESSFUL) {
-        now.year = 2001;
-        now.month = 1;
-        now.day = 1;
-        now.hour = 0;
-        now.minute = 0;
+#endif
+        now.year = 2012;
+        now.month = 4;
+        now.day = 14;
+        now.hour = 7;
+        now.minute = 23;
         now.second = 0;
         now.ticks = 0;
         if ((sc = rtems_clock_set (&now)) != RTEMS_SUCCESSFUL)
@@ -649,7 +759,13 @@ Init (rtems_task_argument ignored)
         }
     }
     tzset();
+#if __RTEMS_MAJOR__>4 || \
+   (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__>11) || \
+   (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__==11 && __RTEMS_REVISION__==99)
+    // osdTimeRegister(); called during C++ initialization
+#else
     osdTimeRegister();
+#endif
 
     /*
      * Run the EPICS startup script
@@ -665,4 +781,5 @@ Init (rtems_task_argument ignored)
     printf ("***** IOC application terminating *****\n");
     epicsThreadSleep(1.0);
     epicsExit(0);
+    return NULL;
 }

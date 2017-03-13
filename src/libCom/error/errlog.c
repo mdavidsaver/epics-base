@@ -34,7 +34,6 @@
 #include "epicsStdio.h"
 #include "epicsExit.h"
 
-
 #define BUFFER_SIZE 1280
 #define MAX_MESSAGE_SIZE 256
 

@@ -151,7 +151,7 @@ extern "C" void messageQueueTest(void *parm)
         testOk(q1->pending() == i, "q1->pending() == %d", i);
     }
     testOk1(q1->pending() == 4);
-
+             
     want = 0;
     len = q1->receive(cbuf, sizeof cbuf);
     testOk1(q1->pending() == 3);

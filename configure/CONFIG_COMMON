@@ -138,7 +138,7 @@ BUILDLIB_SUFFIX = $(BUILDLIB_SUFFIX_$(SHARED_LIBRARIES))
 POSIX_YES = os/posix
 GENERIC_SRC_DIRS = .. $(SRC_DIRS)
 OS_SRC_DIRS += . $(foreach dir, .. $(SRC_DIRS), \
-       $(addprefix $(dir)/, os/$(OS_CLASS) $(POSIX_$(POSIX)) os/default ))
+       $(addprefix $(dir)/, os/$(OS_CLASS)$(RTEMS_XVERSION) $(POSIX_$(POSIX)) os/default ))
 CMPLR_SRC_DIRS += . $(foreach dir, .. $(SRC_DIRS), \
        $(addprefix $(dir)/, compiler/$(CMPLR_CLASS) compiler/default ))
 ALL_SRC_DIRS = $(CMPLR_SRC_DIRS) $(OS_SRC_DIRS) $(GENERIC_SRC_DIRS)
@@ -236,6 +236,7 @@ TARGET_INCLUDES += $($(basename $@)_INCLUDES_$(OS_CLASS)) $($(basename $@)_INCLU
 TARGET_CFLAGS += $($(basename $@)_CFLAGS_$(OS_CLASS)) $($(basename $@)_CFLAGS)
 TARGET_CXXFLAGS += $($(basename $@)_CXXFLAGS_$(OS_CLASS)) $($(basename $@)_CXXFLAGS)
 TARGET_CPPFLAGS += $($(basename $@)_CPPFLAGS_$(OS_CLASS)) $($(basename $@)_CPPFLAGS)
+
 
 TARGET_LDFLAGS = $($*_LDFLAGS)
 
@@ -440,7 +441,6 @@ OS_INSTALL_INC = $(addprefix $(INSTALL_INCLUDE)/os/$(OS_CLASS)/, $(INSTALL_INC_g
 INSTALL_INC_ggg = $(foreach dir, $(OS_SRC_DIRS), $(INSTALL_INC_fff)  )
 INSTALL_INC_fff = $(subst $(dir)/, , $(INSTALL_INC_eee) )
 INSTALL_INC_eee = $(wildcard $(addsuffix /$(inc), $(dir)) )
-
 #
 # Rule 2
 #

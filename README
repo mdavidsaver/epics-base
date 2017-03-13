@@ -22,3 +22,24 @@ training materials, additional components, links to other
 websites etc. is available on the EPICS home page at
 	http://www.aps.anl.gov/epics/
 
+hpj:
+In configure/CONFIG_COMMON add RTEMS_XVERSION
+$(addprefix $(dir)/, os/$(OS_CLASS)$(RTEMS_XVERSION) $(POSIX_$(POSIX)) os/default ))
+
+add to $Home/configure/CONFIG_USER
+
+#FHI
+EPICS_SITE_VERSION = fhi
+#
+RTEMS_VERSION = 4.12
+#to use new libcom osd files
+RTEMS_XVERSION = 4.12
+
+RTEMS_BASE = /home/h1/RTEMS/rtems-$(RTEMS_VERSION)
+
+# Runs on beatnik board (MVME6100)
+CROSS_COMPILER_TARGET_ARCHS = RTEMS-beatnik
+
+ARCH_DEP_CFLAGS += -DMY_DO_BOOTP=rtems_bsdnet_do_bootp
+ARCH_DEP_CFLAGS += -DBSP_NVRAM_BASE_ADDR=0xf1110000
+

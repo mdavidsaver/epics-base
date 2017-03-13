@@ -8,6 +8,7 @@
 #*************************************************************************
 
 TOP = .
+
 include $(TOP)/configure/CONFIG
 
 # Bootstrap resolution: tools not installed yet

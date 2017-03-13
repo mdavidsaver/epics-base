@@ -24,22 +24,26 @@ void epicsThreadShowInfo(epicsThreadOSD *pthreadInfo, unsigned int level)
 {
     if(!pthreadInfo) {
         fprintf(epicsGetStdout(),"            NAME       EPICS ID   "
-            "PTHREAD ID   OSIPRI  OSSPRI  STATE\n");
+            "PTHREAD ID   OSIPRI  OSSPRI  STATE  STACKSIZE\n");
     } else {
         struct sched_param param;
         int policy;
         int priority = 0;
+        size_t stackSize = 0;
 
         if(pthreadInfo->tid) {
             int status;
             status = pthread_getschedparam(pthreadInfo->tid,&policy,&param);
             if(!status) priority = param.sched_priority;
+            status = pthread_attr_getstacksize( &pthreadInfo->attr,&stackSize);
+            if(status) stackSize = 0;
         }
-        fprintf(epicsGetStdout(),"%16.16s %14p %12lu    %3d%8d %8.8s\n",
+        fprintf(epicsGetStdout(),"%16.16s %14p   0x%08X    %3d%8d %8.8s  %9d\n",
              pthreadInfo->name,(void *)
              pthreadInfo,(unsigned long)pthreadInfo->tid,
              pthreadInfo->osiPriority,priority,
-             pthreadInfo->isSuspended?"SUSPEND":"OK");
+             pthreadInfo->isSuspended?"SUSPEND":"OK",
+             stackSize);
     }
 }
 
