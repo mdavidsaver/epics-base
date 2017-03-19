@@ -27,5 +27,5 @@ addons:
 cache:
   directories:
    - $HOME/.cache
-install: sh prepare-travis.sh </dev/null
-script: sh build-travis.sh </dev/null
+install: sh ci/travis-prepare.sh </dev/null
+script: sh ci/travis-build.sh </dev/null
