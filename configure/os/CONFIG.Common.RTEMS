@@ -91,18 +91,27 @@ MODEXT=.obj
 OS_CLASS = RTEMS
 
 #--------------------------------------------------
+# operating system API (src/os/<os_class>-<os_api>)
+OS_API_4.7 = kernel
+OS_API_4.8 = kernel
+OS_API_4.9 = kernel
+OS_API_4.10 = kernel
+OS_API_4.11 = $(error RTEMS-4.11 is not currently supported)
+# Later RTEMS versions will use posix, no need to specify
+OS_API = $(firstword $(OS_API_$(RTEMS_SERIES)) posix)
+
+#--------------------------------------------------
 # Operating system flags
 OP_SYS_LDLIBS += -lrtemsCom -lc -lrtemscpu -lCom -lnfs -lm
-ifeq ($(RTEMS_XVERSION),4.12)
-OP_SYS_LDFLAGS += $(CPU_CFLAGS) -u POSIX_Init
-else
-OP_SYS_LDFLAGS += $(CPU_CFLAGS) -u Init \
+
+OP_SYS_LDFLAGS_posix += -u POSIX_Init
+OP_SYS_LDFLAGS_kernel += -u Init \
                  $(PROJECT_RELEASE)/lib/no-dpmem.rel \
                  $(PROJECT_RELEASE)/lib/no-mp.rel \
                  $(PROJECT_RELEASE)/lib/no-part.rel \
                  $(PROJECT_RELEASE)/lib/no-signal.rel \
                  $(PROJECT_RELEASE)/lib/no-rtmon.rel
-endif
+OP_SYS_LDFLAGS += $(CPU_CFLAGS) $(OP_SYS_LDFLAGS_$(OS_API))
 
 MOD_SYS_LDFLAGS += $(CPU_CFLAGS) -Wl,-r -nostdlib
 

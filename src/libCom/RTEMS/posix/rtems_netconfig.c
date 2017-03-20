@@ -9,7 +9,7 @@
  *      Author: W. Eric Norum
  *              Heinz Junkes
  *
- * Adapted to rtems4.12
+ * Version for RTEMS-4.12
  *
  * This file can be copied to an application source dirctory
  * and modified to override the values shown below.
@@ -17,21 +17,6 @@
 #include <stdio.h>
 #include <bsp.h>
 #include <rtems/rtems_bsdnet.h>
-
-#if __RTEMS_MAJOR__>4 \
-    || (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__>11) \
-    || (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__==11 && __RTEMS_REVISION__==99)
-// loopback interface created by network initialization
-#else
-extern void rtems_bsdnet_loopattach();
-static struct rtems_bsdnet_ifconfig loopback_config = {
-    "lo0",                          /* name */
-    (int (*)(struct rtems_bsdnet_ifconfig *, int))rtems_bsdnet_loopattach, /* attach function */
-    NULL,                           /* link to next interface */
-    "127.0.0.1",                    /* IP address */
-    "255.0.0.0",                    /* IP net mask */
-};
-#endif
 
 /*
  * The following conditionals select the network interface card.
@@ -43,26 +28,14 @@ static struct rtems_bsdnet_ifconfig loopback_config = {
  * To use a different NIC for a particular application, copy this file to the
  * application directory and make the appropriate changes.
  */
+
 #if defined(__i386__)
 extern int rtems_fxp_attach (struct rtems_bsdnet_ifconfig *, int);
 static struct rtems_bsdnet_ifconfig fxp_driver_config = {
     "fxp1",                             /* name */
     rtems_fxp_attach,                   /* attach function */
-#if __RTEMS_MAJOR__>4 \
-    || (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__>11) \
-    || (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__==11 && __RTEMS_REVISION__==99)
-    NULL,
-#else
-    &loopback_config,                   /* link to next interface */
-#endif
+    NULL,                               /* link to next interface */
 };
-#if __RTEMS_MAJOR__>4 \
-    || (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__>11) \
-    || (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__==11 && __RTEMS_REVISION__==99)
-//extern int rtems_3c509_driver_attach (struct rtems_bsdnet_ifconfig *, int);
-#else
-extern int rtems_3c509_driver_attach (struct rtems_bsdnet_ifconfig *, int);
-#endif
 static struct rtems_bsdnet_ifconfig e3c509_driver_config = {
     "ep0",                              /* name */
     rtems_3c509_driver_attach,          /* attach function */
@@ -72,11 +45,6 @@ static struct rtems_bsdnet_ifconfig e3c509_driver_config = {
 #endif
 
 # if defined(__PPC)
-
-#if __RTEMS_MAJOR__>4 \
-    || (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__>11) \
-    || (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__==11 && __RTEMS_REVISION__==99)
-  
 static struct rtems_bsdnet_ifconfig netdriver_config_2 = {
   "mve2",
   RTEMS_BSP_NETWORK_DRIVER_ATTACH,
@@ -86,7 +54,6 @@ static struct rtems_bsdnet_ifconfig netdriver_config_2 = {
   NULL,                 // Driver supplies hardware address
   0                     // Use default driver parameters
 };
-
 static struct rtems_bsdnet_ifconfig netdriver_config = {
   "mve1",
   RTEMS_BSP_NETWORK_DRIVER_ATTACH,
@@ -97,26 +64,6 @@ static struct rtems_bsdnet_ifconfig netdriver_config = {
   0                     // Use default driver parameters
 };
 #define FIRST_DRIVER_CONFIG &netdriver_config
-
-#else
-  /*
-   * FIXME: This really belongs in the BSP
-   */
-#ifndef RTEMS_BSP_NETWORK_DRIVER_NAME
-#   define RTEMS_BSP_NETWORK_DRIVER_NAME "dc1"
-#endif
-#ifndef RTEMS_BSP_NETWORK_DRIVER_ATTACH
-#   define RTEMS_BSP_NETWORK_DRIVER_ATTACH rtems_dec21140_driver_attach
-    extern int rtems_dec21140_driver_attach();
-#endif
-
-static struct rtems_bsdnet_ifconfig bsp_driver_config = {
-    RTEMS_BSP_NETWORK_DRIVER_NAME,      /* name */
-    RTEMS_BSP_NETWORK_DRIVER_ATTACH,    /* attach function */
-    &loopback_config,                   /* link to next interface */
-};
-#define FIRST_DRIVER_CONFIG &bsp_driver_config
-#endif /* RTEMS < 4.11.99 */
 #endif /* PPC */
 
 /*

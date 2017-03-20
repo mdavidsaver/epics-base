@@ -9,6 +9,8 @@
 TOP=../../..
 include $(TOP)/configure/CONFIG
 
+SRC_DIRS += ../$(OS_API)
+
 INC += epicsRtemsInitHooks.h
 
 rtemsCom_SRCS += rtems_init.c
