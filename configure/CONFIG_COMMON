@@ -4,7 +4,7 @@
 # Copyright (c) 2002 The Regents of the University of California, as
 #     Operator of Los Alamos National Laboratory.
 # EPICS BASE is distributed subject to a Software License Agreement found
-# in file LICENSE that is included with this distribution. 
+# in file LICENSE that is included with this distribution.
 #*************************************************************************
 #
 #  CONFIG_COMMON
@@ -136,10 +136,11 @@ BUILDLIB_SUFFIX = $(BUILDLIB_SUFFIX_$(SHARED_LIBRARIES))
 #--------------------------------------------------
 # vpath directories
 POSIX_YES = os/posix
+OS_IMPL_DIRS = $(if $(OS_API),os/$(OS_CLASS)-$(OS_API),) os/$(OS_CLASS)
 GENERIC_SRC_DIRS = .. $(SRC_DIRS)
-OS_SRC_DIRS += . $(foreach dir, .. $(SRC_DIRS), \
-       $(addprefix $(dir)/, os/$(OS_CLASS)$(RTEMS_XVERSION) $(POSIX_$(POSIX)) os/default ))
-CMPLR_SRC_DIRS += . $(foreach dir, .. $(SRC_DIRS), \
+OS_SRC_DIRS += . $(foreach dir, $(GENERIC_SRC_DIRS), \
+       $(addprefix $(dir)/, $(OS_IMPL_DIRS) $(POSIX_$(POSIX)) os/default ))
+CMPLR_SRC_DIRS += . $(foreach dir, $(GENERIC_SRC_DIRS), \
        $(addprefix $(dir)/, compiler/$(CMPLR_CLASS) compiler/default ))
 ALL_SRC_DIRS = $(CMPLR_SRC_DIRS) $(OS_SRC_DIRS) $(GENERIC_SRC_DIRS)
 
@@ -237,7 +238,6 @@ TARGET_CFLAGS += $($(basename $@)_CFLAGS_$(OS_CLASS)) $($(basename $@)_CFLAGS)
 TARGET_CXXFLAGS += $($(basename $@)_CXXFLAGS_$(OS_CLASS)) $($(basename $@)_CXXFLAGS)
 TARGET_CPPFLAGS += $($(basename $@)_CPPFLAGS_$(OS_CLASS)) $($(basename $@)_CPPFLAGS)
 
-
 TARGET_LDFLAGS = $($*_LDFLAGS)
 
 # Warnings flags
@@ -262,7 +262,7 @@ LIBRARY_SRCS=$(basename $(foreach lib,$(LIBRARY) $(TESTLIBRARY) $(LOADABLE_LIBRA
 LIBRARY_SRC_CFLAGS=$($(patsubst $*,SHRLIB,$(findstring $*,$(LIBRARY_SRCS)))_CFLAGS)
 
 #--------------------------------------------------
-# prefix, suffix, and ldflags for loadable shared libraries 
+# prefix, suffix, and ldflags for loadable shared libraries
 TARGET_LIB_LDFLAGS=$($(patsubst $*,LOADABLE_,$(findstring $*,$(LOADABLE_LIBRARY)))SHRLIB_LDFLAGS)
 LOADABLE_SHRLIB_PREFIX=$(SHRLIB_PREFIX)
 LOADABLE_SHRLIB_SUFFIX=$(SHRLIB_SUFFIX)
@@ -441,6 +441,7 @@ OS_INSTALL_INC = $(addprefix $(INSTALL_INCLUDE)/os/$(OS_CLASS)/, $(INSTALL_INC_g
 INSTALL_INC_ggg = $(foreach dir, $(OS_SRC_DIRS), $(INSTALL_INC_fff)  )
 INSTALL_INC_fff = $(subst $(dir)/, , $(INSTALL_INC_eee) )
 INSTALL_INC_eee = $(wildcard $(addsuffix /$(inc), $(dir)) )
+
 #
 # Rule 2
 #
@@ -459,5 +460,5 @@ COMMON_INC += $(filter $(COMMON_DIR)/%, $(foreach file, $(INC), \
 SOURCE_INC = $(wildcard $(file) $(SOURCE_INC_bbb) )
 SOURCE_INC_bbb = $(foreach dir, $(ALL_SRC_DIRS), $(SOURCE_INC_aaa)  )
 SOURCE_INC_aaa = $(addsuffix /$(file), $(dir) )
- 
+
 endif
