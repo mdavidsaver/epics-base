@@ -233,3 +233,23 @@ operations before / after passing control down to the child link.
  {trace:{state:"redBeam"}}
 
 =cut
+
+link(ca, lnkCAIf)
+
+=head3 Channel Access C<"ca">
+
+=head4 Example
+
+Simple PV name
+
+ {ca: "some:pv:name"}
+
+With options
+
+ {ca: {pv:"some:pv",
+       ms:true, # true (MS), false (NMS), "I" (MSI), "S" (MSS)
+       proc:false, # true (PP), false (NPP), "CP", "CPP"
+       debug:true  # true, false, 0, 1, 2
+       }}
+
+=cut
