@@ -13,6 +13,7 @@ DBD += links.dbd
 
 dbRecStd_SRCS += lnkConst.c
 dbRecStd_SRCS += lnkCalc.c
+dbRecStd_SRCS += lnkCa.c
 
 HTMLS += links.html
 
