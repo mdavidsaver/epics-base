@@ -116,3 +116,19 @@ result should be displayed. Equivalent to the C<PREC> field of a record.
  {calc: {expr:"A*B", args:[{db:"record.VAL"}, 1.5]}}
 
 =cut
+
+link(ca, lnkCAIf)
+
+=head3 Channel Access C<"ca">
+
+=head4 Example
+
+Simple PV name
+
+ {ca: "some:pv:name"}
+
+With options
+
+ {ca: {pv:"some:pv", debug:True}}
+
+=cut
