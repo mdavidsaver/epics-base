@@ -12,6 +12,7 @@
 #include "dbDefs.h"
 #include "errlog.h"
 #include "epicsAssert.h"
+#include "epicsAtomic.h"
 #include "epicsString.h"
 #include "epicsTypes.h"
 #include "epicsMutex.h"
@@ -27,7 +28,9 @@
 #include "db_convert.h"
 
 #include "dbCommon.h"
+#include "dbScan.h"
 #include "dbLink.h"
+#include "recGbl.h"
 #include "dbJLink.h"
 #include "epicsExport.h"
 
@@ -41,6 +44,7 @@ typedef enum {
 
 typedef struct {
     jlink link;
+    int refcount;
 
     lnkCaParseState pstate;
 
@@ -77,9 +81,10 @@ typedef struct {
     /* we re-use some of the pvlOpt* flags */
     unsigned flags;
 
-    unsigned debug:1;
+    unsigned debug:2;
     unsigned datavalid:1;
     unsigned metavalid:1;
+    unsigned scanqueued:2; /* counts 0, 1, 2 */
 } ca_link;
 
 static
@@ -90,6 +95,63 @@ epicsThreadOnceId lnkca_once = EPICS_THREAD_ONCE_INIT;
 
 static
 struct ca_client_context *lnkca_context;
+
+/* internal */
+
+static
+void linkca_scan_complete(void *raw, dbCommon *prec)
+{
+    ca_link *link = raw;
+
+    epicsMutexMustLock(link->lock);
+    if(!link->plink) {
+        /* IOC shutdown or link re-targeted.  Do nothing. */
+    } else if(--link->scanqueued) {
+        if(scanOnceCallback(link->plink->precord, &linkca_scan_complete, link)) {
+            errlogPrintf("%s: ca_link failed to re-queue scan\n", prec->name);
+            link->scanqueued = 0;
+        } else {
+            epicsAtomicIncrIntT(&link->refcount);
+            if(link->debug)
+                errlogPrintf("%s -> %s: ca_link re-queued scan\n",
+                             link->plink->precord->name, link->target);
+        }
+    }
+
+    epicsMutexUnlock(link->lock);
+
+    lnkca_free(&link->link);
+}
+
+/* link->lock must be locked */
+static
+void linkca_scan(ca_link *link)
+{
+    assert(link->plink); /* not remove'd() */
+
+    if(!((link->flags & pvlOptCP) ||
+            ((link->flags & pvlOptCPP) && link->plink->precord->scan==0)))
+        return;
+
+    switch(link->scanqueued) {
+    case 1:
+        link->scanqueued++;
+    case 2:
+        return;
+    case 0:
+        break;
+    }
+
+    if(scanOnceCallback(link->plink->precord, &linkca_scan_complete, link)) {
+        errlogPrintf("%s: ca_link failed to queue scan\n", link->plink->precord->name);
+    } else {
+        epicsAtomicIncrIntT(&link->refcount);
+        link->scanqueued = 1;
+        if(link->debug)
+            errlogPrintf("%s -> %s: ca_link queued scan\n",
+                         link->plink->precord->name, link->target);
+    }
+}
 
 /* CA callbacks */
 
@@ -128,8 +190,8 @@ void linkca_new_data(struct event_handler_args args)
     assert(link->channel==args.chid);
 
     if(link->debug)
-        errlogPrintf("%s: ca_link event dtype=%u count=%u status=0x%x\n",
-                     ca_name(args.chid), (unsigned)args.type,
+        errlogPrintf("%s -> %s: ca_link event dtype=%u count=%u status=0x%x\n",
+                     link->plink->precord->name, link->target, (unsigned)args.type,
                      (unsigned)args.count, (unsigned)args.status);
 
     if(args.status!=ECA_NORMAL) {
@@ -173,9 +235,9 @@ void linkca_new_data(struct event_handler_args args)
         link->metavalid = 1;
     }
 
-    epicsMutexUnlock(link->lock);
+    linkca_scan(link);
 
-    /* TODO: trigger processing */
+    epicsMutexUnlock(link->lock);
 }
 
 static
@@ -187,8 +249,8 @@ void lnkca_conn_status(struct connection_handler_args args)
     assert(link->channel==args.chid);
 
     if(link->debug)
-        errlogPrintf("%s: ca_link %sconnect\n",
-                     ca_name(args.chid), args.op==CA_OP_CONN_UP ? "" : "dis");
+        errlogPrintf("%s -> %s: ca_link %sconnect\n",
+                     link->plink->precord->name, link->target, args.op==CA_OP_CONN_UP ? "" : "dis");
 
     if(args.op==CA_OP_CONN_UP) {
         /* max element count */
@@ -249,6 +311,8 @@ void lnkca_conn_status(struct connection_handler_args args)
         link->status = LINK_ALARM;
         link->sevr   = INVALID_ALARM;
         link->metavalid = 0;
+
+        linkca_scan(link);
     }
 
     epicsMutexUnlock(link->lock);
@@ -266,15 +330,13 @@ void lnkca_open(struct link *plink)
     struct ca_client_context *save;
     ca_link *link = CONTAINER(plink->value.json.jlink, ca_link, link);
 
-    errlogPrintf("ca_link open \"%s\" debug=%u\n", link->target, link->debug);
-
     if(!link->target) {
         errlogPrintf("ca_link w/o target PV\n");
         return;
     }
 
     if(link->debug)
-        errlogPrintf("%s: ca_link open\n", link->target);
+        errlogPrintf("%s -> %s: ca_link open\n", plink->precord->name, link->target);
 
     link->plink = plink;
 
@@ -293,10 +355,10 @@ void lnkca_open(struct link *plink)
         link->channel = NULL;
     }
 
+    epicsMutexUnlock(link->lock);
+
     SEVCHK(ca_flush_io(),
            "open flush");
-
-    epicsMutexUnlock(link->lock);
 
     ca_detach_context();
     if(save)
@@ -318,7 +380,8 @@ void lnkca_remove(struct dbLocker *locker, struct link *plink)
     epicsMutexMustLock(link->lock);
 
     if(link->debug)
-        errlogPrintf("%s: ca_link remove\n", link->target);
+        errlogPrintf("%s -> %s: ca_link remove\n",
+                     link->plink->precord->name, link->target);
 
     if(link->sub_value)
         SEVCHK(ca_clear_subscription(link->sub_value),
@@ -332,6 +395,8 @@ void lnkca_remove(struct dbLocker *locker, struct link *plink)
 
     link->sub_value = link->sub_meta = NULL;
     link->channel = NULL;
+
+    link->plink = NULL;
 
     epicsMutexUnlock(link->lock);
 
@@ -351,6 +416,8 @@ int lnkca_isconn(const struct link *plink)
     epicsMutexMustLock(link->lock);
     /* channel connected, and first data update received */
     ret = link->sub_value!=NULL && link->datavalid;
+    if(link->debug>1)
+        errlogPrintf("%s -> %s: ca_link isconn=%d\n", link->plink->precord->name, link->target, ret);
     epicsMutexUnlock(link->lock);
     return ret;
 }
@@ -366,6 +433,8 @@ int lnkca_dtype(const struct link *plink)
     /* channel connected, and first data update received */
     if(link->sub_value!=NULL && link->datavalid)
         ret = link->native_type;
+    if(link->debug>1)
+        errlogPrintf("%s -> %s: ca_link dtype=%d\n", link->plink->precord->name, link->target, ret);
     epicsMutexUnlock(link->lock);
     return ret;
 }
@@ -380,6 +449,8 @@ long lnkca_elements(const struct link *plink, long *nelements)
     /* channel connected, and first data update received */
     if(link->sub_value!=NULL && link->datavalid)
         ret = (long)link->getvalcount;
+    if(link->debug>1)
+        errlogPrintf("%s -> %s: ca_link elements=%ld\n", link->plink->precord->name, link->target, ret);
     epicsMutexUnlock(link->lock);
     return ret;
 }
@@ -388,7 +459,7 @@ static
 long lnkca_getValue(struct link *plink, short dbrType, void *pbuffer,
       long *pnRequest)
 {
-    /* note: dbrType is PDB dtype code, link->*_code are CA codes */
+    /* note: dbrType is PDB (new) dtype code, link->*_code are CA (old) codes */
     long ret;
     ca_link *link = CONTAINER(plink->value.json.jlink, ca_link, link);
     long N = pnRequest ? *pnRequest : 1;
@@ -400,17 +471,23 @@ long lnkca_getValue(struct link *plink, short dbrType, void *pbuffer,
     if(link->sub_value==NULL || !link->datavalid) {
         ret = -1;
 
+    } else if(N==0 || link->getvalcount==0) {
+        N = 0;
+        ret = 0;
+
     } else if(N==1) {
         long (*pgetconvert)(const void *from, void *to, dbAddr *paddr);
 
         pgetconvert = dbFastGetConvertRoutine[srctype][dbrType];
 
-        if(pnRequest) *pnRequest = 1;
         ret = pgetconvert(link->getval, pbuffer, NULL);
 
     } else {
         struct dbAddr dbAddr;
         long (*aConvert)(struct dbAddr *paddr, void *to, long nreq, long nto, long off);
+
+        if(N>link->getvalcount)
+            N = link->getvalcount;
 
         aConvert = dbGetConvertRoutine[srctype][dbrType];
 
@@ -423,6 +500,15 @@ long lnkca_getValue(struct link *plink, short dbrType, void *pbuffer,
         ret = 0;
     }
 
+    if(ret==0) {
+        recGblInheritSevr(link->flags & pvlOptMsMode, plink->precord,
+                          link->status, link->sevr);
+
+        if(pnRequest) *pnRequest = N;
+    }
+
+    if(link->debug>1)
+        errlogPrintf("%s -> %s: ca_link getValue code=%ld\n", link->plink->precord->name, link->target, ret);
     epicsMutexUnlock(link->lock);
 
     return ret;
@@ -442,6 +528,8 @@ long lnkca_controllimits(const struct link *plink, double *lo, double *hi)
         if(hi) *hi = link->meta.upper_ctrl_limit;
         ret = 0;
     }
+    if(link->debug>1)
+        errlogPrintf("%s -> %s: ca_link controllimits\n", link->plink->precord->name, link->target);
     epicsMutexUnlock(link->lock);
 
     return ret;
@@ -461,6 +549,8 @@ long lnkca_graphiclimits(const struct link *plink, double *lo, double *hi)
         if(hi) *hi = link->meta.upper_disp_limit;
         ret = 0;
     }
+    if(link->debug>1)
+        errlogPrintf("%s -> %s: ca_link graphiclimits\n", link->plink->precord->name, link->target);
     epicsMutexUnlock(link->lock);
 
     return ret;
@@ -483,6 +573,8 @@ long lnkca_alarmlimits(const struct link *plink, double *lolo, double *lo,
         if(hihi) *hihi = link->meta.upper_alarm_limit;
         ret = 0;
     }
+    if(link->debug>1)
+        errlogPrintf("%s -> %s: ca_link alarmlimits\n", link->plink->precord->name, link->target);
     epicsMutexUnlock(link->lock);
 
     return ret;
@@ -500,6 +592,8 @@ long lnkca_prec(const struct link *plink, short *precision)
     } else {
         if(precision) *precision = link->meta.precision;
     }
+    if(link->debug>1)
+        errlogPrintf("%s -> %s: ca_link prec\n", link->plink->precord->name, link->target);
     epicsMutexUnlock(link->lock);
 
     return ret;
@@ -520,6 +614,8 @@ long lnkca_units(const struct link *plink, char *units, int unitsSize)
         strncpy(units, link->meta.units, unitsSize-1);
         units[unitsSize-1] = '\0';
     }
+    if(link->debug>1)
+        errlogPrintf("%s -> %s: ca_link egu\n", link->plink->precord->name, link->target);
     epicsMutexUnlock(link->lock);
 
     return ret;
@@ -537,6 +633,8 @@ long lnkca_alarm(const struct link *plink, epicsEnum16 *status,
         sevr = link->sevr;
         sts  = link->status;
     }
+    if(link->debug>1)
+        errlogPrintf("%s -> %s: ca_link sevr=%u sts=%u\n", link->plink->precord->name, link->target, sevr, sts);
     epicsMutexUnlock(link->lock);
 
     if(status) *status = sts;
@@ -557,6 +655,10 @@ long lnkca_time(const struct link *plink, epicsTimeStamp *pstamp)
         if(pstamp)
             *pstamp = link->time;
     }
+    if(link->debug>1)
+        errlogPrintf("%s -> %s: ca_link sec=%u nsec=%u\n", link->plink->precord->name, link->target,
+                     (unsigned)link->time.secPastEpoch,
+                     (unsigned)link->time.nsec);
     epicsMutexUnlock(link->lock);
 
     return ret;
@@ -566,7 +668,48 @@ static
 long lnkca_putValue(struct link *plink, short dbrType,
                     const void *pbuffer, long nRequest)
 {
-    return -1;
+    int ret;
+    struct ca_client_context *save;
+    ca_link *link = CONTAINER(plink->value.json.jlink, ca_link, link);
+
+    dbrType = dbDBRnewToDBRold[dbrType];
+
+    save = ca_current_context();
+    if(save)
+        ca_detach_context();
+    SEVCHK(ca_attach_context(lnkca_context),
+           "open attach");
+
+    epicsMutexMustLock(link->lock);
+
+    if(link->channel) {
+
+        ret = ca_array_put(dbrType, nRequest, link->channel, pbuffer);
+
+        if(ret!=ECA_NORMAL) {
+            errlogPrintf("%s: ca_link %s error (%d) %s\n",
+                         link->plink->precord->name, link->target, ret, ca_message(ret));
+        }
+    } else {
+        ret = ECA_DISCONN;
+    }
+
+    if(link->debug>2)
+        errlogPrintf("%s -> %s: ca_link putval (%d) %s\n",
+                     link->plink->precord->name, link->target, ret, ca_message(ret));
+
+    epicsMutexUnlock(link->lock);
+
+    if(ret==ECA_NORMAL) {
+        SEVCHK(ca_flush_io(),
+               "open flush");
+    }
+
+    ca_detach_context();
+    if(save)
+        ca_attach_context(save);
+
+    return ret!=ECA_NORMAL;
 }
 
 static
@@ -647,6 +790,7 @@ jlink* lnkca_alloc(short dbfType)
 
     link = calloc(1, sizeof(*link));
     if(link) {
+        epicsAtomicSetIntT(&link->refcount, 1);
         link->status = LINK_ALARM;
         link->sevr   = INVALID_ALARM;
         link->lock = epicsMutexCreate();
@@ -663,10 +807,14 @@ static
 void lnkca_free(jlink *lnk)
 {
     ca_link *link = CONTAINER(lnk, ca_link, link);
-    errlogPrintf("ca_link free\n");
-    epicsMutexDestroy(link->lock);
-    free(link->target);
-    free(link);
+    assert(epicsAtomicGetIntT(&link->refcount)>0);
+    if(epicsAtomicDecrIntT(&link->refcount)==0) {
+        if(link->debug>2)
+            errlogPrintf("ca_link free\n");
+        epicsMutexDestroy(link->lock);
+        free(link->target);
+        free(link);
+    }
 }
 
 static
@@ -731,6 +879,22 @@ jlif_result linkca_bool(jlink *lnk, int val)
         link->flags &= ~(pvlOptPP|pvlOptCA|pvlOptCP|pvlOptCPP);
         if(val)
             link->flags |= pvlOptPP;
+        break;
+    default:
+        return jlif_stop;
+    }
+    return jlif_key_continue;
+}
+
+static
+jlif_result linkca_int(jlink *lnk, long val)
+{
+    ca_link *link = CONTAINER(lnk, ca_link, link);
+
+    switch(link->pstate) {
+    case lnkCaParseDEBUG:
+        if(val>3) val = 3;
+        link->debug = val;
         break;
     default:
         return jlif_stop;
@@ -813,7 +977,7 @@ static jlif lnkCAIf = {
     lnkca_free,
     NULL,
     linkca_bool,
-    NULL,
+    linkca_int,
     NULL,
     linkca_parse_string,
     linkca_start_map,
