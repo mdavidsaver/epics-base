@@ -62,7 +62,7 @@ INP{link} {
 
 {punctuation}	{ return(yytext[0]); }
 
-^#.*
+#.*
 {whitespace}	;
 
 \n      { line_num ++;}
