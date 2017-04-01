@@ -39,8 +39,23 @@ typedef enum {
     lnkCaParsePROC,
     lnkCaParseMS,
     lnkCaParseDEBUG,
+    lnkCaParseQOS,
     lnkCaParseINVALID
 } lnkCaParseState;
+
+typedef enum {
+    lnkCaQOS_None,
+    /* accept put request while disconnected,
+     * issue put upon connection.
+     * dis-connect before ack. not retried
+     */
+    lnkCaQOS_defer,
+    /* accept put request while disconnected,
+     * issue put upon connection or data update
+     * when not equal.
+     */
+    lnkCaQOS_sync,
+} lnkCaQOS;
 
 typedef struct {
     jlink link;
@@ -71,7 +86,7 @@ typedef struct {
 
     /* last value put */
     void *putval;
-    size_t putvalcount;
+    size_t putvalcount, putvalcountalloc;
 
     /* storage for meta-data subscription.
      * lset API uses double, so we always request this :)
@@ -84,6 +99,7 @@ typedef struct {
     unsigned debug:2;
     unsigned datavalid:1;
     unsigned metavalid:1;
+    unsigned putretry:1;
     unsigned scanqueued:2; /* counts 0, 1, 2 */
 } ca_link;
 
@@ -848,6 +864,10 @@ jlif_result linkca_key(jlink *lnk, const char *key, size_t len)
         link->pstate = lnkCaParseDEBUG;
         return jlif_key_continue;
 
+    } else if(len==5 && strncmp("retry", key, len)==0) {
+        link->pstate = lnkCaParseQOS;
+        return jlif_key_continue;
+
     } else {
         return jlif_key_stop;
     }
@@ -936,6 +956,14 @@ jlif_result linkca_parse_string(jlink *lnk, const char *val, size_t len)
             link->flags |= pvlOptCP;
         else if(len==3 && val[0]=='C' && val[1]=='P' && val[2]=='P')
             link->flags |= pvlOptCPP;
+        else
+            return jlif_stop; /* TODO strict? */
+        return jlif_continue;
+
+    } else if(link->pstate == lnkCaParseQOS) {
+        if(len==5 && strncmp(val, "retry", 5)==0) {
+
+        }
         else
             return jlif_stop; /* TODO strict? */
         return jlif_continue;
