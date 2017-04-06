@@ -125,6 +125,9 @@ TESTS += dbChannelTest
 
 TARGETS += $(COMMON_DIR)/dbChArrTest.dbd
 DBDDEPENDS_FILES += dbChArrTest.dbd$(DEP)
+dbChArrTest_DBD += menuGlobal.dbd
+dbChArrTest_DBD += menuConvert.dbd
+dbChArrTest_DBD += menuScan.dbd
 dbChArrTest_DBD += arrRecord.dbd
 TESTPROD_HOST += dbChArrTest
 dbChArrTest_SRCS += dbChArrTest.cpp

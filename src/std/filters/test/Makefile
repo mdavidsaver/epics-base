@@ -43,6 +43,9 @@ dbndTest_SRCS += filterTest_registerRecordDeviceDriver.cpp
 testHarness_SRCS += dbndTest.c
 TESTS += dbndTest
 
+arrTest_DBD += menuGlobal.dbd
+arrTest_DBD += menuConvert.dbd
+arrTest_DBD += menuScan.dbd
 TESTPROD_HOST += arrTest
 arrTest_SRCS += arrTest.cpp
 arrTest_SRCS += filterTest_registerRecordDeviceDriver.cpp
