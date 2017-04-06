@@ -645,6 +645,7 @@ void scanIoSetComplete(IOSCANPVT piosh, io_scan_complete cb, void *arg)
 }
 
 int scanOnce(struct dbCommon *precord) {
+    if(!precord) return 1; /* no record or callback, complete no-op, is considered an error */
     return scanOnceCallback(precord, NULL, NULL);
 }
 
@@ -696,9 +697,11 @@ static void onceTask(void *arg)
                 continue; /* what to do? */
             } else if (ent.prec == (void*)&exitOnce) goto shutdown;
 
-            dbScanLock(ent.prec);
-            dbProcess(ent.prec);
-            dbScanUnlock(ent.prec);
+            if(ent.prec) {
+                dbScanLock(ent.prec);
+                dbProcess(ent.prec);
+                dbScanUnlock(ent.prec);
+            }
             if(ent.cb)
                 ent.cb(ent.usr, ent.prec);
         }
