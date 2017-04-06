@@ -1,6 +1,3 @@
-include "menuGlobal.dbd"
-include "menuConvert.dbd"
-include "menuScan.dbd"
 recordtype(arr) {
   include "dbCommon.dbd"
   field(VAL, DBF_NOACCESS) {

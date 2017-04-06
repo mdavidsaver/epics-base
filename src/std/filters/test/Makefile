@@ -42,6 +42,9 @@ TESTS += dbndTest
 
 TARGETS += $(COMMON_DIR)/arrTest.dbd
 DBDDEPENDS_FILES += arrTest.dbd$(DEP)
+arrTest_DBD += menuGlobal.dbd
+arrTest_DBD += menuConvert.dbd
+arrTest_DBD += menuScan.dbd
 arrTest_DBD += arrRecord.dbd
 TESTPROD_HOST += arrTest
 arrTest_SRCS += arrTest.cpp
