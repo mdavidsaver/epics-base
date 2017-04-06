@@ -21,6 +21,7 @@
 #include "iocInit.h"
 #include "dbBase.h"
 #include "link.h"
+#include "dbScan.h"
 #include "dbAccess.h"
 #include "epicsStdio.h"
 #include "dbEvent.h"
@@ -50,6 +51,12 @@ void waitCB(void *unused)
 {
     if(waitEvent)
         epicsEventMustTrigger(waitEvent);
+}
+
+static
+void waitOnce(void *usr, dbCommon *prec)
+{
+    waitCB(usr);
     waitCounter++; /* TODO: atomic */
 }
 
@@ -69,6 +76,12 @@ void startWait(DBLINK *plink)
     testDiag("Preparing to wait on pca=%p", pca);
 }
 
+/* wait for subscription update to CA link to complete
+ * (requires previous call to startWait().
+ * Then syncs with the scanOnce queue in case a link with CP
+ * triggered processing.
+ * (assumes link scanOnce worker)
+ */
 static
 void waitForUpdate(DBLINK *plink)
 {
@@ -83,6 +96,12 @@ void waitForUpdate(DBLINK *plink)
     pca->monitor = NULL;
     pca->userPvt = NULL;
     epicsMutexUnlock(pca->lock);
+
+    if(scanOnceCallback(NULL, waitOnce, NULL))
+        testAbort("Unable to sync scanOnce queue");
+
+    testDiag("Waiting scanOnce sync");
+    epicsEventMustWait(waitEvent);
 
     epicsEventDestroy(waitEvent);
     waitEvent = NULL;
@@ -287,7 +306,9 @@ static void testStringLink(void)
 
 static void wasproc(xRecord *prec)
 {
+    testDiag("%s: proc", prec->name);
     waitCB(NULL);
+    waitCounter++; /* TODO: atomic */
 }
 
 static void testCP(void)
@@ -306,7 +327,10 @@ static void testCP(void)
     psrc = (xRecord*)testdbRecordPtr("source");
     ptarg= (xRecord*)testdbRecordPtr("target");
 
-    /* hook in before IOC init */
+    /* sync. to capture initial processing is hard as
+     * the CA link worker is started before links are initialized. (startWait() can't be called)
+     * There is no place to hook in before initial process might have completed...
+     */
     waitCounter=0;
     psrc->clbk = &wasproc;
 
@@ -320,7 +344,7 @@ static void testCP(void)
     epicsEventMustWait(waitEvent);
 
     dbScanLock((dbCommon*)psrc);
-    testOp("%u",waitCounter,==,1); /* initial processing */
+    testOk(waitCounter==1, "wait for initial process %u==1", waitCounter);
     dbScanUnlock((dbCommon*)psrc);
 
     dbScanLock((dbCommon*)ptarg);
@@ -331,7 +355,7 @@ static void testCP(void)
     epicsEventMustWait(waitEvent);
 
     dbScanLock((dbCommon*)psrc);
-    testOp("%u",waitCounter,==,2); /* process due to monitor update */
+    testOk(waitCounter==2, "wait for process due to monitor update %u==2", waitCounter);
     dbScanUnlock((dbCommon*)psrc);
 
     testIocShutdownOk();
