@@ -96,6 +96,53 @@ epicsShareFunc unsigned testMonitorCount(testMonitor*, unsigned reset);
 
 #ifdef __cplusplus
 }
-#endif
+
+/** Wrapper for IOC test life-cycle
+ *
+ *@code
+ extern "C" void myIOC_registerRecordDeviceDriver(struct dbBase *);
+ try {
+   TestIOC ioc;
+   ioc.readDatabase("myIOC.dbd");
+   myIOC_registerRecordDeviceDriver(pdbbase)
+   ioc.init();
+   testdbGetFieldEqual("some:pv", DBF_INT, 42);
+ }catch(std::exception& e){
+   testFail("unexpected exception: %s", e.what());
+ }
+ *@endcode
+ */
+class TestIOC {
+    bool hasInit;
+public:
+    TestIOC() {
+        testdbPrepare();
+    }
+    ~TestIOC() {
+        this->shutdown();
+        testdbCleanup();
+    }
+    void readDatabase(const char* file,
+                      const char* path=0,
+                      const char* substitutions=0) {
+        testdbReadDatabase(file, path, substitutions);
+    }
+    void init() {
+        if(!hasInit) {
+            eltc(0);
+            testIocInitOk();
+            eltc(1);
+            hasInit = true;
+        }
+    }
+    void shutdown() {
+        if(hasInit) {
+            testIocShutdownOk();
+            hasInit = false;
+        }
+    }
+};
+
+#endif /* __cplusplus */
 
 #endif // EPICSUNITTESTDB_H
