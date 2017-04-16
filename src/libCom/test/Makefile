@@ -26,6 +26,10 @@ TESTS += epicsUnitTestTest
 
 endif
 
+TESTPROD_HOST += epicsUnitTestTestCXX
+epicsUnitTestTestCXX_SRCS += epicsUnitTestTestCXX.cpp
+TESTS += epicsUnitTestTestCXX
+
 TESTPROD_HOST += epicsTypesTest
 epicsTypesTest_SRCS += epicsTypesTest.cpp
 testHarness_SRCS += epicsTypesTest.cpp
