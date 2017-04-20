@@ -48,33 +48,41 @@ epicsExportAddress(dset, devWfSoft);
 
 static long init_record(waveformRecord *prec)
 {
-    /* INP must be CONSTANT, PV_LINK, DB_LINK or CA_LINK*/
-    switch (prec->inp.type) {
-    case CONSTANT:
-        prec->nord = 0;
-        break;
-    case PV_LINK:
-    case DB_LINK:
-    case CA_LINK:
-        break;
-    default:
-        recGblRecordError(S_db_badField, (void *)prec,
-            "devWfSoft (init_record) Illegal INP field");
-        return(S_db_badField);
+    long nelm = prec->nelm;
+    long status = dbLoadLinkArray(&prec->inp, prec->ftvl, prec->bptr, &nelm);
+
+    if (!status && nelm > 0) {
+        prec->nord = nelm;
+        prec->udf = FALSE;
     }
-    return 0;
+    else
+        prec->nord = 0;
+    return status;
+}
+
+static long readLocked(struct link *pinp, void *dummy)
+{
+    waveformRecord *prec = (waveformRecord *) pinp->precord;
+    long nRequest = prec->nelm;
+    long status = dbGetLink(pinp, prec->ftvl, prec->bptr, 0, &nRequest);
+
+    if (!status && nRequest > 0) {
+        prec->nord = nRequest;
+        prec->udf = FALSE;
+
+        if (dbLinkIsConstant(&prec->tsel) &&
+            prec->tse == epicsTimeEventDeviceTime)
+            dbGetTimeStamp(pinp, &prec->time);
+    }
+    return status;
 }
 
 static long read_wf(waveformRecord *prec)
 {
-    long nRequest = prec->nelm;
+    long status = dbLinkDoLocked(&prec->inp, readLocked, NULL);
 
-    dbGetLink(&prec->inp, prec->ftvl, prec->bptr, 0, &nRequest);
-    if (nRequest > 0) {
-        prec->nord = nRequest;
-        if (prec->tsel.type == CONSTANT &&
-            prec->tse == epicsTimeEventDeviceTime)
-            dbGetTimeStamp(&prec->inp, &prec->time);
-    }
-    return 0;
+    if (status == S_db_noLSET)
+        status = readLocked(&prec->inp, NULL);
+
+    return status;
 }

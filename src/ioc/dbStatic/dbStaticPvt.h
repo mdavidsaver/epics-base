@@ -36,19 +36,25 @@ char *dbRecordName(DBENTRY *pdbentry);
 char *dbGetStringNum(DBENTRY *pdbentry);
 long dbPutStringNum(DBENTRY *pdbentry,const char *pstring);
 
+struct jlink;
+
 typedef struct dbLinkInfo {
     short ltype;
 
     /* full link string for CONSTANT and PV_LINK,
-     * parm string for HW links*/
+     * parm string for HW links, JSON for JSON_LINK
+     */
     char *target;
 
     /* for PV_LINK */
     short modifiers;
 
-    /* HW links */
+    /* for HW links */
     char hwid[6]; /* one extra element for a nil */
     int  hwnums[5];
+
+    /* for JSON_LINK */
+    struct jlink *jlink;
 } dbLinkInfo;
 
 long dbInitRecordLinks(dbRecordType *rtyp, struct dbCommon *prec);
@@ -68,6 +74,8 @@ long dbCanSetLink(DBLINK *plink, dbLinkInfo *pinfo, devSup *devsup);
  * Unconditionally takes ownership of pinfo->target
  */
 long dbSetLink(DBLINK *plink, dbLinkInfo *pinfo, devSup *dset);
+/* Free dbLinkInfo storage */
+epicsShareFunc void dbFreeLinkInfo(dbLinkInfo *pinfo);
 
 /* The following is for path */
 typedef struct dbPathNode {

@@ -43,6 +43,13 @@ typedef struct devSup {
 	struct dsxt	*pdsxt;       /* Extended device support */
 }devSup;
 
+typedef struct linkSup {
+	ELLNODE		node;
+	char 		*name;
+	char		*jlif_name;
+	struct jlif	*pjlif;
+} linkSup;
+
 typedef struct dbDeviceMenu {
 	int		nChoice;
 	char		**papChoice;
@@ -161,6 +168,7 @@ typedef struct dbBase {
 	ELLLIST		menuList;
 	ELLLIST		recordTypeList;
 	ELLLIST		drvList;
+	ELLLIST		linkList;
 	ELLLIST		registrarList;
 	ELLLIST		functionList;
 	ELLLIST		variableList;

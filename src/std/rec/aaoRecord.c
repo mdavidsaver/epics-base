@@ -140,10 +140,7 @@ static long init_record(aaoRecord *prec, int pass)
         return 0;
     }
 
-    /* SIML must be a CONSTANT or a PV_LINK or a DB_LINK */
-    if (prec->siml.type == CONSTANT) {
-        recGblInitConstantLink(&prec->siml,DBF_USHORT,&prec->simm);
-    }
+    recGblInitConstantLink(&prec->siml,DBF_USHORT,&prec->simm);
 
     /* must have write_aao function defined */
     if (pdset->number < 5 || pdset->write_aao == NULL) {

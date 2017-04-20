@@ -47,35 +47,31 @@ epicsExportAddress(dset, devSASoft);
 
 static long init_record(subArrayRecord *prec)
 {
-    /* INP must be CONSTANT, PV_LINK, DB_LINK or CA_LINK*/
-    switch (prec->inp.type) {
-    case CONSTANT:
-        prec->nord = 0;
-        break;
-    case PV_LINK:
-    case DB_LINK:
-    case CA_LINK:
-        break;
-    default:
-        recGblRecordError(S_db_badField, (void *)prec,
-            "devSASoft (init_record) Illegal INP field");
-        return S_db_badField;
+    long nelm = prec->nelm;
+    long status = dbLoadLinkArray(&prec->inp, prec->ftvl, prec->bptr, &nelm);
+
+    if (!status && nelm > 0) {
+        prec->nord = nelm;
+        prec->udf = FALSE;
     }
-    return 0;
+    else
+        prec->nord = 0;
+    return status;
 }
 
-static long read_sa(subArrayRecord *prec)
+static long readLocked(struct link *pinp, void *dummy)
 {
+    subArrayRecord *prec = (subArrayRecord *) pinp->precord;
     long nRequest = prec->indx + prec->nelm;
     long ecount;
 
     if (nRequest > prec->malm)
         nRequest = prec->malm;
 
-    if (prec->inp.type == CONSTANT)
+    if (dbLinkIsConstant(pinp))
         nRequest = prec->nord;
     else
-        dbGetLink(&prec->inp, prec->ftvl, prec->bptr, 0, &nRequest);
+        dbGetLink(pinp, prec->ftvl, prec->bptr, 0, &nRequest);
 
     ecount = nRequest - prec->indx;
     if (ecount > 0) {
@@ -91,9 +87,19 @@ static long read_sa(subArrayRecord *prec)
     prec->nord = ecount;
 
     if (nRequest > 0 &&
-        prec->tsel.type == CONSTANT &&
+        dbLinkIsConstant(&prec->tsel) &&
         prec->tse == epicsTimeEventDeviceTime)
-        dbGetTimeStamp(&prec->inp, &prec->time);
+        dbGetTimeStamp(pinp, &prec->time);
 
     return 0;
+}
+
+static long read_sa(subArrayRecord *prec)
+{
+    long status = dbLinkDoLocked(&prec->inp, readLocked, NULL);
+
+    if (status == S_db_noLSET)
+        status = readLocked(&prec->inp, NULL);
+
+    return status;
 }
