@@ -941,8 +941,6 @@ static void printBuffer(
                     len -= chunk;
                     if (len > 0)
                         strcat(pmsg, " +");
-                if (width > MAXLINE - 5) width = MAXLINE - 5;
-                sprintf(pmsg, " \"%.*s\"", width, (char *)pbuffer + i);
                     dbpr_msgOut(pMsgBuff, tab_size);
                 }
             }
