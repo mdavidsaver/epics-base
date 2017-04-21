@@ -32,6 +32,7 @@
 #include "envDefs.h"
 #include "locationException.h"
 #include "errlog.h"
+#include "epicsExport.h"
 
 #define epicsExportSharedSymbols
 #include "addrList.h"
@@ -53,6 +54,14 @@
 static const char pVersionCAC[] =
     "@(#) " EPICS_VERSION_STRING
     ", CA Client Library " __DATE__;
+
+// when set, respect EPICS_CA_MAX_ARRAY_BYTES
+// when clear, ignore it
+extern "C" {
+epicsShareExtern int caLimitArray;
+int caLimitArray;
+epicsExportAddress(int, caLimitArray);
+}
 
 // TCP response dispatch table
 const cac::pProtoStubTCP cac::tcpJumpTableCAC [] =
@@ -218,9 +227,11 @@ cac::cac (
             throw std::bad_alloc ();
         }
 
-        freeListInitPvt ( &this->tcpLargeRecvBufFreeList, this->maxRecvBytesTCP, 1 );
-        if ( ! this->tcpLargeRecvBufFreeList ) {
-            throw std::bad_alloc ();
+        if(caLimitArray) {
+            freeListInitPvt ( &this->tcpLargeRecvBufFreeList, this->maxRecvBytesTCP, 1 );
+            if ( ! this->tcpLargeRecvBufFreeList ) {
+                throw std::bad_alloc ();
+            }
         }
         unsigned bufsPerArray = this->maxRecvBytesTCP / comBuf::capacityBytes ();
         if ( bufsPerArray > 1u ) {
@@ -231,9 +242,7 @@ cac::cac (
     catch ( ... ) {
         osiSockRelease ();
         delete [] this->pUserName;
-        if ( this->tcpSmallRecvBufFreeList ) {
-            freeListCleanup ( this->tcpSmallRecvBufFreeList );
-        }
+        freeListCleanup ( this->tcpSmallRecvBufFreeList );
         if ( this->tcpLargeRecvBufFreeList ) {
             freeListCleanup ( this->tcpLargeRecvBufFreeList );
         }
@@ -318,7 +327,9 @@ cac::~cac ()
     }
 
     freeListCleanup ( this->tcpSmallRecvBufFreeList );
-    freeListCleanup ( this->tcpLargeRecvBufFreeList );
+    if ( this->tcpLargeRecvBufFreeList ) {
+        freeListCleanup ( this->tcpLargeRecvBufFreeList );
+    }
 
     delete [] this->pUserName;
 
