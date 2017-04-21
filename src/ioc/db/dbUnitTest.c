@@ -198,6 +198,9 @@ void testdbVGetFieldEqual(const char* pv, short dbrType, va_list ap)
     if (status) {
         testFail("dbGetField(\"%s\", %d, ...) -> %#lx (%s)", pv, dbrType, status, errSymMsg(status));
         return;
+    } else if(nReq==0) {
+        testFail("dbGetField(\"%s\", %d, ...) -> zero length", pv, dbrType);
+        return;
     }
 
     switch(dbrType) {
