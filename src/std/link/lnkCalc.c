@@ -313,6 +313,10 @@ static jlif_result lnkCalc_end_array(jlink *pjlink)
 
     if (clink->pstate == ps_error)
         return jlif_stop;
+    else if (!clink->post_expr) {
+        errlogPrintf("lnkCalc: no expression ('expr' key)\n");
+        return jlif_stop;
+    }
 
     return jlif_continue;
 }
