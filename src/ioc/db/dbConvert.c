@@ -1150,7 +1150,7 @@ static long putStringEnum(dbAddr *paddr,
     const void *pfrom, long nRequest, long no_elements, long offset)
 {
     epicsEnum16 *pfield = paddr->pfield;
-    struct rset *prset = dbGetRset(paddr);
+    rset *prset = dbGetRset(paddr);
     long status = S_db_noRSET;
     struct dbr_enumStrs enumStrs;
 
@@ -1562,7 +1562,7 @@ static long putFloatString(dbAddr *paddr,
     char        *pdst = (char *) paddr->pfield;
     long status = 0;
     long        precision = 6;
-    struct rset *prset = 0;
+    rset *prset = 0;
     short size = paddr->field_size;
 
     if (paddr)
@@ -1604,7 +1604,7 @@ static long putDoubleString(dbAddr *paddr,
     char        *pdst = (char *) paddr->pfield;
     long status = 0;
     long        precision = 6;
-    struct rset *prset = 0;
+    rset *prset = 0;
     short size = paddr->field_size;
 
     if (paddr)
