@@ -31,6 +31,7 @@
 #include <rtems/error.h>
 #include "epicsMessageQueue.h"
 #include "errlog.h"
+#include <epicsAtomic.h>
 
 #include <errno.h>
 #include <mqueue.h>
@@ -39,48 +40,36 @@
 epicsShareFunc epicsMessageQueueId epicsShareAPI
 epicsMessageQueueCreate(unsigned int capacity, unsigned int maximumMessageSize)
 {
-
-  rtems_interrupt_level level;
-
-  epicsMessageQueueId mqDes;
   struct mq_attr the_attr;
+  epicsMessageQueueId id = (epicsMessageQueueId)calloc(1, sizeof(*id));
 
-  static char c1 = 'a';
-  static char c2 = 'a';
-  static char c3 = 'a';
-  static char name[6];
-
-  sprintf(name, "MQ_%c%c%c",c3,c2,c1);    
+  epicsAtomicIncrIntT(&id->idCnt);
+  sprintf(id->name, "MQ_%010d",epicsAtomicGetIntT(&id->idCnt));    
   the_attr.mq_maxmsg = capacity;
   the_attr.mq_msgsize = maximumMessageSize;
-  mqDes = (epicsMessageQueueId)mq_open(name, O_RDWR | O_CREAT, 0644, &the_attr);
-  if (mqDes < 0) { 
+  id->id = mq_open(id->name, O_RDWR | O_CREAT | O_EXCL, 0644, &the_attr);
+  if (id->id < 0) { 
     errlogPrintf ("Can't create message queue: %s\n", strerror (errno));
     return NULL;
   }
+  return id;
+}
 
-  rtems_interrupt_disable (level);
-  if (c1 == 'z') {
-      if (c2 == 'z') {
-          if (c3 == 'z') {
-              c3 = 'a';
-          }
-          else {
-              c3++;
-          }
-          c2 = 'a';
-      }
-      else {
-          c2++;
-      }
-      c1 = 'a';
+epicsShareFunc void epicsShareAPI epicsMessageQueueDestroy(
+    epicsMessageQueueId id)
+{
+  int rv;
+  rv = mq_close(id->id);
+  if( rv ) { 
+    errlogPrintf("epicsMessageQueueDestroy mq_close failed: %s\n",
+                         strerror(rv));
   }
-  else {
-      c1++;
+  rv = mq_unlink(id->name);
+  if( rv ) { 
+    errlogPrintf("epicsMessageQueueDestroy mq_unlink %s failed: %s\n",
+                         id->name, strerror(rv));
   }
-  rtems_interrupt_enable (level);
-
-  return mqDes;
+  free(id);
 }
 
 epicsShareFunc int epicsShareAPI epicsMessageQueueTrySend(
@@ -90,7 +79,7 @@ epicsShareFunc int epicsShareAPI epicsMessageQueueTrySend(
 {
   struct timespec ts;
   clock_gettime(CLOCK_REALTIME, &ts);
-  return mq_timedsend((mqd_t)id, (char const *)message, messageSize, 0, &ts); 
+  return mq_timedsend(id->id, (char const *)message, messageSize, 0, &ts); 
 }
 
 epicsShareFunc int epicsShareAPI epicsMessageQueueSendWithTimeout(
@@ -108,7 +97,7 @@ epicsShareFunc int epicsShareAPI epicsMessageQueueSendWithTimeout(
   ts.tv_sec += micros / 1000000L;
   ts.tv_nsec += (micros % 1000000L) * 1000L;
 
-  return  mq_timedsend ((mqd_t)id, (const char *)message, messageSize, 0, &ts);
+  return  mq_timedsend (id->id, (const char *)message, messageSize, 0, &ts);
 }
 
 epicsShareFunc int epicsShareAPI epicsMessageQueueTryReceive(
@@ -118,7 +107,7 @@ epicsShareFunc int epicsShareAPI epicsMessageQueueTryReceive(
 {
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
-    return mq_timedreceive((mqd_t)id, (char *)message, size, NULL, &ts);
+    return mq_timedreceive(id->id, (char *)message, size, NULL, &ts);
 }
 
 epicsShareFunc int epicsShareAPI epicsMessageQueueReceiveWithTimeout(
@@ -135,7 +124,7 @@ epicsShareFunc int epicsShareAPI epicsMessageQueueReceiveWithTimeout(
     ts.tv_sec += micros / 1000000L;
     ts.tv_nsec += (micros % 1000000L) * 1000L;
 
-    return mq_timedreceive((mqd_t)id, (char *)message, size, NULL, &ts);
+    return mq_timedreceive(id->id, (char *)message, size, NULL, &ts);
 }
 
 epicsShareFunc int epicsShareAPI epicsMessageQueuePending(
@@ -144,10 +133,10 @@ epicsShareFunc int epicsShareAPI epicsMessageQueuePending(
   int rv;
   struct mq_attr the_attr;
 
-  rv = mq_getattr((mqd_t)id, &the_attr);    
+  rv = mq_getattr(id->id, &the_attr);    
   if (rv) {
-    errlogPrintf("Epics Message queue %x get attr failed: %s\n",
-                         (unsigned int)id, strerror(rv));
+    errlogPrintf("Epics Message queue %x (%s) get attr failed: %s\n",
+                         (unsigned int)id->id, id->name, strerror(rv));
         return -1;
     }
     return the_attr.mq_curmsgs;
@@ -160,10 +149,10 @@ epicsShareFunc void epicsShareAPI epicsMessageQueueShow(
   int rv;
   struct mq_attr the_attr;
 
-  rv = mq_getattr((mqd_t)id, &the_attr);    
+  rv = mq_getattr(id->id, &the_attr);    
   if (rv) {
-    errlogPrintf("Epics Message queue %x get attr failed: %s\n",
-                         (unsigned int)id, strerror(rv));
+    errlogPrintf("Epics Message queue %x (%s) get attr failed: %s\n",
+                         (unsigned int)id->id, id->id, strerror(rv));
     }
 
     printf("Message Queue Used:%ld  Max Msg:%lu", the_attr.mq_curmsgs, the_attr.mq_maxmsg);

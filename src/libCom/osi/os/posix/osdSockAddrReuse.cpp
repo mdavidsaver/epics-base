@@ -33,14 +33,20 @@ epicsShareFunc void epicsShareAPI
 
 /*
  * SO_REUSEPORT is not in POSIX
+ * but in RTEMS
  */
 epicsShareFunc void epicsShareAPI 
     epicsSocketEnableAddressUseForDatagramFanout ( SOCKET s )
 {
     int yes = true;
     int status;
+#if defined (__rtems__)
+    status = setsockopt ( s, SOL_SOCKET, SO_REUSEPORT,
+        (char *) & yes, sizeof ( yes ) );
+#else
     status = setsockopt ( s, SOL_SOCKET, SO_REUSEADDR,
         (char *) & yes, sizeof ( yes ) );
+#endif
     if ( status < 0 ) {
         errlogPrintf (
             "epicsSocketEnablePortUseForDatagramFanout: "

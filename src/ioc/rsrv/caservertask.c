@@ -307,13 +307,17 @@ void rsrv_build_addr_lists(void)
         }
 #ifdef IP_ADD_MEMBERSHIP
         {
+#if defined(__rtems__)
+	    char flag = 1;
+#else
             int flag = 1;
+#endif
             if (setsockopt(beaconSocket, IPPROTO_IP, IP_MULTICAST_LOOP,
                            (char *)&flag, sizeof(flag))<0) {
                 char sockErrBuf[64];
                 epicsSocketConvertErrnoToString (
                             sockErrBuf, sizeof ( sockErrBuf ) );
-                errlogPrintf("rsrv: failed to set mcast loopback\n");
+                errlogPrintf("rsrv: failed to set mcast loopback (%d:%s)\n", errno, sockErrBuf);
             }
         }
 #endif

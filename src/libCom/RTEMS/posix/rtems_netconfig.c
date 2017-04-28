@@ -44,9 +44,14 @@ static struct rtems_bsdnet_ifconfig e3c509_driver_config = {
 #define FIRST_DRIVER_CONFIG &e3c509_driver_config
 #endif
 
-# if defined(__PPC)
+#if defined (__PPC)
+
+# define XIFSTR(x) IFSTR(x)
+# define IFSTR(x) #x
+
+# if defined(ETH_NAME_2)
 static struct rtems_bsdnet_ifconfig netdriver_config_2 = {
-  "mve2",
+  XIFSTR(ETH_NAME_2),
   RTEMS_BSP_NETWORK_DRIVER_ATTACH,
   NULL,     /* no more interface */
   "141.14.128.11",      // IP address
@@ -54,17 +59,22 @@ static struct rtems_bsdnet_ifconfig netdriver_config_2 = {
   NULL,                 // Driver supplies hardware address
   0                     // Use default driver parameters
 };
+#endif /* ETH_NAME_2 */
+
+# if defined(ETH_NAME_1)
 static struct rtems_bsdnet_ifconfig netdriver_config = {
-  "mve1",
+  XIFSTR(ETH_NAME_1),
   RTEMS_BSP_NETWORK_DRIVER_ATTACH,
-  &netdriver_config_2,
+  NULL, /* during tests, don't use econd interface : netdriver_config_2, */
   NULL,
   NULL,                 // ip address per bootp
   NULL,                 // Driver supplies hardware address
   0                     // Use default driver parameters
 };
 #define FIRST_DRIVER_CONFIG &netdriver_config
-#endif /* PPC */
+#endif /* ETH_NAME_1 */
+
+#endif /* __PPC */
 
 /*
  * Allow configure/os/CONFIG_SITE.Common.RTEMS to provide domain name

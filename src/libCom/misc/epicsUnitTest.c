@@ -248,6 +248,7 @@ void testHarnessExit(void *dummy) {
 
 void testHarness(void) {
     epicsThreadOnce(&onceFlag, testOnce, NULL);
+epicsThreadShowAll(1);
     epicsAtExit(testHarnessExit, NULL);
     Harness = 1;
     Programs = 0;

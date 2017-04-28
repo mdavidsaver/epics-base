@@ -26,6 +26,7 @@
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <netdb.h>
+#include <ifaddrs.h> /* getifaddrs() */
 #include <unistd.h>
 
 #ifdef __cplusplus
@@ -42,6 +43,8 @@ int select(int  n,  fd_set  *readfds,  fd_set  *writefds, fd_set *exceptfds, str
 #ifndef IPPORT_USERRESERVED
 #define IPPORT_USERRESERVED 5000
 #endif
+
+#define USE_IFADDRS
 
 typedef int                     SOCKET;
 #define INVALID_SOCKET          (-1)

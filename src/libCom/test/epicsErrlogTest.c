@@ -341,7 +341,7 @@ MAIN(epicsErrlogTest)
     testOk(1 == errlogRemoveListeners(&logClient, &pvt),
         "Removed 1 listener");
 
-//    testLogPrefix();
+    testLogPrefix();
 
     return testDone();
 }

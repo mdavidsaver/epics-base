@@ -20,14 +20,12 @@
 #include <rtems.h>
 #include <mqueue.h>
 
-#define epicsMessageQueueDestroy(q) (mq_close((mqd_t)(q)))
+struct epicsMessageQueueOSD {
+    mqd_t id;
+    char  name[24];
+    int	  idCnt;
 
-#define epicsMessageQueueSend(q,m,l) (mq_send((mqd_t)(q), (const char*)(m), (l), 0))
-#define epicsMessageQueueReceive(q,m,s) (mq_receive((mqd_t)(q), (char*)(m), (s), NULL))
+};
 
-/*
-#define epicsMessageQueueTryReceive(q,m,s) (msgQReceive((MSG_Q_ID)(q), (char*)(m), (s), NO_WAIT))
-
-#define epicsMessageQueuePending(q) (msgQNumMsgs((MSG_Q_ID)(q)))
-#define epicsMessageQueueShow(q,l) (msgQShow((MSG_Q_ID)(q),(l)))
-*/
+#define epicsMessageQueueSend(q,m,l) (mq_send((q)->id, (const char*)(m), (l), 0))
+#define epicsMessageQueueReceive(q,m,s) (mq_receive((q)->id, (char*)(m), (s), NULL))

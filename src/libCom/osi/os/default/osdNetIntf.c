@@ -3,6 +3,8 @@
 *     National Laboratory.
 * Copyright (c) 2002 The Regents of the University of California, as
 *     Operator of Los Alamos National Laboratory.
+* Copyright (c) 2015 Brookhaven Science Associates as Operator of
+*     Brookhaven National Lab.
 * EPICS BASE Versions 3.13.7
 * and higher are distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution. 
@@ -19,6 +21,7 @@
 #include <stdlib.h>
 
 #define epicsExportSharedSymbols
+#include "dbDefs.h"
 #include "osiSock.h"
 #include "epicsAssert.h"
 #include "errlog.h"
@@ -30,323 +33,155 @@
 #   define ifDepenDebugPrintf(argsInParen)
 #endif
 
-static osiSockAddr      osiLocalAddrResult;
-static epicsThreadOnceId osiLocalAddrId = EPICS_THREAD_ONCE_INIT;
+#ifdef USE_IFADDRS
 
-/*
- * Determine the size of an ifreq structure
- * Made difficult by the fact that addresses larger than the structure
- * size may be returned from the kernel.
- */
-static size_t ifreqSize ( struct ifreq *pifreq )
+epicsShareFunc int osiGetInterfaceInfo(ELLLIST *pList, unsigned flags)
 {
-    size_t        size;
+    int ret = -1;
+    struct ifaddrs *addrs = NULL, *cur;
 
-    size = ifreq_size ( pifreq );
-    if ( size < sizeof ( *pifreq ) ) {
-	    size = sizeof ( *pifreq );
+    ellFree(pList);
+
+    if(getifaddrs(&addrs))
+        goto cleanup;
+
+    for(cur=addrs; cur; cur=cur?cur->ifa_next:NULL)
+//    for(cur=addrs; cur; cur=cur->ifa_next)
+    {
+        unsigned int flags;
+        osiInterfaceInfo *node = calloc(1, sizeof(*node));
+        if(!node)
+            goto cleanup;
+
+        switch(cur->ifa_addr->sa_family)
+        {
+        case AF_INET:
+        /*case AF_INET6:*/
+            break;
+        default:
+            free(node);
+            continue; /* ignore unknown address types */
+        }
+
+        //assert(cur->ifa_addr->sa_family==cur->ifa_netmask->sa_family);
+        memcpy(&node->address.ia, cur->ifa_addr, sizeof(node->address.ia));
+        memcpy(&node->netmask.ia, cur->ifa_netmask, sizeof(node->address.ia));
+
+        flags = cur->ifa_flags;
+
+        if(flags&IFF_UP) node->up = 1;
+        if(flags&IFF_BROADCAST) node->broadcast = 1;
+        if(flags&IFF_MULTICAST) node->multicast = 1;
+        if(flags&IFF_LOOPBACK) node->loopback = 1;
+        if(flags&IFF_POINTOPOINT) node->point2point = 1;
+
+        if(node->broadcast && node->point2point) {
+            errlogPrintf("Interface %s claims both broadcast and point to point,"
+                         " which should not be possible.  Assuming broadcast only.",
+                         cur->ifa_name);
+            node->point2point = 0;
+        }
+
+        if(node->broadcast)
+            memcpy(&node->endpoint.ia, cur->ifa_broadaddr, sizeof(node->address.ia));
+        else if(node->point2point)
+            memcpy(&node->endpoint.ia, cur->ifa_dstaddr, sizeof(node->address.ia));
+
+        ellAdd(pList, &node->node);
     }
-    return size;
-}
 
-/*
- * Move to the next ifreq structure
- */
-static struct ifreq * ifreqNext ( struct ifreq *pifreq )
+    ret = 0;
+cleanup:
+    if(ret)
+        ellFree(pList);
+    if(addrs) freeifaddrs(addrs);
+    return ret;
+}
+#else /* USE_IFADDRS */
+
+epicsShareFunc int osiGetInterfaceInfo(ELLLIST *pList, unsigned flags)
 {
-    struct ifreq *ifr;
+    SOCKET sock;
+    int ret = -1;
+    struct if_nameindex* pIndex = 0;
+    struct if_nameindex* pIndex2 = 0;
 
-    ifr = ( struct ifreq * )( ifreqSize (pifreq) + ( char * ) pifreq );
-    ifDepenDebugPrintf( ("ifreqNext() pifreq %p, size 0x%x, ifr 0x%p\n", pifreq, (unsigned)ifreqSize (pifreq), ifr) );
-    return ifr;
+    ellFree(pList);
+
+    sock = epicsSocketCreate(AF_INET, SOCK_DGRAM, 0);
+    if(sock==INVALID_SOCKET)
+        return ret;
+
+    pIndex = pIndex2 = if_nameindex();
+    while ((pIndex != NULL) && (pIndex->if_name != NULL))
+    {
+	struct ifreq req;
+        unsigned int flags;
+        osiInterfaceInfo *node = calloc(1, sizeof(*node));
+        if(!node)
+            goto cleanup;
+	strncpy(req.ifr_name, pIndex->if_name, IFNAMSIZ);
+        if(socket_ioctl(sock, SIOCGIFADDR, &req)<0) {
+	  if (errno == EADDRNOTAVAIL) {
+	    free(node);
+            ++pIndex;
+            continue;
+          }
+          free(node);
+          goto cleanup;
+        }
+	memcpy(&node->address.ia, &req.ifr_addr, sizeof(node->address.ia));
+
+        if(socket_ioctl(sock, SIOCGIFNETMASK, &req)<0) {
+            free(node);
+            goto cleanup;
+        }
+        memcpy(&node->netmask.ia, &req.ifr_addr, sizeof(node->netmask.ia));
+
+        if(socket_ioctl(sock, SIOCGIFFLAGS, &req)<0) {
+            free(node);
+            goto cleanup;
+        }
+        flags = req.ifr_flags;
+        if(flags&IFF_UP) node->up = 1;
+        if(flags&IFF_BROADCAST) node->broadcast = 1;
+        if(flags&IFF_MULTICAST) node->multicast = 1;
+        if(flags&IFF_LOOPBACK) node->loopback = 1;
+        if(flags&IFF_POINTOPOINT) node->point2point = 1;
+
+        if(node->broadcast && node->point2point) {
+            errlogPrintf("Interface %s claims both broadcast and point to point,"
+                         " which should not be possible.  Assuming broadcast only.",
+                         req.ifr_name);
+            node->point2point = 0;
+        }
+        if(node->broadcast) {
+            if(socket_ioctl(sock, SIOCGIFBRDADDR, &req)<0) {
+                free(node);
+                goto cleanup;
+            }
+        } else if(node->point2point) {
+            if(socket_ioctl(sock, SIOCGIFDSTADDR, &req)<0) {
+                free(node);
+                goto cleanup;
+            }
+        }
+
+        if(node->broadcast || node->point2point) {
+            assert(req.ifr_addr.sa_family==node->address.sa.sa_family);
+
+            memcpy(&node->endpoint.ia, &req.ifr_addr, sizeof(node->endpoint.ia));
+        }
+
+        ellAdd(pList, &node->node);
+        ++pIndex;
+    }
+
+    ret = 0;
+cleanup:
+    if(ret)
+        ellFree(pList);
+    epicsSocketDestroy(sock);
+    return ret;
 }
-
-
-/*
- * osiSockDiscoverBroadcastAddresses ()
- */
-epicsShareFunc void epicsShareAPI osiSockDiscoverBroadcastAddresses
-     (ELLLIST *pList, SOCKET socket, const osiSockAddr *pMatchAddr)
-{
-    static const unsigned           nelem = 100;
-    int                             status;
-    struct ifconf                   ifconf;
-    struct ifreq                    *pIfreqList;
-    struct ifreq                    *pIfreqListEnd;
-    struct ifreq                    *pifreq;
-    struct ifreq                    *pnextifreq;
-    osiSockAddrNode                 *pNewNode;
-
-    if ( pMatchAddr->sa.sa_family == AF_INET  ) {
-        if ( pMatchAddr->ia.sin_addr.s_addr == htonl (INADDR_LOOPBACK) ) {
-            pNewNode = (osiSockAddrNode *) calloc (1, sizeof (*pNewNode) );
-            if ( pNewNode == NULL ) {
-                errlogPrintf ( "osiSockDiscoverBroadcastAddresses(): no memory available for configuration\n" );
-                return;
-            }
-            pNewNode->addr.ia.sin_family = AF_INET;
-            pNewNode->addr.ia.sin_port = htons ( 0 );
-            pNewNode->addr.ia.sin_addr.s_addr = htonl (INADDR_LOOPBACK);
-            ellAdd ( pList, &pNewNode->node );
-            return;
-        }
-    }
-     
-    /*
-     * use pool so that we avoid using too much stack space
-     *
-     * nelem is set to the maximum interfaces 
-     * on one machine here
-     */
-    pIfreqList = (struct ifreq *) calloc ( nelem, sizeof(*pifreq) );
-    if (!pIfreqList) {
-        errlogPrintf ("osiSockDiscoverBroadcastAddresses(): no memory to complete request\n");
-        return;
-    }
-    
-    ifconf.ifc_len = nelem * sizeof(*pifreq);
-    ifconf.ifc_req = pIfreqList;
-    status = socket_ioctl (socket, SIOCGIFCONF, &ifconf);
-    if (status < 0 || ifconf.ifc_len == 0) {
-        errlogPrintf ("osiSockDiscoverBroadcastAddresses(): unable to fetch network interface configuration (%d)\n", status);
-        free (pIfreqList);
-        return;
-    }
-    
-    pIfreqListEnd = (struct ifreq *) (ifconf.ifc_len + (char *) pIfreqList);
-    pIfreqListEnd--;
-
-    for ( pifreq = pIfreqList; pifreq <= pIfreqListEnd; pifreq = pnextifreq ) {
-        uint32_t  current_ifreqsize;
-
-        /*
-         * find the next ifreq
-         */
-        pnextifreq = ifreqNext (pifreq);
-        
-        /* determine ifreq size */
-        current_ifreqsize = ifreqSize ( pifreq );
-        /* copy current ifreq to aligned bufferspace (to start of pIfreqList buffer) */
-        memmove(pIfreqList, pifreq, current_ifreqsize);
-
-        ifDepenDebugPrintf (("osiSockDiscoverBroadcastAddresses(): found IFACE: %s len: 0x%x current_ifreqsize: 0x%x \n",
-            pIfreqList->ifr_name,
-            (unsigned)ifreq_size(pifreq),
-            (unsigned)current_ifreqsize));
-
-        /*
-         * If its not an internet interface then dont use it 
-         */
-        if ( pIfreqList->ifr_addr.sa_family != AF_INET ) {
-             ifDepenDebugPrintf ( ("osiSockDiscoverBroadcastAddresses(): interface \"%s\" was not AF_INET\n", pIfreqList->ifr_name) );
-             continue;
-        }
-
-        /*
-         * if it isnt a wildcarded interface then look for
-         * an exact match
-         */
-        if ( pMatchAddr->sa.sa_family != AF_UNSPEC ) {
-            if ( pMatchAddr->sa.sa_family != AF_INET ) {
-                continue;
-            }
-            if ( pMatchAddr->ia.sin_addr.s_addr != htonl (INADDR_ANY) ) {
-                 struct sockaddr_in *pInetAddr = (struct sockaddr_in *) &pIfreqList->ifr_addr;
-                 if ( pInetAddr->sin_addr.s_addr != pMatchAddr->ia.sin_addr.s_addr ) {
-                     ifDepenDebugPrintf ( ("osiSockDiscoverBroadcastAddresses(): net intf \"%s\" didnt match\n", pIfreqList->ifr_name) );
-                     continue;
-                 }
-            }
-        }
-
-        status = socket_ioctl ( socket, SIOCGIFFLAGS, pIfreqList );
-        if ( status ) {
-            errlogPrintf ("osiSockDiscoverBroadcastAddresses(): net intf flags fetch for \"%s\" failed\n", pIfreqList->ifr_name);
-            continue;
-        }
-        ifDepenDebugPrintf ( ("osiSockDiscoverBroadcastAddresses(): net intf \"%s\" flags: %x\n", pIfreqList->ifr_name, pIfreqList->ifr_flags) );
-
-        /*
-         * dont bother with interfaces that have been disabled
-         */
-        if ( ! ( pIfreqList->ifr_flags & IFF_UP ) ) {
-             ifDepenDebugPrintf ( ("osiSockDiscoverBroadcastAddresses(): net intf \"%s\" was down\n", pIfreqList->ifr_name) );
-             continue;
-        }
-
-        /*
-         * dont use the loop back interface 
-         */
-        if ( pIfreqList->ifr_flags & IFF_LOOPBACK ) {
-             ifDepenDebugPrintf ( ("osiSockDiscoverBroadcastAddresses(): ignoring loopback interface: \"%s\"\n", pIfreqList->ifr_name) );
-             continue;
-        }
-
-        pNewNode = (osiSockAddrNode *) calloc (1, sizeof (*pNewNode) );
-        if ( pNewNode == NULL ) {
-            errlogPrintf ( "osiSockDiscoverBroadcastAddresses(): no memory available for configuration\n" );
-            free ( pIfreqList );
-            return;
-        }
-
-        /*
-         * If this is an interface that supports
-         * broadcast fetch the broadcast address.
-         *
-         * Otherwise if this is a point to point 
-         * interface then use the destination address.
-         *
-         * Otherwise CA will not query through the 
-         * interface.
-         */
-        if ( pIfreqList->ifr_flags & IFF_BROADCAST ) {
-            osiSockAddr baddr;
-            status = socket_ioctl (socket, SIOCGIFBRDADDR, pIfreqList);
-            if ( status ) {
-                errlogPrintf ("osiSockDiscoverBroadcastAddresses(): net intf \"%s\": bcast addr fetch fail\n", pIfreqList->ifr_name);
-                free ( pNewNode );
-                continue;
-            }
-            baddr.sa = pIfreqList->ifr_broadaddr;
-            if (baddr.ia.sin_family==AF_INET && baddr.ia.sin_addr.s_addr != INADDR_ANY) {
-                pNewNode->addr.sa = pIfreqList->ifr_broadaddr;
-                ifDepenDebugPrintf ( ( "found broadcast addr = %x\n", ntohl ( baddr.ia.sin_addr.s_addr ) ) );
-            } else {
-                ifDepenDebugPrintf ( ( "Ignoring broadcast addr = \n", ntohl ( baddr.ia.sin_addr.s_addr ) ) );
-                free ( pNewNode );
-                continue;
-            }
-        }
-#if defined (IFF_POINTOPOINT)
-        else if ( pIfreqList->ifr_flags & IFF_POINTOPOINT ) {
-            status = socket_ioctl ( socket, SIOCGIFDSTADDR, pIfreqList);
-            if ( status ) {
-                ifDepenDebugPrintf ( ("osiSockDiscoverBroadcastAddresses(): net intf \"%s\": pt to pt addr fetch fail\n", pIfreqList->ifr_name) );
-                free ( pNewNode );
-                continue;
-            }
-            pNewNode->addr.sa = pIfreqList->ifr_dstaddr;
-        }
-#endif
-        else {
-            ifDepenDebugPrintf ( ( "osiSockDiscoverBroadcastAddresses(): net intf \"%s\": not point to point or bcast?\n", pIfreqList->ifr_name ) );
-            free ( pNewNode );
-            continue;
-        }
-
-        ifDepenDebugPrintf ( ("osiSockDiscoverBroadcastAddresses(): net intf \"%s\" found\n", pIfreqList->ifr_name) );
-
-        /*
-         * LOCK applied externally
-         */
-        ellAdd ( pList, &pNewNode->node );
-    }
-
-    free ( pIfreqList );
-}
-     
-/*
- * osiLocalAddr ()
- */
-static void osiLocalAddrOnce (void *raw)
-{
-    SOCKET *psocket = raw;
-    const unsigned          nelem = 100;
-    osiSockAddr             addr;
-    int                     status;
-    struct ifconf           ifconf;
-    struct ifreq            *pIfreqList;
-    struct ifreq            *pifreq;
-    struct ifreq            *pIfreqListEnd;
-    struct ifreq            *pnextifreq;
-
-    memset ( (void *) &addr, '\0', sizeof ( addr ) );
-    addr.sa.sa_family = AF_UNSPEC;
-    
-    pIfreqList = (struct ifreq *) calloc ( nelem, sizeof(*pIfreqList) );
-    if ( ! pIfreqList ) {
-        errlogPrintf ( "osiLocalAddr(): no memory to complete request\n" );
-        goto fail;
-    }
- 
-    ifconf.ifc_len = nelem * sizeof ( *pIfreqList );
-    ifconf.ifc_req = pIfreqList;
-    status = socket_ioctl ( *psocket, SIOCGIFCONF, &ifconf );
-    if ( status < 0 || ifconf.ifc_len == 0 ) {
-        char sockErrBuf[64];
-        epicsSocketConvertErrnoToString ( 
-            sockErrBuf, sizeof ( sockErrBuf ) );
-        errlogPrintf (
-            "osiLocalAddr(): SIOCGIFCONF ioctl failed because \"%s\"\n",
-            sockErrBuf );
-        goto fail;
-    }
-    
-    pIfreqListEnd = (struct ifreq *) ( ifconf.ifc_len + (char *) ifconf.ifc_req );
-    pIfreqListEnd--;
-
-    for ( pifreq = ifconf.ifc_req; pifreq <= pIfreqListEnd; pifreq = pnextifreq ) {
-        osiSockAddr addrCpy;
-        uint32_t  current_ifreqsize;
-
-        /*
-         * find the next if req
-         */
-        pnextifreq = ifreqNext ( pifreq );
-
-        /* determine ifreq size */
-        current_ifreqsize = ifreqSize ( pifreq );
-        /* copy current ifreq to aligned bufferspace (to start of pIfreqList buffer) */
-        memmove(pIfreqList, pifreq, current_ifreqsize);
-
-        if ( pIfreqList->ifr_addr.sa_family != AF_INET ) {
-            ifDepenDebugPrintf ( ("osiLocalAddr(): interface %s was not AF_INET\n", pIfreqList->ifr_name) );
-            continue;
-        }
-
-        addrCpy.sa = pIfreqList->ifr_addr;
-
-        status = socket_ioctl ( *psocket, SIOCGIFFLAGS, pIfreqList );
-        if ( status < 0 ) {
-            errlogPrintf ( "osiLocalAddr(): net intf flags fetch for %s failed\n", pIfreqList->ifr_name );
-            continue;
-        }
-
-        if ( ! ( pIfreqList->ifr_flags & IFF_UP ) ) {
-            ifDepenDebugPrintf ( ("osiLocalAddr(): net intf %s was down\n", pIfreqList->ifr_name) );
-            continue;
-        }
-
-        /*
-         * dont use the loop back interface
-         */
-        if ( pIfreqList->ifr_flags & IFF_LOOPBACK ) {
-            ifDepenDebugPrintf ( ("osiLocalAddr(): ignoring loopback interface: %s\n", pIfreqList->ifr_name) );
-            continue;
-        }
-
-        ifDepenDebugPrintf ( ("osiLocalAddr(): net intf %s found\n", pIfreqList->ifr_name) );
-
-        osiLocalAddrResult = addrCpy;
-        free ( pIfreqList );
-        return;
-    }
-
-    errlogPrintf (
-        "osiLocalAddr(): only loopback found\n");
-fail:
-    /* fallback to loopback */
-    memset ( (void *) &addr, '\0', sizeof ( addr ) );
-    addr.ia.sin_family = AF_INET;
-    addr.ia.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    osiLocalAddrResult = addr;
-
-    free ( pIfreqList );
-}
-
-
-epicsShareFunc osiSockAddr epicsShareAPI osiLocalAddr (SOCKET socket)
-{
-    epicsThreadOnce(&osiLocalAddrId, osiLocalAddrOnce, &socket);
-    return osiLocalAddrResult;
-}
+#endif /* USE_IFADRS */

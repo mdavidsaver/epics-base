@@ -235,7 +235,6 @@ static void testPair(int locked)
 MAIN(ringPointerTest)
 {
     int prio = epicsThreadGetPrioritySelf();
-
     testPlan(37);
     testSingle();
     epicsThreadSetPriority(epicsThreadGetIdSelf(), epicsThreadPriorityScanLow);

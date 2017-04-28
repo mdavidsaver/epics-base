@@ -155,12 +155,49 @@ typedef struct osiSockAddrNode {
     osiSockAddr addr;
 } osiSockAddrNode;
 
+typedef struct {
+    ELLNODE node;
+    unsigned int up:1;
+    unsigned int loopback:1;
+    unsigned int broadcast:1;
+    unsigned int multicast:1;
+    unsigned int point2point:1;
+    osiSockAddr address, netmask;
+    osiSockAddr endpoint; //!< broadcast or p2p destination address
+} osiInterfaceInfo;
+
 /*
  * sockAddrAreIdentical() 
  * (returns true if addresses are identical)
  */
 epicsShareFunc int epicsShareAPI sockAddrAreIdentical 
 			( const osiSockAddr * plhs, const osiSockAddr * prhs );
+
+/* Fills the provided list with osiInterfaceInfo nodes
+ * describing the network interfaces of the host machine
+ * at the time it is called (may change later).
+ *
+ * Caller is responsible for freeing elements in the provided list with
+ * osiFreeInterfaceInfo().  This may be used individually, or in conjuction
+ * with ellFree2().
+ *
+ * flags provides for forward compatibility (eg. ipv6) and should be zero.
+ */
+epicsShareFunc int osiGetInterfaceInfo(ELLLIST *pList, unsigned flags);
+
+/* Find the interface information to the interface having address 'paddr'.
+ * Fills in the provided 'presults' if non-NULL, in which case the caller
+ * must free with osiFreeInterfaceInfo().
+ *
+ * Returns zero on success.
+ *
+ * flags provides for forward compatibility (eg. ipv6) and should be zero.
+ */
+epicsShareFunc
+int osiGetInterfaceInfoSingle(const osiSockAddr *paddr, osiInterfaceInfo **presult, unsigned flags);
+
+
+epicsShareFunc void osiFreeInterfaceInfo(osiInterfaceInfo *pinfo);
 
 /*
  *  osiSockDiscoverBroadcastAddresses ()

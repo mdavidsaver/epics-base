@@ -55,6 +55,8 @@
 #include <rtems/malloc.h>
 #include <rtems/score/heap.h>
 #include <pthread.h>
+#include <assert.h>
+#define rtems_test_assert(_a) assert(_a)
 #endif
 
 /*
@@ -64,9 +66,46 @@ void tzset(void);
 int fileno(FILE *);
 int main(int argc, char **argv);
 
+//Helper function must be made useful
 #if RTEMS_VERSION_INT >= VERSION_INT(4, 11, 99, 0)
 
-//Helper function must be made useful
+static int get_current_prio( pthread_t thread ) 
+{ 
+rtems_status_code sc; 
+rtems_task_priority prio; 
+int max; 
+
+sc = rtems_task_set_priority( thread, RTEMS_CURRENT_PRIORITY, &prio ); 
+rtems_test_assert( sc == RTEMS_SUCCESSFUL ); 
+
+max = sched_get_priority_max( SCHED_FIFO ); 
+
+return max + 1 - (int) prio; 
+} 
+
+//We are using posix map osi 0-100 to posix 100-200
+int epicsThreadGetOsiPriorityValue(int ossPriority)
+{
+  if (ossPriority > 200) {
+    return epicsThreadPriorityMax;
+  }
+  else if (ossPriority < 100) {
+    return epicsThreadPriorityMin;
+  }
+  else {
+    return ((unsigned int)ossPriority - 100u);
+  }
+}
+int epicsThreadGetOssPriorityValue(unsigned int osiPriority)
+{
+  if (osiPriority > 99) {
+    return 200;
+  }
+  else {
+    return ((signed int)osiPriority + 100u);
+  }
+}
+#else
 /*
  * Just map osi 0 to 99 into RTEMS 199 to 100
  * For RTEMS lower number means higher priority
@@ -106,10 +145,12 @@ logReset (void)
     if (fp) {
         char buf[80];
         fp(buf, sizeof buf);
-        printk /*errlogPrintf*/ ("Startup after %s.\n", buf);
+        //errlogPrintf ("Startup after %s.\n", buf);
+        printk ("Startup after %s.\n", buf);
     }
     else {
-        printk /*errlogPrintf*/ ("Startup.\n");
+        //errlogPrintf ("Startup.\n");
+        printk ("Startup.\n");
     }
 }
 
@@ -362,10 +403,11 @@ initialize_remote_filesystem(char **argv, int hasLocalFilesystem)
                                           "%[^:] : / %s",  
                                           pServerName, 
                                           pServerPath + 1u );
+
                 if ( scanfStatus ==  2 ) {
                     pServerPath[0u]= '/';
                     server_name = pServerName;
-                    server_path = pServerPath;
+                    server_path = mount_point = pServerPath;
                 }
                 else {
                     free ( pServerName );
@@ -385,10 +427,7 @@ initialize_remote_filesystem(char **argv, int hasLocalFilesystem)
             argv[1] = abspath;
         }
     }
-    // errlogPrintf still not working ???
-    printf("nfsMount(\"%s\", \"%s\", \"%s\")\n",
-                 server_name, server_path, mount_point);
-    nfsMount(server_name, server_path, server_path /*mount_point*/);
+    nfsMount(server_name, server_path, mount_point);
 #endif
 }
 
@@ -601,7 +640,7 @@ rtems_task
 Init (rtems_task_argument ignored)
 #endif
 {
-    int                 i;
+    int                i;
     char               *argv[3]         = { NULL, NULL, NULL };
     char               *cp;
     rtems_status_code   sc;
@@ -633,7 +672,7 @@ Init (rtems_task_argument ignored)
 
     if (pthread_getschedparam(pthread_self(), &policy, &param) != 0)
       delayedPanic("pthread_getschedparam failed");
-    param.sched_priority = epicsThreadPriorityIocsh;
+    param.sched_priority = epicsThreadGetOssPriorityValue(epicsThreadPriorityIocsh);
     if (pthread_setschedparam(pthread_self(), policy, &param) != 0)
       delayedPanic("pthread_setschedparam failed");
 #else
@@ -641,6 +680,7 @@ Init (rtems_task_argument ignored)
     rtems_task_set_priority (RTEMS_SELF,
         epicsThreadGetOssPriorityValue(epicsThreadPriorityIocsh), &newpri);
 #endif
+
     /*
      * Create a reasonable environment
      */
@@ -654,13 +694,7 @@ Init (rtems_task_argument ignored)
     printf("\n***** RTEMS Version: %s *****\n",
         rtems_get_version_string());
 
-#if RTEMS_VERSION_INT >= VERSION_INT(4, 11, 99, 0)
-    /* Override taskInfoBlock written by
-     * createImplicit during static initialization
-     */
-    epicsThreadSetPriority(epicsThreadGetId("_main_"), epicsThreadPriorityIocsh);
-#endif
-
+    printf("\n***** RTEMS min stack size : %d\n", RTEMS_MINIMUM_STACK_SIZE);
     /*
      * Start network
      */
@@ -739,6 +773,18 @@ Init (rtems_task_argument ignored)
 #else
     osdTimeRegister();
 #endif
+
+    /*
+     * Some network diagnotics
+     */
+
+     // rtems_bsdnet_show_mbuf_stats (void);
+     rtems_bsdnet_show_if_stats ();
+     rtems_bsdnet_show_ip_stats ();
+     rtems_bsdnet_show_icmp_stats ();
+     rtems_bsdnet_show_inet_routes ();
+     //rtems_bsdnet_show_udp_stats (void);
+     //rtems_bsdnet_show_tcp_stats (void);
 
     /*
      * Run the EPICS startup script

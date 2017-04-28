@@ -34,6 +34,11 @@
 #include "epicsStdio.h"
 #include "epicsExit.h"
 
+#if defined(__rtems__)
+#include <rtems/bspIo.h>
+#include <rtems.h>
+#endif
+
 #define BUFFER_SIZE 1280
 #define MAX_MESSAGE_SIZE 256
 
@@ -116,6 +121,7 @@ epicsShareFunc int errlogPrintf(const char *pFormat, ...)
     }
 
     errlogInit(0);
+
     isOkToBlock = epicsThreadIsOkToBlock();
 
     if (pvtData.atExit || (isOkToBlock && pvtData.toConsole)) {
