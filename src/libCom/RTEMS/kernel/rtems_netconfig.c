@@ -19,55 +19,70 @@
 extern void rtems_bsdnet_loopattach();
 static struct rtems_bsdnet_ifconfig loopback_config = {
     "lo0",                          /* name */
-    (int (*)(struct rtems_bsdnet_ifconfig *, int))rtems_bsdnet_loopattach, /* attach function */
-    NULL,                           /* link to next interface */
+    (int (*)(struct rtems_bsdnet_ifconfig *, int))rtems_bsdnet_loopattach,
+    NULL,                           /* last interface */
     "127.0.0.1",                    /* IP address */
     "255.0.0.0",                    /* IP net mask */
 };
 
+#define stringOf(x) #x
+#define STRING(x) stringOf(x)
+
 /*
- * The following conditionals select the network interface card.
- *
- * On RTEMS-pc386 targets all network drivers which support run-time
- * probing are linked. 
- * On other targets the network interface specified by the board-support
- * package is used.
- * To use a different NIC for a particular application, copy this file to the
- * application directory and make the appropriate changes.
+ * The following configures up to 2 network interface card(s) using
+ * settings in either configure/os/CONFIG_SITE.Common.RTEMS or in a
+ * BSP-specific configure/os/CONFIG_SITE.Common.RTEMS-<bsp> file.
+ * If no settings are provided, it uses the BSP's defaults instead.
  */
-#if defined(__i386__)
-extern int rtems_fxp_attach (struct rtems_bsdnet_ifconfig *, int);
-static struct rtems_bsdnet_ifconfig fxp_driver_config = {
-    "fxp1",                             /* name */
-    rtems_fxp_attach,                   /* attach function */
-    &loopback_config,                   /* link to next interface */
-};
-extern int rtems_3c509_driver_attach (struct rtems_bsdnet_ifconfig *, int);
-static struct rtems_bsdnet_ifconfig e3c509_driver_config = {
-    "ep0",                              /* name */
-    rtems_3c509_driver_attach,          /* attach function */
-    &fxp_driver_config,                 /* link to next interface */
-};
-#define FIRST_DRIVER_CONFIG &e3c509_driver_config
-#else
 
-# if defined(__PPC)
-  /*
-   * FIXME: This really belongs in the BSP
-   */
-#  ifndef RTEMS_BSP_NETWORK_DRIVER_NAME
-#   define RTEMS_BSP_NETWORK_DRIVER_NAME "dc1"
-#  endif
-#  ifndef RTEMS_BSP_NETWORK_DRIVER_ATTACH
-#   define RTEMS_BSP_NETWORK_DRIVER_ATTACH rtems_dec21140_driver_attach
-    extern int rtems_dec21140_driver_attach();
-#  endif
-# endif
+#if defined(RTEMS_NETWORK_DRIVER_NAME_1)
 
+  #if defined(RTEMS_NETWORK_DRIVER_NAME_2)
+    static struct rtems_bsdnet_ifconfig netdriver_config_2 = {
+        STRING(RTEMS_NETWORK_DRIVER_NAME_2),
+    #if defined(RTEMS_NETWORK_DRIVER_ATTACH_2)
+        RTEMS_NETWORK_DRIVER_ATTACH_2,  /* specific attach function */
+    #else
+        RTEMS_BSP_NETWORK_DRIVER_ATTACH,    /* default attach function */
+    #endif
+        &loopback_config,                   /* loopback interface */
+    #if defined(RTEMS_NETWORK_IP4_ADDR_2)
+        STRING(RTEMS_NETWORK_IP4_ADDR_2),
+      #if defined(RTEMS_NETWORK_IP4_MASK_2)
+        STRING(RTEMS_NETWORK_IP4_MASK_2),
+      #endif
+    #endif
+    };
+  #endif /* RTEMS_NETWORK_DRIVER_NAME_2 */
+
+  static struct rtems_bsdnet_ifconfig netdriver_config = {
+      STRING(RTEMS_NETWORK_DRIVER_NAME_1),
+  #if defined(RTEMS_NETWORK_DRIVER_ATTACH_1)
+      RTEMS_NETWORK_DRIVER_ATTACH_1,  /* specific attach function */
+  #else
+      RTEMS_BSP_NETWORK_DRIVER_ATTACH,    /* default attach function */
+  #endif
+  #if defined(RTEMS_NETWORK_DRIVER_NAME_2)
+      &netdriver_config_2,                /* link to next interface */
+  #else
+      &loopback_config,                   /* loopback interface */
+  #endif
+  #if defined(RTEMS_NETWORK_IP4_ADDR_1)
+      STRING(RTEMS_NETWORK_IP4_ADDR_1),
+    #if defined(RTEMS_NETWORK_IP4_MASK_1)
+      STRING(RTEMS_NETWORK_IP4_MASK_1),
+    #endif
+  #endif
+  };
+  #define FIRST_DRIVER_CONFIG &netdriver_config
+
+#else /* RTEMS_NETWORK_DRIVER_NAME_1 */
+
+/* Use the BSP-provided standard macros */
 static struct rtems_bsdnet_ifconfig bsp_driver_config = {
     RTEMS_BSP_NETWORK_DRIVER_NAME,      /* name */
     RTEMS_BSP_NETWORK_DRIVER_ATTACH,    /* attach function */
-    &loopback_config,                   /* link to next interface */
+    &loopback_config,                   /* loopback interface */
 };
 #define FIRST_DRIVER_CONFIG &bsp_driver_config
 
@@ -77,9 +92,7 @@ static struct rtems_bsdnet_ifconfig bsp_driver_config = {
  * Allow configure/os/CONFIG_SITE.Common.RTEMS to provide domain name
  */
 #ifdef RTEMS_NETWORK_CONFIG_DNS_DOMAINNAME
-# define XSTR(x) STR(x)
-# define STR(x) #x
-# define MY_DOMAINNAME XSTR(RTEMS_NETWORK_CONFIG_DNS_DOMAINNAME)
+# define MY_DOMAINNAME STRING(RTEMS_NETWORK_CONFIG_DNS_DOMAINNAME)
 #else
 # define MY_DOMAINNAME NULL
 #endif

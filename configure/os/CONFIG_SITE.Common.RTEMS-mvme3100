@@ -1,0 +1,19 @@
+# CONFIG_SITE.Common.RTEMS-mvme3100
+#
+# Site-specific overrides for RTEMS-mvme3100 target
+#
+
+# Any sites using the beatnik BSP on more than one kind of MVME
+# board may have difficulties with this release...
+
+#ARCH_DEP_CFLAGS += -DRTEMS_NETWORK_DRIVER_NAME_1=?
+#ARCH_DEP_CFLAGS += -DRTEMS_NETWORK_IP4_ADDR_1=192.168.4.1
+#ARCH_DEP_CFLAGS += -DRTEMS_NETWORK_IP4_MASK_1=255.255.254.0
+
+#ARCH_DEP_CFLAGS += -DRTEMS_NETWORK_DRIVER_NAME_2=?
+#ARCH_DEP_CFLAGS += -DRTEMS_NETWORK_IP4_ADDR_2=192.168.6.2
+#ARCH_DEP_CFLAGS += -DRTEMS_NETWORK_IP4_MASK_2=255.255.254.0
+
+# Uncomment this to link against libbspExt
+#OP_SYS_LDLIBS += -lbspExt
+
