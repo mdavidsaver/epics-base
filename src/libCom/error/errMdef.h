@@ -16,6 +16,7 @@
 #define INCerrMdefh
 
 #include "shareLib.h"
+#include "compilerDependencies.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -62,6 +63,23 @@ epicsShareFunc void epicsShareAPI tstErrSymFind(void);
 
 #ifdef __cplusplus
 }
-#endif
+
+#include <exception>
+
+namespace epics {
+
+class epicsShareClass Error : public std::exception
+{
+    long sts;
+public:
+    explicit Error(long sts) EPICS_NOEXCEPT :sts(sts) {}
+    virtual ~Error() EPICS_NOEXCEPT {}
+    virtual const char *what() const EPICS_NOEXCEPT EPICS_OVERRIDE;
+    inline long code() const { return sts; }
+};
+
+} // namespace epics
+
+#endif /* __cplusplus */
 
 #endif /*INCerrMdefh*/

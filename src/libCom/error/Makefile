@@ -16,6 +16,7 @@ INC += errlog.h
 INC += error.h
 
 Com_SRCS += errlog.c
+Com_SRCS += errorxx.cpp
 Com_SRCS += errSymLib.c
 Com_SRCS += errSymTbl.c
 
