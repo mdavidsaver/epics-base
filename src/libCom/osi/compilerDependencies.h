@@ -41,6 +41,26 @@
 #   define epicsPlacementDeleteOperator(X)
 #endif
 
+/* Newer keywords.
+ class Example : public Base {
+   // Declare runtime spec. to throw no exceptions.  (std::terminate() call if such a function does)
+   void perfect() EPICS_NOEXCEPT {}
+   // Prevent further overrides
+   virtual void nomore() EPICS_FINAL {}
+   // Error unless actually overrides
+   virtual void another() EPICS_OVERRIDE {}
+ }
+ */
+#if __cplusplus>=201103L
+#  define EPICS_NOEXCEPT noexcept
+#  define EPICS_FINAL final
+#  define EPICS_OVERRIDE override
+#else
+#  define EPICS_NOEXCEPT throw()
+#  define EPICS_FINAL
+#  define EPICS_OVERRIDE
+#endif
+
 #endif /* __cplusplus */
 
 
