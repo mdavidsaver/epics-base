@@ -17,6 +17,12 @@
 #include "osiSock.h"
 #include "errlog.h"
 
+#ifdef SO_REUSEPORT
+#define OPTION SO_REUSEPORT
+#else
+#define OPTION SO_REUSEADDR
+#endif
+
 epicsShareFunc void epicsShareAPI 
     epicsSocketEnableAddressReuseDuringTimeWaitState ( SOCKET s )
 {
@@ -40,13 +46,8 @@ epicsShareFunc void epicsShareAPI
 {
     int yes = true;
     int status;
-#if defined (__rtems__)
-    status = setsockopt ( s, SOL_SOCKET, SO_REUSEPORT,
+    status = setsockopt ( s, SOL_SOCKET, OPTION,
         (char *) & yes, sizeof ( yes ) );
-#else
-    status = setsockopt ( s, SOL_SOCKET, SO_REUSEADDR,
-        (char *) & yes, sizeof ( yes ) );
-#endif
     if ( status < 0 ) {
         errlogPrintf (
             "epicsSocketEnablePortUseForDatagramFanout: "
