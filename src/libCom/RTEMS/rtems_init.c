@@ -106,34 +106,7 @@ int epicsThreadGetOssPriorityValue(unsigned int osiPriority)
   }
 }
 #else
-/*
- * Just map osi 0 to 99 into RTEMS 199 to 100
- * For RTEMS lower number means higher priority
- * RTEMS = 100 + (99 - osi)
- *       = 199 - osi
- *   osi =  199 - RTEMS
- */
-int epicsThreadGetOsiPriorityValue(int ossPriority)
-{
-  if (ossPriority < 100) {
-    return epicsThreadPriorityMax;
-  }
-  else if (ossPriority > 199) {
-    return epicsThreadPriorityMin;
-  }
-  else {
-    return (199u - (unsigned int)ossPriority);
-  }
-}
-int epicsThreadGetOssPriorityValue(unsigned int osiPriority)
-{
-  if (osiPriority > 99) {
-    return 100;
-  }
-  else {
-    return (199 - (signed int)osiPriority);
-  }
-}
+/* see osdThread.c */
 #endif
 
 static void
