@@ -18,5 +18,5 @@ ARCH_DEP_CFLAGS += -DRTEMS_NETWORK_DRIVER_NAME_2=mve2
 #ARCH_DEP_CFLAGS += -DRTEMS_NETWORK_IP4_MASK_2=255.255.254.0
 
 # Uncomment this to link against libbspExt
-#OP_SYS_LDLIBS += -lbspExt
+OP_SYS_LDLIBS += -lbspExt
 

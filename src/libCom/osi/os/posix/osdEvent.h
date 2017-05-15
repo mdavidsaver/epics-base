@@ -3,8 +3,15 @@
 *     National Laboratory.
 * Copyright (c) 2002 The Regents of the University of California, as
 *     Operator of Los Alamos National Laboratory.
-* EPICS BASE Versions 3.13.7
-* and higher are distributed subject to a Software License Agreement found
-* in file LICENSE that is included with this distribution. 
+* Copyright (c) 2017 Fritz-Haber-Institut der Max-Planck-Gesellschaft
+* EPICS BASE is distributed subject to a Software License Agreement found
+* in file LICENSE that is included with this distribution.
 \*************************************************************************/
-/* for a pure posix implementation no osdEvent.h definitions are needed*/
+
+#include <pthread.h>
+
+struct epicsEventOSD {
+    pthread_mutex_t mutex;
+    pthread_cond_t  cond;
+    int             isFull;
+};

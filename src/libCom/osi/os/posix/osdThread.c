@@ -51,12 +51,6 @@
 #include <rtems.h>
 #endif
 
-struct epicsEventOSD {
-    pthread_mutex_t mutex;
-    pthread_cond_t  cond;
-    int             isFull;
-};
-
 epicsShareFunc void epicsThreadShowInfo(epicsThreadOSD *pthreadInfo, unsigned int level);
 epicsShareFunc void osdThreadHooksRun(epicsThreadId id);
 epicsShareFunc void osdThreadHooksRunMain(epicsThreadId id);
@@ -527,7 +521,7 @@ epicsShareFunc unsigned int epicsShareAPI epicsThreadGetStackSize (epicsThreadSt
 #if defined (OSITHREAD_USE_DEFAULT_STACK)
     return 0;
 #elif defined(_POSIX_THREAD_ATTR_STACKSIZE) && _POSIX_THREAD_ATTR_STACKSIZE > 0
-#if defined (__rtems)
+#if defined (__rtems__)
     #define STACK_SIZE(f) (f * 0x1000 * sizeof(void *))
 #else
     #define STACK_SIZE(f) (f * 0x10000 * sizeof(void *))

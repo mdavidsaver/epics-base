@@ -24,11 +24,13 @@
 #include "epicsTime.h"
 #include "errlog.h"
 
+/*
 struct epicsEventOSD {
     pthread_mutex_t mutex;
     pthread_cond_t  cond;
     int             isFull;
 };
+*/
 
 #define printStatus(status, routine, func) \
     errlogPrintf("%s: %s failed: %s\n", (func), (routine), strerror(status))

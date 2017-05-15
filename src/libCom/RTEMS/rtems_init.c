@@ -752,10 +752,10 @@ Init (rtems_task_argument ignored)
      */
 
      // rtems_bsdnet_show_mbuf_stats (void);
-     rtems_bsdnet_show_if_stats ();
-     rtems_bsdnet_show_ip_stats ();
-     rtems_bsdnet_show_icmp_stats ();
-     rtems_bsdnet_show_inet_routes ();
+     //rtems_bsdnet_show_if_stats ();
+     //rtems_bsdnet_show_ip_stats ();
+     //rtems_bsdnet_show_icmp_stats ();
+     //rtems_bsdnet_show_inet_routes ();
      //rtems_bsdnet_show_udp_stats (void);
      //rtems_bsdnet_show_tcp_stats (void);
 
