@@ -86,13 +86,6 @@ epicsSockResolveTest_SYS_LIBS_WIN32 = ws2_32 user32
 testHarness_SRCS += epicsSockResolveTest.c
 TESTS += epicsSockResolveTest
 
-TESTPROD_HOST += epicsNetIntfTest
-epicsNetIntfTest_SRCS += epicsNetIntfTest.c
-epicsNetIntfTest_SYS_LIBS_solaris = socket
-epicsNetIntfTest_SYS_LIBS_WIN32 = ws2_32 user32
-testHarness_SRCS += epicsNetIntfTest.c
-TESTS += epicsNetIntfTest
-
 TESTPROD_HOST += epicsStringTest
 epicsStringTest_SRCS += epicsStringTest.c
 testHarness_SRCS += epicsStringTest.c

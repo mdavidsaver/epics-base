@@ -26,10 +26,8 @@
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <netdb.h>
-#include <ifaddrs.h> /* getifaddrs() */
 #include <unistd.h> /* close() and others */
 
-#define USE_IFADDRS
 
 typedef int                     SOCKET;
 #define INVALID_SOCKET          (-1)
