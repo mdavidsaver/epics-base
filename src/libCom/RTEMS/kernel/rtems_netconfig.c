@@ -16,6 +16,8 @@
 #include <bsp.h>
 #include <rtems/rtems_bsdnet.h>
 
+#include "rtems_netconfig.h"
+
 extern void rtems_bsdnet_loopattach();
 static struct rtems_bsdnet_ifconfig loopback_config = {
     "lo0",                          /* name */

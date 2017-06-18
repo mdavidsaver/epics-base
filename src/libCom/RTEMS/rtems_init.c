@@ -66,8 +66,6 @@
 #define rtems_test_assert(_a) assert(_a)
 #endif
 
-#define RTEMS_VERSION_INT  VERSION_INT(__RTEMS_MAJOR__, __RTEMS_MINOR__, 0, 0)
-
 /*
  * Prototypes for some functions not in header files
  */

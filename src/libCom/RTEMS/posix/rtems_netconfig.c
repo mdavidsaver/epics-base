@@ -18,6 +18,8 @@
 #include <bsp.h>
 #include <rtems/rtems_bsdnet.h>
 
+#include "rtems_netconfig.h"
+
 #define stringOf(x) #x
 #define STRING(x) stringOf(x)
 
