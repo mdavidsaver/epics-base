@@ -67,6 +67,7 @@
 #include "recSup.h"
 #include "registryDeviceSupport.h"
 #include "registryDriverSupport.h"
+#include "registryJLinks.h"
 #include "registryRecordType.h"
 #include "rsrv.h"
 
@@ -402,7 +403,7 @@ static void initRecSup(void)
          pdbRecordType = (dbRecordType *)ellNext(&pdbRecordType->node)) {
         recordTypeLocation *precordTypeLocation =
             registryRecordTypeFind(pdbRecordType->name);
-        struct rset *prset;
+        rset *prset;
 
         if (!precordTypeLocation) {
             errlogPrintf("iocInit record support for %s not found\n",
@@ -487,13 +488,12 @@ static void iterateRecords(recIterFunc func, void *user)
 static void doInitRecord0(dbRecordType *pdbRecordType, dbCommon *precord,
     void *user)
 {
-    struct rset *prset = pdbRecordType->prset;
+    rset *prset = pdbRecordType->prset;
     devSup *pdevSup;
 
     if (!prset) return;         /* unlikely */
 
     precord->rset = prset;
-    precord->rdes = pdbRecordType;
     precord->mlok = epicsMutexMustCreate();
     ellInit(&precord->mlis);
 
@@ -542,7 +542,7 @@ static void doResolveLinks(dbRecordType *pdbRecordType, dbCommon *precord,
 static void doInitRecord1(dbRecordType *pdbRecordType, dbCommon *precord,
     void *user)
 {
-    struct rset *prset = pdbRecordType->prset;
+    rset *prset = pdbRecordType->prset;
 
     if (!prset) return;         /* unlikely */
 
@@ -655,18 +655,14 @@ static void doCloseLinks(dbRecordType *pdbRecordType, dbCommon *precord,
             pdbRecordType->papFldDes[pdbRecordType->link_ind[j]];
         DBLINK *plink = (DBLINK *)((char *)precord + pdbFldDes->offset);
 
-        if (plink->type == CA_LINK) {
+        if (plink->type == CA_LINK ||
+            plink->type == JSON_LINK ||
+            (plink->type == DB_LINK && iocBuildMode == buildIsolated)) {
             if (!locked) {
                 dbScanLock(precord);
                 locked = 1;
             }
-            dbCaRemoveLink(NULL, plink);
-
-        } else if (iocBuildMode==buildIsolated && plink->type == DB_LINK) {
-            /* free link, but don't split lockset like dbDbRemoveLink() */
-            free(plink->value.pv_link.pvt);
-            plink->type = PV_LINK;
-            plink->lset = NULL;
+            dbRemoveLink(NULL, plink);
         }
     }
 

@@ -18,6 +18,7 @@
 #include "dbFldTypes.h"
 #include "ellLib.h"
 #include "dbDefs.h"
+#include "recSup.h"
 
 typedef struct dbMenu {
 	ELLNODE		node;
@@ -42,6 +43,13 @@ typedef struct devSup {
 	struct dset	*pdset;
 	struct dsxt	*pdsxt;       /* Extended device support */
 }devSup;
+
+typedef struct linkSup {
+	ELLNODE		node;
+	char 		*name;
+	char		*jlif_name;
+	struct jlif	*pjlif;
+} linkSup;
 
 typedef struct dbDeviceMenu {
 	int		nChoice;
@@ -108,6 +116,7 @@ typedef struct dbRecordNode {
 	char		*recordname;
 	ELLLIST		infoList;	/*LIST head of info nodes*/
 	int		flags;
+    struct dbRecordNode *aliasedRecnode; /* NULL unless flags|DBRN_FLAGS_ISALIAS */
 }dbRecordNode;
 
 /*dbRecordAttribute is for "psuedo" fields */
@@ -133,25 +142,25 @@ typedef struct dbVariableDef {
 }dbVariableDef;
 
 typedef struct dbRecordType {
-	ELLNODE		node;
-	ELLLIST		attributeList;	/*LIST head of attributes*/
-	ELLLIST		recList;	/*LIST head of sorted dbRecordNodes*/
-	ELLLIST		devList;	/*List of associated device support*/
-	ELLLIST		cdefList;	/*LIST of Cdef text items*/
-	char		*name;
-	short		no_fields;	/* number of fields defined	*/
-	short		no_prompt;	/* number of fields to configure*/
-	short		no_links;	/* number of links		*/
-	short		no_aliases;	/* number of aliases in recList */
-	short		*link_ind;	/* addr of array of ind in papFldDes*/
-	char		**papsortFldName;/* ptr to array of ptr to fld names*/
-	short		*sortFldInd;	/* addr of array of ind in papFldDes*/
-	dbFldDes	*pvalFldDes;	/*pointer dbFldDes for VAL field*/
-	short		indvalFlddes;	/*ind in papFldDes*/
-	dbFldDes 	**papFldDes;	/* ptr to array of ptr to fldDes*/
-	/*The following are only available on run time system*/
-	struct	rset	*prset;
-	int		rec_size;	/*record size in bytes          */
+    ELLNODE		node;
+    ELLLIST		attributeList;	/*LIST head of attributes*/
+    ELLLIST		recList;	/*LIST head of sorted dbRecordNodes*/
+    ELLLIST		devList;	/*List of associated device support*/
+    ELLLIST		cdefList;	/*LIST of Cdef text items*/
+    char		*name;
+    short		no_fields;	/* number of fields defined	*/
+    short		no_prompt;	/* number of fields to configure*/
+    short		no_links;	/* number of links		*/
+    short		no_aliases;	/* number of aliases in recList */
+    short		*link_ind;	/* addr of array of ind in papFldDes*/
+    char		**papsortFldName;/* ptr to array of ptr to fld names*/
+    short		*sortFldInd;	/* addr of array of ind in papFldDes*/
+    dbFldDes	*pvalFldDes;	/*pointer dbFldDes for VAL field*/
+    short		indvalFlddes;	/*ind in papFldDes*/
+    dbFldDes 	**papFldDes;	/* ptr to array of ptr to fldDes*/
+    /*The following are only available on run time system*/
+    rset        *prset;
+    int		rec_size;	/*record size in bytes          */
 }dbRecordType;
 
 struct dbPvd;           /* Contents private to dbPvdLib code */
@@ -161,6 +170,7 @@ typedef struct dbBase {
 	ELLLIST		menuList;
 	ELLLIST		recordTypeList;
 	ELLLIST		drvList;
+	ELLLIST		linkList;
 	ELLLIST		registrarList;
 	ELLLIST		functionList;
 	ELLLIST		variableList;

@@ -11,8 +11,10 @@ variable(asCaDebug,int)
 
 # Static database access variables
 variable(dbRecordsOnceOnly,int)
+variable(dbRecordsAbcSorted,int)
 variable(dbBptNotMonotonic,int)
 variable(dbQuietMacroWarnings,int)
+variable(dbConvertStrict,int)
 
 # dbLoadTemplate settings
 variable(dbTemplateMaxVars,int)

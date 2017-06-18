@@ -42,15 +42,15 @@
 /* Create RSET - Record Support Entry Table*/
 #define report NULL
 #define initialize NULL
-static long init_record(waveformRecord *, int);
-static long process(waveformRecord *);
+static long init_record(struct dbCommon *, int);
+static long process(struct dbCommon *);
 #define special NULL
 #define get_value NULL
 static long cvt_dbaddr(DBADDR *);
 static long get_array_info(DBADDR *, long *, long *);
 static long put_array_info(DBADDR *, long);
 static long get_units(DBADDR *, char *);
-static long get_precision(DBADDR *, long *);
+static long get_precision(const DBADDR *, long *);
 #define get_enum_str NULL
 #define get_enum_strs NULL
 #define put_enum_str NULL
@@ -90,8 +90,9 @@ struct wfdset { /* waveform dset */
 static void monitor(waveformRecord *);
 static long readValue(waveformRecord *);
 
-static long init_record(waveformRecord *prec, int pass)
+static long init_record(struct dbCommon *pcommon, int pass)
 {
+    struct waveformRecord *prec = (struct waveformRecord *)pcommon;
     struct wfdset *pdset;
 
     if (pass==0){
@@ -109,10 +110,7 @@ static long init_record(waveformRecord *prec, int pass)
         return 0;
     }
 
-    /* wf.siml must be a CONSTANT or a PV_LINK or a DB_LINK */
-    if (prec->siml.type == CONSTANT) {
-        recGblInitConstantLink(&prec->siml,DBF_USHORT,&prec->simm);
-    }
+    recGblInitConstantLink(&prec->siml,DBF_USHORT,&prec->simm);
 
     /* must have dset defined */
     if (!(pdset = (struct wfdset *)(prec->dset))) {
@@ -129,8 +127,9 @@ static long init_record(waveformRecord *prec, int pass)
     return (*pdset->init_record)(prec);
 }
 
-static long process(waveformRecord *prec)
+static long process(struct dbCommon *pcommon)
 {
+    struct waveformRecord *prec = (struct waveformRecord *)pcommon;
     struct wfdset *pdset = (struct wfdset *)(prec->dset);
     unsigned char  pact=prec->pact;
 
@@ -210,7 +209,7 @@ static long get_units(DBADDR *paddr, char *units)
     return 0;
 }
 
-static long get_precision(DBADDR *paddr, long *precision)
+static long get_precision(const DBADDR *paddr, long *precision)
 {
     waveformRecord *prec = (waveformRecord *) paddr->precord;
 
@@ -312,7 +311,7 @@ static long readValue(waveformRecord *prec)
         return (*pdset->read_wf)(prec);
     }
 
-    status = dbGetLink(&(prec->siml), DBR_ENUM, &(prec->simm),0,0);
+    status = dbGetLink(&prec->siml, DBR_ENUM, &prec->simm, 0, 0);
     if (status)
         return status;
 
@@ -328,9 +327,9 @@ static long readValue(waveformRecord *prec)
     if (prec->simm == menuYesNoYES){
         long nRequest = prec->nelm;
 
-        status = dbGetLink(&(prec->siol), prec->ftvl, prec->bptr, 0, &nRequest);
+        status = dbGetLink(&prec->siol, prec->ftvl, prec->bptr, 0, &nRequest);
         /* nord set only for db links: needed for old db_access */
-        if (prec->siol.type != CONSTANT) {
+        if (!dbLinkIsConstant(&prec->siol)) {
             prec->nord = nRequest;
             db_post_events(prec, &prec->nord, DBE_VALUE | DBE_LOG);
             if (status == 0)

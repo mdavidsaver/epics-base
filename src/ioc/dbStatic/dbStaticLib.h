@@ -56,9 +56,9 @@ typedef struct{
     char         *message;
     short        indfield;
 } DBENTRY;
-
-/*dbDumpFldDes is obsolete. It is only provided for compatibility*/
-#define dbDumpFldDes dbDumpField
+
+struct dbAddr;
+struct dbCommon;
 
 /* Static database access routines*/
 epicsShareFunc DBBASE * dbAllocBase(void);
@@ -67,6 +67,19 @@ epicsShareFunc DBENTRY * dbAllocEntry(DBBASE *pdbbase);
 epicsShareFunc void dbFreeEntry(DBENTRY *pdbentry);
 epicsShareFunc void dbInitEntry(DBBASE *pdbbase,
     DBENTRY *pdbentry);
+
+/** Initialize DBENTRY from a valid dbAddr*.
+ * Constant time equivalent of dbInitEntry() then dbFindRecord(),
+ * and finally dbFollowAlias()
+ */
+epicsShareFunc void dbInitEntryFromAddr(struct dbAddr *paddr, DBENTRY *pdbentry);
+
+/** Initialize DBENTRY from a valid record (dbCommon*).
+ * Constant time equivalent of dbInitEntry() then dbFindRecord(),
+ * and finally dbFollowAlias() when no field is specified.
+ */
+epicsShareFunc void dbInitEntryFromRecord(struct dbCommon *prec, DBENTRY *pdbentry);
+
 epicsShareFunc void dbFinishEntry(DBENTRY *pdbentry);
 epicsShareFunc DBENTRY * dbCopyEntry(DBENTRY *pdbentry);
 epicsShareFunc void dbCopyEntryContents(DBENTRY *pfrom,
@@ -102,6 +115,7 @@ epicsShareFunc long dbWriteDeviceFP(DBBASE *pdbbase, FILE *fp);
 epicsShareFunc long dbWriteDriver(DBBASE *pdbbase,
     const char *filename);
 epicsShareFunc long dbWriteDriverFP(DBBASE *pdbbase, FILE *fp);
+epicsShareFunc long dbWriteLinkFP(DBBASE *pdbbase, FILE *fp);
 epicsShareFunc long dbWriteRegistrarFP(DBBASE *pdbbase, FILE *fp);
 epicsShareFunc long dbWriteFunctionFP(DBBASE *pdbbase, FILE *fp);
 epicsShareFunc long dbWriteVariableFP(DBBASE *pdbbase, FILE *fp);
@@ -146,8 +160,6 @@ epicsShareFunc long dbNextRecord(DBENTRY *pdbentry);
 epicsShareFunc int  dbGetNRecords(DBENTRY *pdbentry);
 epicsShareFunc int  dbGetNAliases(DBENTRY *pdbentry);
 epicsShareFunc char * dbGetRecordName(DBENTRY *pdbentry);
-epicsShareFunc long dbRenameRecord(DBENTRY *pdbentry,
-    const char *newName);
 epicsShareFunc long dbCopyRecord(DBENTRY *pdbentry,
     const char *newRecordName, int overWriteOK);
 
@@ -158,6 +170,8 @@ epicsShareFunc int dbIsVisibleRecord(DBENTRY *pdbentry);
 epicsShareFunc long dbCreateAlias(DBENTRY *pdbentry,
     const char *paliasName);
 epicsShareFunc int dbIsAlias(DBENTRY *pdbentry);
+/* Follow alias to actual record */
+epicsShareFunc int dbFollowAlias(DBENTRY *pdbentry);
 epicsShareFunc long dbDeleteAliases(DBENTRY *pdbentry);
 
 epicsShareFunc long dbFindFieldPart(DBENTRY *pdbentry,
@@ -168,9 +182,6 @@ epicsShareFunc int dbFoundField(DBENTRY *pdbentry);
 epicsShareFunc char * dbGetString(DBENTRY *pdbentry);
 epicsShareFunc long dbPutString(DBENTRY *pdbentry,
     const char *pstring);
-epicsShareFunc char * dbVerify(DBENTRY *pdbentry,
-    const char *pstring);
-epicsShareFunc char * dbGetRange(DBENTRY *pdbentry);
 epicsShareFunc int  dbIsDefaultValue(DBENTRY *pdbentry);
 
 epicsShareFunc long dbFirstInfo(DBENTRY *pdbentry);
@@ -211,11 +222,12 @@ epicsShareFunc drvSup * dbFindDriver(dbBase *pdbbase,
     const char *name);
 epicsShareFunc char * dbGetRelatedField(DBENTRY *pdbentry);
 
+epicsShareFunc linkSup * dbFindLinkSup(dbBase *pdbbase,
+    const char *name);
+
 epicsShareFunc int  dbGetNLinks(DBENTRY *pdbentry);
 epicsShareFunc long dbGetLinkField(DBENTRY *pdbentry, int index);
 epicsShareFunc int  dbGetLinkType(DBENTRY *pdbentry);
-epicsShareFunc long dbCvtLinkToConstant(DBENTRY *pdbentry);
-epicsShareFunc long dbCvtLinkToPvlink(DBENTRY *pdbentry);
 
 /* Dump routines */
 epicsShareFunc void dbDumpPath(DBBASE *pdbbase);
@@ -230,6 +242,7 @@ epicsShareFunc void dbDumpField(DBBASE *pdbbase,
 epicsShareFunc void dbDumpDevice(DBBASE *pdbbase,
     const char *recordTypeName);
 epicsShareFunc void dbDumpDriver(DBBASE *pdbbase);
+epicsShareFunc void dbDumpLink(DBBASE *pdbbase);
 epicsShareFunc void dbDumpRegistrar(DBBASE *pdbbase);
 epicsShareFunc void dbDumpFunction(DBBASE *pdbbase);
 epicsShareFunc void dbDumpVariable(DBBASE *pdbbase);
@@ -246,6 +259,7 @@ epicsShareFunc void dbCatString(char **string, int *stringLength,
     char *pnew, char *separator);
 
 extern int dbStaticDebug;
+extern int dbConvertStrict;
 
 #define S_dbLib_recordTypeNotFound (M_dbLib|1) /* Record Type does not exist */
 #define S_dbLib_recExists (M_dbLib|3)          /* Record Already exists */

@@ -50,6 +50,9 @@ epicsExportAddress(int,dbBptNotMonotonic);
 epicsShareDef int dbQuietMacroWarnings=0;
 epicsExportAddress(int,dbQuietMacroWarnings);
 
+epicsShareDef int dbRecordsAbcSorted=0;
+epicsExportAddress(int,dbRecordsAbcSorted);
+
 /*private routines */
 static void yyerrorAbort(char *str);
 static void allocTemp(void *pvoid);
@@ -74,6 +77,7 @@ static short findOrAddGuiGroup(const char *name);
 static void dbDevice(char *recordtype,char *linktype,
 	char *dsetname,char *choicestring);
 static void dbDriver(char *name);
+static void dbLinkType(char *name, char *jlif_name);
 static void dbRegistrar(char *name);
 static void dbFunction(char *name);
 static void dbVariable(char *name, char *type);
@@ -194,7 +198,16 @@ static void freeInputFileList(void)
 	free((void *)pinputFileNow);
     }
 }
-
+
+static
+int cmp_dbRecordNode(const ELLNODE *lhs, const ELLNODE *rhs)
+{
+    dbRecordNode *LHS = (dbRecordNode*)lhs,
+                 *RHS = (dbRecordNode*)rhs;
+
+    return strcmp(LHS->recordname, RHS->recordname);
+}
+
 static long dbReadCOM(DBBASE **ppdbbase,const char *filename, FILE *fp,
 	const char *path,const char *substitutions)
 {
@@ -239,24 +252,25 @@ static long dbReadCOM(DBBASE **ppdbbase,const char *filename, FILE *fp,
         macSuppressWarning(macHandle,dbQuietMacroWarnings);
     }
     pinputFile = dbCalloc(1,sizeof(inputFile));
-    if(filename) {
-	pinputFile->filename = macEnvExpand(filename);
+    if (filename) {
+        pinputFile->filename = macEnvExpand(filename);
     }
-    if(!fp) {
-	FILE	*fp1;
+    if (!fp) {
+        FILE *fp1 = 0;
 
-	if(pinputFile->filename) pinputFile->path = dbOpenFile(pdbbase,pinputFile->filename,&fp1);
-	if(!pinputFile->filename || !fp1) {
-	    errPrintf(0,__FILE__, __LINE__,
-		"dbRead opening file %s",pinputFile->filename);
-	    free((void *)pinputFile->filename);
-	    free((void *)pinputFile);
+        if (pinputFile->filename)
+            pinputFile->path = dbOpenFile(pdbbase, pinputFile->filename, &fp1);
+        if (!pinputFile->filename || !fp1) {
+            errPrintf(0, __FILE__, __LINE__,
+                "dbRead opening file %s",pinputFile->filename);
+            free(pinputFile->filename);
+            free(pinputFile);
             status = -1;
             goto cleanup;
-	}
-	pinputFile->fp = fp1;
+        }
+        pinputFile->fp = fp1;
     } else {
-	pinputFile->fp = fp;
+        pinputFile->fp = fp;
     }
     pinputFile->line_num = 0;
     pinputFileNow = pinputFile;
@@ -294,6 +308,15 @@ static long dbReadCOM(DBBASE **ppdbbase,const char *filename, FILE *fp,
 	dbFinishEntry(pdbEntry);
     }
 cleanup:
+    if(dbRecordsAbcSorted) {
+        ELLNODE *cur;
+        for(cur = ellFirst(&pdbbase->recordTypeList); cur; cur=ellNext(cur))
+        {
+            dbRecordType *rtype = CONTAINER(cur, dbRecordType, node);
+
+            ellSortStable(&rtype->recList, &cmp_dbRecordNode);
+        }
+    }
     if(macHandle) macDeleteHandle(macHandle);
     macHandle = NULL;
     if(mac_input_buffer) free((void *)mac_input_buffer);
@@ -793,6 +816,26 @@ static void dbDriver(char *name)
     ellAdd(&pdbbase->drvList,&pdrvSup->node);
 }
 
+static void dbLinkType(char *name, char *jlif_name)
+{
+    linkSup *pLinkSup;
+    GPHENTRY *pgphentry;
+
+    pgphentry = gphFind(pdbbase->pgpHash, name, &pdbbase->linkList);
+    if (pgphentry) {
+	return;
+    }
+    pLinkSup = dbCalloc(1,sizeof(linkSup));
+    pLinkSup->name = epicsStrDup(name);
+    pLinkSup->jlif_name = epicsStrDup(jlif_name);
+    pgphentry = gphAdd(pdbbase->pgpHash, pLinkSup->name, &pdbbase->linkList);
+    if (!pgphentry) {
+	yyerrorAbort("gphAdd failed");
+    } 
+    pgphentry->userPvt = pLinkSup;
+    ellAdd(&pdbbase->linkList, &pLinkSup->node);
+}
+
 static void dbRegistrar(char *name)
 {
     dbText	*ptext;
@@ -1035,13 +1078,20 @@ static void dbRecordField(char *name,char *value)
 	yyerror(NULL);
 	return;
     }
-    dbTranslateEscape(value, value);    /* yuck: in-place, but safe */
+    if (*value == '"') {
+	/* jsonSTRING values still have their quotes */
+        value++;
+	value[strlen(value) - 1] = 0;
+    }
+    dbTranslateEscape(value, value);    /* in-place; safe & legal */
     status = dbPutString(pdbentry,value);
     if(status) {
-	epicsPrintf("Can't set \"%s.%s\" to \"%s\"\n",
-                    dbGetRecordName(pdbentry), name, value);
-	yyerror(NULL);
-	return;
+        char msg[128];
+        errSymLookup(status, msg, sizeof(msg));
+        epicsPrintf("Can't set \"%s.%s\" to \"%s\" %s\n",
+                    dbGetRecordName(pdbentry), name, value, msg);
+        yyerror(NULL);
+        return;
     }
 }
 
@@ -1054,6 +1104,12 @@ static void dbRecordInfo(char *name, char *value)
     if(duplicate) return;
     ptempListNode = (tempListNode *)ellFirst(&tempList);
     pdbentry = ptempListNode->item;
+    if (*value == '"') {
+	/* jsonSTRING values still have their quotes */
+        value++;
+	value[strlen(value) - 1] = 0;
+    }
+    dbTranslateEscape(value, value);    /* yuck: in-place, but safe */
     status = dbPutInfo(pdbentry,name,value);
     if(status) {
 	epicsPrintf("Can't set \"%s\" info \"%s\" to \"%s\"\n",

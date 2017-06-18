@@ -222,6 +222,15 @@ int epicsStrnCaseCmp(const char *s1, const char *s2, size_t len)
     return 0;
 }
 
+char * epicsStrnDup(const char *s, size_t len)
+{
+    char *buf = mallocMustSucceed(len + 1, "epicsStrnDup");
+
+    strncpy(buf, s, len);
+    buf[len] = '\0';
+    return buf;
+}
+
 char * epicsStrDup(const char *s)
 {
     return strcpy(mallocMustSucceed(strlen(s)+1, "epicsStrDup"), s);
@@ -254,6 +263,18 @@ int epicsStrPrintEscaped(FILE *fp, const char *s, size_t len)
        }
    }
    return nout;
+}
+
+/* Until Base requires POSIX 2008 we must provide our own implementation */
+size_t epicsStrnLen(const char *s, size_t maxlen)
+{
+    size_t i;
+
+    for (i=0; i<maxlen; i++) {
+        if(s[i]=='\0')
+            return i;
+    }
+    return i;
 }
 
 int epicsStrGlobMatch(const char *str, const char *pattern)

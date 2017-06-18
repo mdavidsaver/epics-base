@@ -191,6 +191,22 @@ udpiiu::udpiiu (
     }
 #endif
 
+#ifdef IP_MULTICAST_TTL
+    {
+        int ttl;
+        long val;
+        if(envGetLongConfigParam(&EPICS_CA_MCAST_TTL, &val))
+            val =1;
+        ttl = val;
+        if ( setsockopt(this->sock, IPPROTO_IP, IP_MULTICAST_TTL, (char*)&ttl, sizeof(ttl))) {
+            char sockErrBuf[64];
+            epicsSocketConvertErrnoToString (
+                sockErrBuf, sizeof ( sockErrBuf ) );
+            errlogPrintf("CAC: failed to set mcast ttl %d\n", ttl);
+        }
+    }
+#endif
+
     int boolValue = true;
     int status = setsockopt ( this->sock, SOL_SOCKET, SO_BROADCAST, 
                 (char *) &boolValue, sizeof ( boolValue ) );
@@ -930,10 +946,12 @@ bool udpiiu::pushDatagramMsg ( epicsGuard < epicsMutex > & guard,
 
     caHdr * pbufmsg = ( caHdr * ) &this->xmitBuf[this->nBytesInXmitBuf];
     *pbufmsg = msg;
-    memcpy ( pbufmsg + 1, pExt, extsize );
-    if ( extsize != alignedExtSize ) {
-        char *pDest = (char *) ( pbufmsg + 1 );
-        memset ( pDest + extsize, '\0', alignedExtSize - extsize );
+    if ( extsize ) {
+        memcpy ( pbufmsg + 1, pExt, extsize );
+        if ( extsize != alignedExtSize ) {
+            char *pDest = (char *) ( pbufmsg + 1 );
+            memset ( pDest + extsize, '\0', alignedExtSize - extsize );
+        }
     }
     AlignedWireRef < epicsUInt16 > ( pbufmsg->m_postsize ) = alignedExtSize;
     this->nBytesInXmitBuf += msgsize;
