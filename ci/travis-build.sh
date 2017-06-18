@@ -65,9 +65,10 @@ then
   curl -L "https://github.com/mdavidsaver/rsb/releases/download/travis-20160306-2/rtems${RTEMS}-i386-trusty-20190306-2.tar.gz" \
   | tar -C /home/travis/.cache -xj
 
-  sed -i -e '/^RTEMS_VERSION/d' -e '/^RTEMS_BASE/d' configure/os/CONFIG_SITE.Common.RTEMS
+  sed -i -e '/^RTEMS_VERSION/d' -e '/RTEMS_SERIES/d' -e '/^RTEMS_BASE/d' configure/os/CONFIG_SITE.Common.RTEMS
   cat << EOF >> configure/os/CONFIG_SITE.Common.RTEMS
 RTEMS_VERSION=$RTEMS
+RTEMS_SERIES=$RTEMS
 RTEMS_BASE=/home/travis/.cache/rtems${RTEMS}-i386
 EOF
   cat << EOF >> configure/CONFIG_SITE
