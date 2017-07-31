@@ -226,10 +226,10 @@ va_list                 args
     /*
      * add their context string into the protocol
      */
-    localStatus = epicsVsnprintf ( pMsgString, maxDiagLen, pformat, args );
+    localStatus = epicsVsnprintf ( pMsgString, maxDiagLen - size, pformat, args );
     if ( localStatus >= 1 ) {
         unsigned diagLen = ( unsigned ) localStatus;
-        if ( diagLen < maxDiagLen ) {
+        if ( diagLen < maxDiagLen - size ) {
             size += (ca_uint32_t) (diagLen + 1u);
         }
         else {
@@ -237,7 +237,7 @@ va_list                 args
                 "caserver: vsend_err: epicsVsnprintf detected "
                 "error message truncation, pFormat = \"%s\"\n",
                 pformat );
-            size += maxDiagLen;
+            size = maxDiagLen;
             pMsgString [ maxDiagLen - 1 ] = '\0';
         }
     }
