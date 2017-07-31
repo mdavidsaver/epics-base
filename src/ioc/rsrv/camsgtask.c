@@ -70,6 +70,11 @@ void camsgtask ( void *pParm )
         assert ( client->recv.maxstk >= client->recv.cnt );
         nchars = recv ( client->sock, &client->recv.buf[client->recv.cnt], 
                 (int) ( client->recv.maxstk - client->recv.cnt ), 0 );
+        if ( CASDEBUG > 4 ) {
+            errlogPrintf ( "CAS: recv(%u, %u) -> %ld (%lu)\n",
+                           client->recv.cnt, client->recv.maxstk - client->recv.cnt,
+                           (long)nchars, (unsigned long)SOCKERRNO);
+        }
         if ( nchars == 0 ){
             if ( CASDEBUG > 0 ) {
                 /* convert to u long so that %lu works on both 32 and 64 bit archs */
