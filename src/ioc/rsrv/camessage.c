@@ -2566,8 +2566,10 @@ int camessage ( struct client *client )
          * aligned payloads
          */
         if ( msgsize & 0x7 ) {
+                SEND_LOCK(client);
             send_err ( &msg, ECA_INTERNAL, client,
                 "CAS: Missaligned protocol rejected" );
+                SEND_UNLOCK(client);
             log_header ( "CAS: Missaligned protocol rejected",
                 client, &msg, 0, nmsg );
             status = RSRV_ERROR;
@@ -2583,9 +2585,11 @@ int camessage ( struct client *client )
         if ( msgsize > client->recv.maxstk ) {
             casExpandRecvBuffer ( client, msgsize );
             if ( msgsize > client->recv.maxstk ) {
+                    SEND_LOCK(client);
                 send_err ( &msg, ECA_TOLARGE, client,
                     "CAS: Server unable to load large request message. Max bytes=%lu",
                     rsrvSizeofLargeBufTCP );
+                    SEND_UNLOCK(client);
                 log_header ( "CAS: server unable to load large request message",
                     client, &msg, 0, nmsg );
                 assert ( client->recv.cnt <= client->recv.maxstk );
