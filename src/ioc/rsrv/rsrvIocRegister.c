@@ -11,7 +11,10 @@
 
 #define epicsExportSharedSymbols
 #include "rsrv.h"
+#include "server.h"
 #include "rsrvIocRegister.h"
+
+#include "epicsExport.h"
 
 /* casr */
 static const iocshArg casrArg0 = { "level",iocshArgInt};
@@ -22,8 +25,9 @@ static void casrCallFunc(const iocshArgBuf *args)
     casr(args[0].ival);
 }
 
-
 void rsrvIocRegister(void)
 {
     iocshRegister(&casrFuncDef,casrCallFunc);
 }
+
+epicsExportAddress(int, CASDEBUG);
