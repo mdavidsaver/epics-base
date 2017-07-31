@@ -45,6 +45,10 @@ void cas_send_bs_msg ( struct client *pclient, int lock_needed )
 {
     int status;
 
+    if ( lock_needed ) {
+        SEND_LOCK ( pclient );
+    }
+
     if ( CASDEBUG > 2 && pclient->send.stk ) {
         errlogPrintf ( "CAS: Sending a message of %d bytes\n", pclient->send.stk );
     }
@@ -56,10 +60,6 @@ void cas_send_bs_msg ( struct client *pclient, int lock_needed )
         }
         pclient->send.stk = 0u;
         return;
-    }
-
-    if ( lock_needed ) {
-        SEND_LOCK ( pclient );
     }
 
     while ( pclient->send.stk && ! pclient->disconnect ) {
