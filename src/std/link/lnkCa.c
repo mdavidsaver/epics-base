@@ -345,6 +345,7 @@ void lnkca_open(struct link *plink)
 {
     struct ca_client_context *save;
     ca_link *link = CONTAINER(plink->value.json.jlink, ca_link, link);
+    int ret;
 
     if(!link->target) {
         errlogPrintf("ca_link w/o target PV\n");
@@ -364,8 +365,8 @@ void lnkca_open(struct link *plink)
 
     epicsMutexMustLock(link->lock);
 
-    int ret = ca_create_channel(link->target, lnkca_conn_status, link, CA_PRIORITY_DB_LINKS,
-                                &link->channel);
+    ret = ca_create_channel(link->target, lnkca_conn_status, link, CA_PRIORITY_DB_LINKS,
+                            &link->channel);
     if(ret!=ECA_NORMAL) {
         errlogPrintf("ca_link: bad PV name \"%s\"\n", link->target);
         link->channel = NULL;
