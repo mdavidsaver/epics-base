@@ -84,7 +84,7 @@ MAIN(epicsTimeTest)
     const int wasteTime = 100000;
     const int nTimes = 10;
 
-    testPlan(20 + nTimes * 19);
+    testPlan(22 + nTimes * 19);
 
     try {
         const epicsTimeStamp epochTS = {0, 0};
