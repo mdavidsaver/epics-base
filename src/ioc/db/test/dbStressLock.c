@@ -165,10 +165,10 @@ void worker(void *raw)
         epicsUInt64 after, before;
         double sel = getRand();
         double duration;
+        int act;
 
         before = epicsMonotonicGet();
 
-        int act;
         if(sel<0.33) {
             doSingle(priv);
             act = 0;
