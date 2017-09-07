@@ -9,7 +9,7 @@
 * in file LICENSE that is included with this distribution. 
 \*************************************************************************/
 
-/* mbbiDirectRecord.c - Record Support routines for mbboDirect records */
+/* mbbiDirectRecord.c - Record Support routines for mbbiDirect records */
 /*
  *      Original Authors: Bob Dalesio and Matthew Needes
  *      Date: 10-07-93
