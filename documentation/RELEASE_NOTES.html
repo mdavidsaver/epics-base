@@ -3,11 +3,13 @@
 <html>
 <head>
   <meta http-equiv="content-type" content="text/html; charset=iso-8859-1">
-  <title>EPICS Base R3.16.1 Release Notes</title>
+  <title>EPICS Base R3.16.2 Release Notes</title>
 </head>
 
 <body lang="en">
-<h1 align="center">EPICS Base Release 3.16.1</h1>
+<h1 align="center">EPICS Base Release 3.16.2</h1>
+
+<h2 align="center">Changes made between 3.16.1 and 3.16.2</h2>
 
 <!-- Insert new items immediately below this template ...
 
@@ -16,6 +18,16 @@
 <p>Description</p>
 
 -->
+
+<h3>Record types mbbiDirect and mbboDirect extented to 32 bit</h3>
+
+<p>The VAL fields of mbbiDirect and mbboDirect records have
+been extended from <tt>DBF_USHORT</tt> (16 bit) to <tt>DBF_LONG</tt> (32 bit).
+New bit fields <tt>B10</tt>...<tt>B1F</tt> have been added.</p>
+
+Device support which accesses the bit fields can test if the macro
+<tt>mbbiDirectRecord1BF</tt> or <tt>mbboDirectRecord1BF</tt> is
+defined. Device support which only accesses RVAL needs no modification.
 
 <h2 align="center">Changes made between 3.16.0.1 and 3.16.1</h2>
 
