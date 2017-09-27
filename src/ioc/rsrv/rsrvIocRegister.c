@@ -13,7 +13,6 @@
 #define epicsExportSharedSymbols
 #include "rsrv.h"
 #include "server.h"
-#include "rsrvIocRegister.h"
 
 #include "epicsExport.h"
 
