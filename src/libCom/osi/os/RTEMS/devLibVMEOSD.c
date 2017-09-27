@@ -20,18 +20,10 @@
 #include <epicsInterrupt.h>
 #include <epicsMMIO.h>
 
-/* Remove the following defintion to use an internal bspExtMemProbe implementation
- * based on polling.
- */
-#define USE_BSPEXT
-
 #if defined(__PPC__) || defined(__mcf528x__)
 
 #if defined(__PPC__)
 #include <bsp/VME.h>
-#ifdef USE_BSPEXT
-#include <bsp/bspExt.h>
-#endif
 #endif
 
 
@@ -133,12 +125,7 @@ static long
 rtemsDevInit(void)
 {
     /* assume the vme bridge has been initialized by bsp */
-    /* init BSP extensions [memProbe etc.] */
-#ifdef USE_BSPEXT
-    return bspExtInit();
-#else
     return 0;
-#endif
 }
 
 /*
@@ -256,7 +243,6 @@ static long rtemsDevMapAddr (epicsAddressType addrType, unsigned options,
     return 0;
 }
 
-#ifndef USE_BSPEXT
 static
 rtems_status_code bspExtMemProbe(void *addr, int write, int size, void *pval)
 {
@@ -305,7 +291,6 @@ rtems_status_code bspExtMemProbe(void *addr, int write, int size, void *pval)
 
     return ret;
 }
-#endif
 
 /*
  * a bus error safe "wordSize" read at the specified address which returns
