@@ -72,8 +72,13 @@
 
 extern "C" int softIoc_registerRecordDeviceDriver(struct dbBase *pdbbase);
 
-#define DBD_FILE EPICS_BASE "/dbd/softIoc.dbd"
-#define EXIT_FILE EPICS_BASE "/db/softIocExit.db"
+#if defined(__rtems__) || defined(vxWorks)
+#  define DBD_FILE "softIoc.dbd"
+#  define EXIT_FILE "softIocExit.db"
+#else
+#  define DBD_FILE EPICS_BASE "/dbd/softIoc.dbd"
+#  define EXIT_FILE EPICS_BASE "/db/softIocExit.db"
+#endif
 
 const char *arg0;
 const char *base_dbd = DBD_FILE;
@@ -96,12 +101,19 @@ static void usage(int status) {
 
 int main(int argc, char *argv[])
 {
+    int startIocsh = 1;	/* default = start shell */
+#if defined(__rtems__) || defined(vxWorks)
+    int loadedDb = 1;
+
+    if(argc>1 && argv[1][0]!='\0') {
+        iocsh(argv[1]);
+    }
+#else
     char *dbd_file = const_cast<char*>(base_dbd);
     char *macros = NULL;
     char xmacro[PVNAME_STRINGSZ + 4];
-    int startIocsh = 1;	/* default = start shell */
     int loadedDb = 0;
-    
+
     arg0 = strrchr(*argv, '/');
     if (!arg0) {
 	arg0 = *argv;
@@ -215,7 +227,9 @@ int main(int argc, char *argv[])
 	epicsThreadSleep(0.2);
 	loadedDb = 1;	/* Give it the benefit of the doubt... */
     }
-    
+
+#endif /* rtems or vxworks */
+
     /* start an interactive shell if it was requested */
     if (startIocsh) {
 	iocsh(NULL);
