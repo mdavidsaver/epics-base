@@ -226,6 +226,11 @@ TESTPROD_HOST += yajl_test
 yajl_test_SRCS += yajl_test.c
 TESTS += yajlTest
 
+TESTPROD_HOST += osiSockTest
+osiSockTest_SRCS += osiSockTest.c
+testHarness_SRCS += osiSockTest.c
+TESTS += osiSockTest
+
 # The testHarness runs all the test programs in a known working order.
 testHarness_SRCS += epicsRunLibComTests.c
 
@@ -274,4 +279,3 @@ cvtFastPerform_SRCS += cvtFastPerform.cpp
 testHarness_SRCS += cvtFastPerform.cpp
 
 include $(TOP)/configure/RULES
-
