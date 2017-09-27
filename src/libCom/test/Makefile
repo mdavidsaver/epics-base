@@ -226,9 +226,14 @@ ipAddrToAsciiTest_SRCS += ipAddrToAsciiTest.cpp
 testHarness_SRCS += ipAddrToAsciiTest.cpp
 TESTS += ipAddrToAsciiTest
 
+ifeq ($(EPICS_HOST_ARCH),$(T_A))
+# skip except for host arch due to custom .plt
+
 TESTPROD_HOST += yajl_test
 yajl_test_SRCS += yajl_test.c
 TESTS += yajlTest
+
+endif
 
 TESTPROD_HOST += osiSockTest
 osiSockTest_SRCS += osiSockTest.c
