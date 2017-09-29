@@ -36,7 +36,8 @@ typedef struct jlink {
     struct jlink *parent;   /* NULL for top-level links */
     int parseDepth;         /* Used by parser, unused afterwards */
     unsigned debug:1;       /* set by caller of jlif operations to request debug output to console */
-    /* Link types extend or embed this structure for private storage */
+    unsigned internal:2;    /* internal flag */
+    /* Link types embed this structure for private storage (see CONTAINER() in dbDefs.h) */
 } jlink;
 
 typedef long (*jlink_map_fn)(jlink *, void *ctx);

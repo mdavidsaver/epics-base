@@ -49,6 +49,7 @@
 #include "dbFldTypes.h"
 #include "dbFldTypes.h"
 #include "dbLink.h"
+#include "dbJLink.h"
 #include "dbLockPvt.h"
 #include "dbNotify.h"
 #include "dbScan.h"
@@ -1036,7 +1037,8 @@ static long dbPutFieldLink(DBADDR *paddr,
         return S_db_badDbrtype;
     }
 
-    status = dbParseLink(pstring, pfldDes->field_type, &link_info, 0);
+    status = dbParseLink(pstring, pfldDes->field_type, &link_info,
+                         plink->type==JSON_LINK ? plink->value.json.jlink->internal : 0);
     if (status)
         return status;
 
