@@ -2164,6 +2164,7 @@ long dbInitRecordLinks(dbRecordType *rtyp, struct dbCommon *prec)
         dbFldDes *pflddes = rtyp->papFldDes[rtyp->link_ind[i]];
         DBLINK *plink = (DBLINK *)(((char *)prec) + pflddes->offset);
         devSup *devsup = NULL;
+        unsigned opts = 0;
 
         plink->precord = prec;
 
@@ -2201,7 +2202,23 @@ long dbInitRecordLinks(dbRecordType *rtyp, struct dbCommon *prec)
         if(!plink->text)
             continue;
 
-        if(dbParseLink(plink->text, pflddes->field_type, &link_info, 0)!=0) {
+        {
+            DBENTRY entry, *pdbentry=&entry;
+            dbInitEntryFromRecord(prec, &entry);
+
+            if(ellCount(&pdbentry->precnode->infoList)) {
+
+                if(dbFindInfo(pdbentry, "base:lsetDebug")==0 && epicsStrCaseCmp(dbGetInfoString(pdbentry), "YES")==0)
+                    opts |= LINK_DEBUG_LSET;
+                if(dbFindInfo(pdbentry, "base:jlinkDebug")==0 && epicsStrCaseCmp(dbGetInfoString(pdbentry), "YES")==0)
+                    opts |= LINK_DEBUG_JPARSE;
+
+            }
+
+            dbFinishEntry(&entry);
+        }
+
+        if(dbParseLink(plink->text, pflddes->field_type, &link_info, opts)!=0) {
             /* This was already parsed once when ->text was set.
              * Any syntax error messages were printed at that time.
              */
