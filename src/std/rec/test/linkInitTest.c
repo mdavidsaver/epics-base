@@ -7,10 +7,13 @@
 #include <string.h>
 
 #include "dbAccess.h"
+#include "devSup.h"
 #include "alarm.h"
 #include "dbUnitTest.h"
 #include "errlog.h"
 #include "epicsThread.h"
+
+#include "longinRecord.h"
 
 #include "testMain.h"
 
@@ -28,11 +31,20 @@ static void startTestIoc(const char *dbfile)
     eltc(1);
 }
 
+/* testing here instead of ioc/db/test as xRecord has no INP/OUT */
+static void testdbGetDevLink(void)
+{
+    longinRecord *rec = (longinRecord*)testdbRecordPtr("li1");
+    testOk1(dbGetDevLink((dbCommon*)rec) == &rec->inp);
+}
+
 static void testLongStringInit()
 {
     testDiag("testLongStringInit");
 
     startTestIoc("linkInitTest.db");
+
+    testdbGetDevLink();
 
     {
         const char buf[] = "!----------------------------------------------!";
@@ -213,7 +225,7 @@ static void testEventRecord()
 
 MAIN(linkInitTest)
 {
-    testPlan(72);
+    testPlan(73);
 
     testLongStringInit();
     testCalcInit();
