@@ -4,7 +4,7 @@
 # Copyright (c) 2002 The Regents of the University of California, as
 #     Operator of Los Alamos National Laboratory.
 # EPICS BASE is distributed subject to a Software License Agreement found
-# in the file LICENSE that is included with this distribution. 
+# in the file LICENSE that is included with this distribution.
 #*************************************************************************
 TOP=../../../..
 
@@ -93,6 +93,11 @@ TESTPROD_HOST += dbStateTest
 dbStateTest_SRCS += dbStateTest.c
 testHarness_SRCS += dbStateTest.c
 TESTS += dbStateTest
+
+TESTPROD_HOST += dbServerTest
+dbServerTest_SRCS += dbServerTest.c
+testHarness_SRCS += dbServerTest.c
+TESTS += dbServerTest
 
 TESTPROD_HOST += dbCaStatsTest
 dbCaStatsTest_SRCS += dbCaStatsTest.c
