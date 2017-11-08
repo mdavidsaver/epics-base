@@ -1,6 +1,6 @@
-# valgrind suppressions for known false positives
-# generally "reachable" leaks from one time
-# initializations kept in global variables.
+# valgrind suppressions for known false positives for memcheck and helgrind.
+# generally "reachable" leaks from one time initializations kept in global variables.
+# also "races" in atomic primatives
 #   valgrind --suppressions=base.supp <exec> <args...>
 {
    Assume all Once allocations are really once...
@@ -97,5 +97,11 @@
    match-leak-kinds: reachable
    ...
    fun:testdbPrepare
+   ...
+}
+{
+   Atomic set
+   Helgrind:Race
+   fun:epicsAtomicSetIntT
    ...
 }
