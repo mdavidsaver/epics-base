@@ -159,6 +159,12 @@ static long init_record(struct dbCommon *pcommon, int pass)
     }
     strcpy(prec->onam, prec->snam);
     prec->oval = prec->val;
+    for (i = 0; i < NUM_ARGS; i++) {
+        (&prec->onva)[i] = (&prec->nova)[i];
+        memcpy((&prec->ovla)[i],
+               (&prec->vala)[i],
+               (&prec->nova)[i]);
+    }
     return 0;
 }
 
