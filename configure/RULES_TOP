@@ -58,6 +58,7 @@ help:
 	@echo "     rebuild        - Same as clean install"
 	@echo "     archclean      - Removes O.<arch> dirs but not O.Common dir"
 	@echo "     runtests       - Run self-tests, summarize results"
+	@echo "     debug          - Print copious information about build configuration"
 	@echo "\"Partial\" build targets supported by Makefiles:"
 	@echo "     host           - Builds and installs $(EPICS_HOST_ARCH) only."
 	@echo "     inc$(DIVIDER)<arch>     - Installs <arch> only header files."
@@ -85,3 +86,21 @@ RELEASE_CFG_TOP_RULES = $(foreach top, $(RELEASE_TOPS), \
 ifneq ($(RELEASE_CFG_TOP_RULES),)
   include $(RELEASE_CFG_TOP_RULES)
 endif
+
+# selection from configure/CONFIG_SITE
+DEBUGVARS  = CROSS_COMPILER_TARGET_ARCHS CROSS_COMPILER_HOST_ARCHS CROSS_COMPILER_RUNTEST_ARCHS
+DEBUGVARS += SHARED_LIBRARIES STATIC_BUILD HOST_OPT CROSS_OPT USE_POSIX_THREAD_PRIORITY_SCHEDULING LINKER_USE_RPATH
+DEBUGVARS += INSTALL_LOCATION
+
+debug-top:
+	@echo "Select variables:"
+	@$(foreach var, $(DEBUGVARS), $(call showvariable,$(var)))
+	@echo "Makefiles used in $$PWD:"
+	@$(foreach ent, $(MAKEFILE_LIST),$(call showentry,$(ent)))
+	@echo "Module search path: (relative to $$PWD)"
+	@$(foreach var, $(RELEASE_TOPS),$(call showvar,$(var)))
+	@echo "Run 'make -C someApp/src debug' for more detailed information"
+
+debug: debug-top
+
+.PHONY: debug debug-top
