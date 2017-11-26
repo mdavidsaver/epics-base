@@ -95,6 +95,5 @@ dbCore_SRCS += dbIocRegister.c
 dbCore_SRCS += chfPlugin.c
 dbCore_SRCS += dbState.c
 dbCore_SRCS += dbUnitTest.c
-dbCore_SRCS += dbUnitTestxx.cpp
 dbCore_SRCS += dbServer.c
 

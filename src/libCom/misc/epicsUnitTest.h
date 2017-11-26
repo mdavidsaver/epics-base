@@ -14,10 +14,6 @@
 
 #include <stdarg.h>
 
-#ifdef __cplusplus
-#include <sstream>
-#endif
-
 #include "compilerDependencies.h"
 #include "shareLib.h"
 
@@ -55,77 +51,6 @@ epicsShareFunc void runTestFunc(const char *name, TESTFUNC func);
 
 #ifdef __cplusplus
 }
-
-/** stream based equivalent to testOk()
- *
- * @code
-   int a, b;
-   ...
-   testOk(a==b, "expect %d == %d", a, b);
-   // becomes
-   TestCase(a==b)<<"expect "<<a<<" = "<<b;
- * @endcode
- */
-class TestCase {
-    bool ok;
-    std::ostringstream strm;
-public:
-    TestCase(bool ok) : ok(ok) {}
-    ~TestCase() {
-        testOk(ok, "%s", strm.str().c_str());
-    }
-    template<typename T>
-    TestCase& operator<<(const T& t) {
-        strm<<t;
-        return *this;
-    }
-};
-
-/** Quick equality test
- *
- *@code
- std::string a, b;
- testEq(a, b);
- *@endcode
- */
-#define testEq(LHS, RHS) TestCase((LHS)==(RHS))<<#LHS<<" ("<<(LHS)<<") == "<<#RHS<<" ("<<(RHS)<<") @"<<__FILE__<<":"<<__LINE__
-
-template<class C, void (C::*M)()>
-void testMethod_(const char *kname, const char *mname)
-{
-    try {
-        testDiag("------- %s::%s --------", kname, mname);
-        C inst;
-        (inst.*M)();
-    } catch(std::exception& e) {
-#ifdef PRINT_EXCEPTION
-        PRINT_EXCEPTION(e);
 #endif
-        testAbort("unexpected exception: %s", e.what());
-    }
-}
-
-/** Construct an instance and run one method
- *
- * Helper when many tests have common setup/teardown
- * to be run around each test
- *@code
- struct MyTest {
-   MyTest() { ... } // setup
-   ~MyTest() { ... } // teardown
-   void testOne() { ... }
-   void testTwo() { ... }
- };
- MAIN(mytest) {
-   ...
-   testMethod(MyTest, testOne)
-   testMethod(MyTest, testTwo)
-   ...
- }
- *@endcode
- */
-#define testMethod(klass, method) testMethod_<klass, &klass::method>(#klass, #method)
-
-#endif /* __cplusplus */
 
 #endif /* INC_epicsUnitTest_H */
