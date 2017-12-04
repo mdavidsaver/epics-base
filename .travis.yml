@@ -1,18 +1,46 @@
-sudo: false
-dist: trusty
 language: c
-compiler:
-  - gcc
-env:
-  - CMPLR=gcc
-  - CMPLR=gcc EXTRA=CMD_CXXFLAGS=-std=c++11
-  - CMPLR=gcc STATIC=YES
-  - CMPLR=clang
-  - CMPLR=clang STATIC=YES
-  - WINE=32 TEST=NO STATIC=YES
-  - WINE=32 TEST=NO STATIC=NO
-  - RTEMS=4.10 TEST=YES
-  - RTEMS=4.9 TEST=YES
+
+matrix:
+  include:
+    - sudo: false
+      dist: trusty
+      compiler: gcc
+      env: CMPLR=gcc
+    - sudo: false
+      dist: trusty
+      compiler: gcc
+      env: CMPLR=gcc EXTRA=CMD_CXXFLAGS=-std=c++11
+    - sudo: false
+      dist: trusty
+      compiler: gcc
+      env: CMPLR=gcc STATIC=YES
+    - sudo: false
+      dist: trusty
+      compiler: gcc
+      env: CMPLR=clang
+    - sudo: false
+      dist: trusty
+      compiler: gcc
+      env: CMPLR=clang STATIC=YES
+    - sudo: false
+      dist: trusty
+      compiler: gcc
+      env: WINE=32 TEST=NO STATIC=YES
+    - sudo: false
+      dist: trusty
+      compiler: gcc
+      env: WINE=32 TEST=NO STATIC=NO
+    - sudo: false
+      dist: trusty
+      compiler: gcc
+      env: RTEMS=4.10 TEST=YES
+    - sudo: false
+      dist: trusty
+      compiler: gcc
+      env: RTEMS=4.9 TEST=YES
+    - os: osx
+      env: EXTRA=CMD_CXXFLAGS=-std=c++11
+
 addons:
   apt:
     packages:
@@ -25,7 +53,6 @@ addons:
     - flex
     - texinfo
     - install-info
-cache:
-  directories:
-   - $HOME/.cache
+    - qemu-system-x86
+
 script: sh ci/travis-build.sh </dev/null
