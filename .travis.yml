@@ -1,8 +1,46 @@
-sudo: false
-dist: trusty
 language: c
-compiler:
-  - gcc
+
+matrix:
+  include:
+    - sudo: false
+      dist: trusty
+      compiler: gcc
+      env: CMPLR=gcc EXTRA=LINKER_USE_RPATH=ORIGIN
+    - sudo: false
+      dist: trusty
+      compiler: gcc
+      env: CMPLR=gcc EXTRA=CMD_CXXFLAGS=-std=c++11
+    - sudo: false
+      dist: trusty
+      compiler: gcc
+      env: CMPLR=gcc STATIC=YES
+    - sudo: false
+      dist: trusty
+      compiler: gcc
+      env: CMPLR=clang
+    - sudo: false
+      dist: trusty
+      compiler: gcc
+      env: CMPLR=clang STATIC=YES
+    - sudo: false
+      dist: trusty
+      compiler: gcc
+      env: WINE=32 TEST=NO STATIC=YES
+    - sudo: false
+      dist: trusty
+      compiler: gcc
+      env: WINE=32 TEST=NO STATIC=NO
+    - sudo: false
+      dist: trusty
+      compiler: gcc
+      env: RTEMS=4.10 TEST=YES
+    - sudo: false
+      dist: trusty
+      compiler: gcc
+      env: RTEMS=4.9 TEST=YES
+    - os: osx
+      env: EXTRA=CMD_CXXFLAGS="-std=c++98 -stdlib=libstdc++"
+
 addons:
   apt:
     packages:
@@ -12,16 +50,5 @@ addons:
     - clang
     - g++-mingw-w64-i686
     - qemu-system-x86
-script:
-  - .ci/travis-build.sh
-env:
-  - CMPLR=gcc EXTRA=LINKER_USE_RPATH=ORIGIN
-  - CMPLR=clang
-  - CMPLR=gcc   STATIC=YES
-  - CMPLR=clang STATIC=YES
-  - CMPLR=gcc   EXTRA=CMD_CXXFLAGS=-std=c++11
-  - CMPLR=clang EXTRA=CMD_CXXFLAGS=-std=c++11
-  - WINE=32 TEST=NO STATIC=YES
-  - WINE=32 TEST=NO STATIC=NO
-  - RTEMS=4.10 TEST=YES
-  - RTEMS=4.9  TEST=YES
+
+script: sh .ci/travis-build.sh </dev/null
