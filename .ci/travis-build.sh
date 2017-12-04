@@ -68,7 +68,7 @@ EOF
   type qemu-system-i386 || echo "Missing qemu"
 fi
 
-make -j2 $EXTRA
+make -j2 "${EXTRA:-RANDOMUNUSEDNAME=X}"
 
 if [ "$TEST" != "NO" ]
 then
