@@ -96,4 +96,4 @@ dbCore_SRCS += chfPlugin.c
 dbCore_SRCS += dbState.c
 dbCore_SRCS += dbUnitTest.c
 dbCore_SRCS += dbServer.c
-
+dbCore_SRCS += dbgraphviz.c
