@@ -252,6 +252,8 @@ epicsShareFunc void dbPvdDump(DBBASE *pdbbase, int verbose);
 epicsShareFunc void dbReportDeviceConfig(DBBASE *pdbbase,
     FILE *report);
 
+epicsShareFunc void dbDumpDot(void);
+
 /* Misc useful routines*/
 #define dbCalloc(nobj,size) callocMustSucceed(nobj,size,"dbCalloc")
 #define dbMalloc(size) mallocMustSucceed(size,"dbMalloc")
