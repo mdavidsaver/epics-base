@@ -159,6 +159,15 @@ static void dbReportDeviceConfigCallFunc(const iocshArgBuf *args)
     dbReportDeviceConfig(*iocshPpdbbase,stdout);
 }
 
+/* dbDumpDot */
+static const iocshArg * const dbDumpDotArgs[0] = {};
+static const iocshFuncDef dbDumpDotFuncDef = {
+    "dbDumpDot",0,dbDumpDotArgs};
+static void dbDumpDotCallFunc(const iocshArgBuf *args)
+{
+    dbDumpDot();
+}
+
 void dbStaticIocRegister(void)
 {
     iocshRegister(&dbDumpPathFuncDef, dbDumpPathCallFunc);
@@ -176,4 +185,5 @@ void dbStaticIocRegister(void)
     iocshRegister(&dbPvdDumpFuncDef, dbPvdDumpCallFunc);
     iocshRegister(&dbPvdTableSizeFuncDef,dbPvdTableSizeCallFunc);
     iocshRegister(&dbReportDeviceConfigFuncDef, dbReportDeviceConfigCallFunc);
+    iocshRegister(&dbDumpDotFuncDef, dbDumpDotCallFunc);
 }
