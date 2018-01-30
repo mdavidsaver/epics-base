@@ -85,10 +85,13 @@ void rsrv_online_notify_task(void *pParm)
                              &pAddr->addr.sa, sizeof(pAddr->addr));
             if (status < 0) {
                 char sockErrBuf[64];
-                epicsSocketConvertErrnoToString ( sockErrBuf, sizeof ( sockErrBuf ) );
-                ipAddrToDottedIP (&pAddr->addr.ia, buf, sizeof(buf));
-                errlogPrintf ( "CAS: CA beacon send to %s error: %s\n",
-                    buf, sockErrBuf);
+                int err = SOCKERRNO;
+                if(err != EPERM) {
+                    epicsSocketConvertErrorToString ( sockErrBuf, sizeof ( sockErrBuf ), err );
+                    ipAddrToDottedIP (&pAddr->addr.ia, buf, sizeof(buf));
+                    errlogPrintf ( "CAS: CA beacon send to %s error: %s\n",
+                        buf, sockErrBuf);
+                }
             }
             else {
                 assert (status == sizeof(msg));
