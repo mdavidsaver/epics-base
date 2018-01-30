@@ -45,7 +45,7 @@ void rsrv_online_notify_task(void *pParm)
     caHdr                       msg;
     int                         status;
     ca_uint32_t                 beaconCounter = 0;
-    char                        buf[16];
+    char                        buf[22];
     
     taskwdInsert (epicsThreadGetIdSelf(),NULL,NULL);
     
