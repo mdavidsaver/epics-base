@@ -83,13 +83,16 @@ void rsrv_online_notify_task(void *pParm)
             status = sendto (beaconSocket, (char *)&msg, sizeof(msg), 0,
                              &pAddr->addr.sa, sizeof(pAddr->addr));
             if (status < 0) {
-                char sockErrBuf[64];
-                char sockDipBuf[22];
+                int err = SOCKERRNO;
+                if(err != EPERM) {
+                    char sockErrBuf[64];
+                    char sockDipBuf[22];
 
-                epicsSocketConvertErrnoToString(sockErrBuf, sizeof(sockErrBuf));
-                ipAddrToDottedIP(&pAddr->addr.ia, sockDipBuf, sizeof(sockDipBuf));
-                errlogPrintf ( "CAS: CA beacon send to %s error: %s\n",
-                    sockDipBuf, sockErrBuf);
+                    epicsSocketConvertErrorToString(sockErrBuf, sizeof(sockErrBuf), err);
+                    ipAddrToDottedIP(&pAddr->addr.ia, sockDipBuf, sizeof(sockDipBuf));
+                    errlogPrintf ( "CAS: CA beacon send to %s error: %s\n",
+                        sockDipBuf, sockErrBuf);
+                }
             }
             else {
                 assert (status == sizeof(msg));
