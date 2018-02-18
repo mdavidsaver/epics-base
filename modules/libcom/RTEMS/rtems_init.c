@@ -568,6 +568,8 @@ static void gdbstopCallFunc(const iocshArgBuf *args)
 
 #endif /* USE_GDBSTUB */
 
+// see qemu_idle.c
+extern void qemu_idle_register(void);
 /*
  * Register RTEMS-specific commands
  */
@@ -583,6 +585,7 @@ static void iocshRegisterRTEMS (void)
     iocshRegister(&gdbstartFuncDef, gdbstartCallFunc);
     iocshRegister(&gdbstopFuncDef, gdbstopCallFunc);
 #endif
+    qemu_idle_register();
 }
 
 /*
