@@ -566,6 +566,8 @@ static void zonesetCallFunc(const iocshArgBuf *args)
     zoneset(args[0].sval);
 }
 
+// see qemu_idle.c
+extern void qemu_idle_register(void);
 
 /*
  * Register RTEMS-specific commands
@@ -582,6 +584,7 @@ static void iocshRegisterRTEMS (void)
     iocshRegister(&gdbstopFuncDef, gdbstopCallFunc);
 #endif
     iocshRegister(&zonesetFuncDef, &zonesetCallFunc);
+    qemu_idle_register();
 }
 
 /*

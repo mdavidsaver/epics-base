@@ -32,6 +32,7 @@ rtemsCom_SRCS += setBootConfigFromNVRAM.c
 rtemsCom_SRCS += epicsRtemsInitHookPre.c
 rtemsCom_SRCS += epicsRtemsInitHookPost.c
 rtemsCom_SRCS += epicsMemFs.c
+rtemsCom_SRCS += qemu_idle.c
 
 ifeq ($(T_A),RTEMS-pc386)
 rtemsCom_SRCS += ne2kpci.c
