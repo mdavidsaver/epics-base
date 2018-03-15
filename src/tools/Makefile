@@ -61,6 +61,8 @@ PERL_SCRIPTS += podToHtml.pl
 PERL_SCRIPTS += podRemove.pl
 PERL_SCRIPTS += registerRecordDeviceDriver.pl
 
+PERL_SCRIPTS += makeRPath.py
+
 HTMLS = style.css
 HTMLS += EPICS/Getopts.html
 HTMLS += EPICS/Path.html
