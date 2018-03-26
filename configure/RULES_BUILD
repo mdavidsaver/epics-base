@@ -339,7 +339,7 @@ $(MODNAME): %$(MODEXT): %$(EXE)
 
 runtests: $(TESTSCRIPTS)
 ifdef RUNTESTS_ENABLED
-	-$(PERL) -MTest::Harness -e 'runtests @ARGV if @ARGV;' $^
+	-LD_LIBRARY_PATH=$(TOP)/lib/$(T_A):$$LD_LIBRARY_PATH $(PERL) -MTest::Harness -e 'runtests @ARGV if @ARGV;' $^
 endif
 
 testspec: $(TESTSCRIPTS)
@@ -371,7 +371,7 @@ junitfiles: $(JUNITFILES)
 # A .tap file is the output from running the associated test script
 %.tap: %.t
 ifdef RUNTESTS_ENABLED
-	-$(PERL) $< -tap > $@
+	-LD_LIBRARY_PATH=$(TOP)/lib/$(T_A):$$LD_LIBRARY_PATH $(PERL) $< -tap > $@
 endif
 
 %.xml: %.tap
