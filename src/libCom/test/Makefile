@@ -219,6 +219,11 @@ osiSockTest_SRCS += osiSockTest.c
 testHarness_SRCS += osiSockTest.c
 TESTS += osiSockTest
 
+TESTPROD_HOST += jtreetest
+jtreetest_SRCS += jtreetest.cpp
+testHarness_SRCS += jtreetest.cpp
+TESTS += jtreetest
+
 ifeq ($(BUILD_CLASS),HOST)
 ifneq ($(OS_CLASS),WIN32)
 # This test can only be run on a build host, and is broken on Windows
