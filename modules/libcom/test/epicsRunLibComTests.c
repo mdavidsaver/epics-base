@@ -50,6 +50,7 @@ int epicsTimeZoneTest(void);
 int epicsTypesTest(void);
 int epicsInlineTest(void);
 int ipAddrToAsciiTest(void);
+int jtreetest(void);
 int macDefExpandTest(void);
 int macLibTest(void);
 int osiSockTest(void);
@@ -105,6 +106,7 @@ void epicsRunLibComTests(void)
 #endif
     runTest(epicsTypesTest);
     runTest(ipAddrToAsciiTest);
+    runTest(jtreetest);
     runTest(macDefExpandTest);
     runTest(macLibTest);
     runTest(osiSockTest);
