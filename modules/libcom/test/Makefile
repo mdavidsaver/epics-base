@@ -227,6 +227,11 @@ osiSockTest_SRCS += osiSockTest.c
 testHarness_SRCS += osiSockTest.c
 TESTS += osiSockTest
 
+TESTPROD_HOST += jtreetest
+jtreetest_SRCS += jtreetest.cpp
+testHarness_SRCS += jtreetest.cpp
+TESTS += jtreetest
+
 TESTPROD_HOST += testexecname
 testexecname_SRCS += testexecname.c
 # no point in including in testHarness.  Not implemented for RTEMS/vxWorks.

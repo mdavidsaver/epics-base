@@ -36,6 +36,7 @@ include $(LIBCOM)/freeList/Makefile
 include $(LIBCOM)/gpHash/Makefile
 include $(LIBCOM)/iocsh/Makefile
 include $(LIBCOM)/log/Makefile
+include $(LIBCOM)/jtree/Makefile
 include $(LIBCOM)/macLib/Makefile
 include $(LIBCOM)/misc/Makefile
 include $(LIBCOM)/osi/Makefile
@@ -74,6 +75,7 @@ include $(LIBCOM)/as/RULES
 include $(LIBCOM)/env/RULES
 include $(LIBCOM)/error/RULES
 include $(LIBCOM)/flex/RULES
+include $(LIBCOM)/jtree/RULES
 include $(LIBCOM)/misc/RULES
 include $(LIBCOM)/osi/RULES
 include $(LIBCOM)/yajl/RULES
