@@ -6,9 +6,9 @@
 TOP = ..
 include $(TOP)/configure/CONFIG
 
-# Submodules for bundle build
-SUBMODULES += libcom
+DIRS += libcom
 
+# Submodules for bundle build
 SUBMODULES += ca
 ca_DEPEND_DIRS = libcom
 

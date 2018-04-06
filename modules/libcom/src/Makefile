@@ -7,13 +7,13 @@
 # in file LICENSE that is included with this distribution.
 #*************************************************************************
 
-TOP = ..
+TOP = ../../..
 include $(TOP)/configure/CONFIG
 
 # Uncomment this to remove the (benign) valgrind helper stubs
 #USR_CFLAGS += -DNVALGRIND
 
-LIBCOM = $(TOP)/src
+LIBCOM = $(TOP)/modules/libcom/src
 
 INC += valgrind/valgrind.h
 
