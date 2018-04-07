@@ -7,7 +7,7 @@
 # in file LICENSE that is included with this distribution.
 #*************************************************************************
 
-TOP = ../..
+TOP = ../../../..
 
 include $(TOP)/configure/CONFIG
 
@@ -109,7 +109,7 @@ EXPAND += S99caRepeater@
 EXPAND += caRepeater.service@
 EXPAND_VARS = INSTALL_BIN=$(abspath $(INSTALL_BIN))
 
-SRC_DIRS += $(TOP)/src/client/test
+SRC_DIRS += $(TOP)/modules/ca/src/client/test
 PROD_HOST += ca_test
 ca_test_SRCS = ca_test_main.c ca_test.c
 ca_test_LIBS  = ca Com

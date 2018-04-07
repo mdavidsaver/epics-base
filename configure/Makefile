@@ -22,6 +22,8 @@ CONFIGS += $(subst ../,,$(wildcard ../RULES*))
 
 CFG += CONFIG_LIBCOM_MODULE
 CFG += CONFIG_LIBCOM_VERSION
+CFG += CONFIG_CA_MODULE
+CFG += CONFIG_CA_VERSION
 
 include $(TOP)/configure/RULES
 

@@ -8,10 +8,10 @@ include $(TOP)/configure/CONFIG
 
 DIRS += libcom
 
-# Submodules for bundle build
-SUBMODULES += ca
+DIRS += ca
 ca_DEPEND_DIRS = libcom
 
+# Submodules for bundle build
 SUBMODULES += database
 database_DEPEND_DIRS = ca
 
