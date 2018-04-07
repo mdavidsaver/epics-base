@@ -7,11 +7,11 @@
 # in the file LICENSE that is included with this distribution.
 #*************************************************************************
 
-TOP = ../../..
+TOP = ../../../../..
 include $(TOP)/configure/CONFIG
 
 # Allow access to private headers in db/
-USR_CPPFLAGS = -I $(TOP)/src/ioc/db
+USR_CPPFLAGS = -I $(TOP)/modules/database/src/ioc/db
 
 TESTLIBRARY = dbTestIoc
 

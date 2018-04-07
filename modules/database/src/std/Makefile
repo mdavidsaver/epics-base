@@ -7,10 +7,10 @@
 # in file LICENSE that is included with this distribution.
 #*************************************************************************
 
-TOP = ../..
+TOP = ../../../..
 include $(TOP)/configure/CONFIG
 
-STDDIR=$(TOP)/src/std
+STDDIR=$(TOP)/modules/database/src/std
 
 LIBRARY_IOC += dbRecStd
 dbRecStd_LIBS = dbCore ca Com

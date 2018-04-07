@@ -11,10 +11,10 @@ DIRS += libcom
 DIRS += ca
 ca_DEPEND_DIRS = libcom
 
-# Submodules for bundle build
-SUBMODULES += database
+DIRS += database
 database_DEPEND_DIRS = ca
 
+# Submodules for bundle build
 SUBMODULES += pvData
 pvData_DEPEND_DIRS = libcom
 
