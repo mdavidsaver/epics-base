@@ -62,12 +62,14 @@
 #include "epicsThread.h"
 #include "epicsExit.h"
 #include "epicsStdio.h"
+#include "epicsString.h"
 #include "dbStaticLib.h"
 #include "subRecord.h"
 #include "dbAccess.h"
 #include "asDbLib.h"
 #include "iocInit.h"
 #include "iocsh.h"
+#include "osiFileName.h"
 #include "epicsInstallDir.h"
 
 extern "C" int softIoc_registerRecordDeviceDriver(struct dbBase *pdbbase);
@@ -76,14 +78,52 @@ extern "C" int softIoc_registerRecordDeviceDriver(struct dbBase *pdbbase);
 #  define DBD_FILE "softIoc.dbd"
 #  define EXIT_FILE "softIocExit.db"
 #else
-#  define DBD_FILE EPICS_BASE "/dbd/softIoc.dbd"
-#  define EXIT_FILE EPICS_BASE "/db/softIocExit.db"
+#  define DBD_BASE "dbd/softIoc.dbd"
+#  define EXIT_BASE "db/softIocExit.db"
+#  define DBD_FILE_REL "../../" DBD_BASE
+#  define EXIT_FILE_REL "../../" EXIT_BASE
+#  define DBD_FILE EPICS_BASE "/" DBD_BASE
+#  define EXIT_FILE EPICS_BASE "/" EXIT_BASE
 #endif
 
 const char *arg0;
 const char *base_dbd = DBD_FILE;
 const char *exit_db = EXIT_FILE;
 
+#ifdef DBD_BASE
+static void preparePath(void)
+{
+    FILE *fp;
+    char *prefix = epicsGetExecDir();
+    char *dbd, *exit;
+    if(!prefix) return;
+
+    dbd = (char*)malloc(strlen(prefix) + strlen(DBD_FILE_REL) + 1);
+    if(dbd) {
+        dbd[0] = '\0';
+        strcat(dbd, prefix);
+        strcat(dbd, DBD_FILE_REL);
+        printf("Testing '%s'\n", dbd);
+        if((fp = fopen(dbd, "rb"))!=NULL) {
+            fclose(fp);
+            base_dbd = dbd;
+        }
+    }
+
+    exit = (char*)malloc(strlen(prefix) + strlen(EXIT_FILE_REL) + 1);
+    if(exit) {
+        exit[0] = '\0';
+        strcat(exit, prefix);
+        strcat(exit, EXIT_FILE_REL);
+        if((fp = fopen(exit, "rb"))!=NULL) {
+            fclose(fp);
+            exit_db = exit;
+        }
+    }
+}
+#else
+static void preparePath(void) {}
+#endif /* DBD_BASE */
 
 static void exitSubroutine(subRecord *precord) {
     epicsExitLater((precord->a == 0.0) ? EXIT_SUCCESS : EXIT_FAILURE);
@@ -101,6 +141,7 @@ static void usage(int status) {
 
 int main(int argc, char *argv[])
 {
+    preparePath();
     int startIocsh = 1;	/* default = start shell */
 #if defined(__rtems__) || defined(vxWorks)
     int loadedDb = 1;
