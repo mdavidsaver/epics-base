@@ -21,6 +21,8 @@
 extern "C" {
 #endif
 
+#define ASMAXGROUPS 16
+
 /* 0 - Use (unverified) client provided host name string.
  * 1 - Use actual client IP address.  HAG() are resolved to IPs at ACF load time.
  */
@@ -38,6 +40,7 @@ typedef struct asClientInfo {
     int asl;
     char *user;
     char *host;
+    char *groups[ASMAXGROUPS]; /* unused must be NULL */
 } asClientInfo;
 
 typedef void (*ASCLIENTCALLBACK) (ASCLIENTPVT,asClientStatus);
@@ -243,6 +246,7 @@ typedef struct asgClient {
 	ASGMEMBER	*pasgMember;
 	const char	*user;
 	char	        *host;
+    char        *groups[ASMAXGROUPS];
 	void		*userPvt;
 	ASCLIENTCALLBACK pcallback;
 	int		level;
