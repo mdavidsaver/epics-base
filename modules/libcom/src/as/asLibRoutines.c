@@ -359,6 +359,29 @@ void epicsShareAPI asPutMemberPvt(ASMEMBERPVT asMemberPvt,void *userPvt)
     return;
 }
 
+static int asCheckGroupNames(const asClientInfo *info)
+{
+    unsigned i;
+    int seennull=0;
+    for(i=0; i<ASMAXGROUPS; i++) {
+        if(!info->groups[i]) {
+            seennull = 1;
+
+        } else {
+            size_t len = strlen(info->groups[i]);
+            if(seennull) {
+                errlogPrintf("as API error: asClientInfo::groups[] must be contigious\n");
+                return 1;
+            } else if(len<=6 || strncmp("group:", info->groups[i], 6)!=0) {
+                errlogPrintf("as API error: group names must begin with \"group:\" and at least one charactor, not '%s'",
+                             info->groups[i]);
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
 epicsShareFunc long epicsShareAPI asAddClient2(
         ASCLIENTPVT *pasClientPvt,ASMEMBERPVT asMemberPvt,
         asClientInfo *info)
@@ -369,7 +392,7 @@ epicsShareFunc long epicsShareAPI asAddClient2(
 
     long	status;
     if(!asActive) return(S_asLib_asNotActive);
-    if(!pasgmember || !info) return(S_asLib_badMember);
+    if(!pasgmember || !info || asCheckGroupNames(info)) return(S_asLib_badMember);
     pasgclient = freeListCalloc(freeListPvt);
     if(!pasgclient) return(S_asLib_noMemory);
     len = strlen(info->host);
@@ -381,6 +404,8 @@ epicsShareFunc long epicsShareAPI asAddClient2(
     pasgclient->level = info->asl;
     pasgclient->user = info->user;
     pasgclient->host = info->host;
+    STATIC_ASSERT(sizeof(pasgclient->groups)==sizeof(info->groups));
+    memcpy(pasgclient->groups, info->groups, sizeof(info->groups));
     LOCK;
     ellAdd(&pasgmember->clientList,&pasgclient->node);
     status = asComputePvt(pasgclient);
@@ -403,7 +428,7 @@ long epicsShareAPI asChangeClient2(
     int		len, i;
 
     if(!asActive) return(S_asLib_asNotActive);
-    if(!pasgclient) return(S_asLib_badClient);
+    if(!pasgclient || asCheckGroupNames(info)) return(S_asLib_badClient);
     len = strlen(info->host);
     for (i = 0; i < len; i++) {
         info->host[i] = (char)tolower((int)info->host[i]);
@@ -412,6 +437,7 @@ long epicsShareAPI asChangeClient2(
     pasgclient->level = info->asl;
     pasgclient->user = info->user;
     pasgclient->host = info->host;
+    memcpy(pasgclient->groups, info->groups, sizeof(info->groups));
     status = asComputePvt(pasgclient);
     UNLOCK;
     return(status);
@@ -1018,11 +1044,15 @@ static long asComputePvt(ASCLIENTPVT asClientPvt)
 
 	    pasguag = (ASGUAG *)ellFirst(&pasgrule->uagList);
 	    while(pasguag) {
-		if((puag = pasguag->puag)) {
-		    pgphentry = gphFind(pasbase->phash,pasgclient->user,puag);
-		    if(pgphentry) goto check_hag;
-		}
-		pasguag = (ASGUAG *)ellNext(&pasguag->node);
+            if((puag = pasguag->puag)) {
+                unsigned i;
+                int match = gphFind(pasbase->phash,pasgclient->user,puag)!=NULL;
+                for(i=0; !match && i<ASMAXGROUPS && pasgclient->groups[i]; i++) {
+                    match = gphFind(pasbase->phash,pasgclient->groups[i],puag)!=NULL;
+                }
+                if(match) goto check_hag;
+            }
+            pasguag = (ASGUAG *)ellNext(&pasguag->node);
 	    }
 	    goto next_rule;
 	}
