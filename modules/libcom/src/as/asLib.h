@@ -21,6 +21,8 @@
 extern "C" {
 #endif
 
+#define ASMAXGROUPS 16
+
 typedef struct asgMember *ASMEMBERPVT;
 typedef struct asgClient *ASCLIENTPVT;
 typedef int (*ASINPUTFUNCPTR)(char *buf,int max_size);
@@ -33,6 +35,7 @@ typedef struct asClientInfo {
     int asl;
     char *user;
     char *host;
+    char *groups[ASMAXGROUPS]; /* unused must be NULL */
 } asClientInfo;
 
 typedef void (*ASCLIENTCALLBACK) (ASCLIENTPVT,asClientStatus);
@@ -239,6 +242,7 @@ typedef struct asgClient {
 	ASGMEMBER	*pasgMember;
 	const char	*user;
 	char	        *host;
+    char        *groups[ASMAXGROUPS];
 	void		*userPvt;
 	ASCLIENTCALLBACK pcallback;
 	int		level;
