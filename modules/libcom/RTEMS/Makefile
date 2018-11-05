@@ -16,9 +16,18 @@ PERL_SCRIPTS += epicsMakeMemFs.pl
 INC += epicsRtemsInitHooks.h
 INC += epicsMemFs.h
 
+ifeq ($(USE_RTEMS_GDBSTUB_$(T_A)),YES)
+rtems_init_CPPFLAGS += -DUSE_GDBSTUB
+endif
+
 ifeq ($(RTEMS_QEMU_FIXUPS),YES)
 rtems_init_CPPFLAGS += -DQEMU_FIXUPS
 endif
+
+ifeq ($(T_A),RTEMS-pc386)
+setBootConfigFromNVRAM_CPPFLAGS += -DUSE_MULTIBOOT
+endif
+
 rtemsCom_SRCS += rtems_init.c
 rtemsCom_SRCS += rtems_config.c
 rtemsCom_SRCS += rtems_netconfig.c

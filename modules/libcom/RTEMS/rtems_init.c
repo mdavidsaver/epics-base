@@ -30,10 +30,15 @@
 #include <rtems/stackchk.h>
 #include <rtems/rtems_bsdnet.h>
 #include <rtems/imfs.h>
+#include <rtems/tftp.h>
 #include <librtemsNfs.h>
 #include <bsp.h>
 
 #include "epicsVersion.h"
+#ifdef USE_GDBSTUB
+#include <rtems-gdb-stub.h>
+#endif
+
 #include "epicsThread.h"
 #include "epicsTime.h"
 #include "epicsExit.h"
@@ -239,40 +244,34 @@ nfsMount(char *uidhost, char *path, char *mntpoint)
 static void
 initialize_remote_filesystem(char **argv, int hasLocalFilesystem)
 {
-#ifdef OMIT_NFS_SUPPORT
-    printf ("***** Initializing TFTP *****\n");
-#if __RTEMS_MAJOR__>4 || \
-   (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__>9) || \
-   (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__==9 && __RTEMS_REVISION__==99)
-    mount_and_make_target_path(NULL,
-                               "/TFTP",
-                               RTEMS_FILESYSTEM_TYPE_TFTPFS,
-                               RTEMS_FILESYSTEM_READ_WRITE,
-                               NULL);
-#else
-    rtems_bsdnet_initialize_tftp_filesystem ();
-#endif
-    if (!hasLocalFilesystem) {
-        char *path;
-        int pathsize = 200;
-        int l;
-
-        path = mustMalloc(pathsize, "Command path name ");
-        strcpy (path, "/TFTP/BOOTP_HOST/epics/");
-        l = strlen (path);
-        if (gethostname (&path[l], pathsize - l - 10) || (path[l] == '\0'))
-        {
-            LogFatal ("Can't get host name");
-        }
-        strcat (path, "/st.cmd");
-        argv[1] = path;
-    }
-#else
+#ifndef OMIT_NFS_SUPPORT
     char *server_name;
     char *server_path;
     char *mount_point;
     char *cp;
     int l = 0;
+#endif
+
+    printf ("***** Initializing TFTP *****\n");
+#if __RTEMS_MAJOR__>4 || \
+   (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__>9) || \
+   (__RTEMS_MAJOR__==4 && __RTEMS_MINOR__==9 && __RTEMS_REVISION__==99)
+    if(mount_and_make_target_path("BOOTP_HOST:/",
+                               "/TFTP/BOOTP_HOST",
+                               RTEMS_FILESYSTEM_TYPE_TFTPFS,
+                               RTEMS_FILESYSTEM_READ_WRITE,
+                               NULL)) {
+        perror("mount TFTP");
+    }
+#else
+    rtems_bsdnet_initialize_tftp_filesystem ();
+#endif
+
+    if(rtems_bsdnet_bootp_cmdline && strncmp("/TFTP", rtems_bsdnet_bootp_cmdline, 4)==0) {
+        argv[1] = rtems_bsdnet_bootp_cmdline;
+        printf("Boot from TFTP\n");
+        return;
+    }
 
     printf ("***** Initializing NFS *****\n");
     NFS_INIT
@@ -292,9 +291,10 @@ initialize_remote_filesystem(char **argv, int hasLocalFilesystem)
         argv[1] = rtems_bsdnet_bootp_cmdline;
     }
     else if (hasLocalFilesystem) {
+        printk("Using Local FS\n");
         return;
     }
-    else {
+    else if (rtems_bsdnet_bootp_cmdline) {
         /*
          * Use first component of nvram/bootp command line pathname
          * to set up initial NFS mount.  A "/tftpboot/" is prepended
@@ -363,10 +363,30 @@ initialize_remote_filesystem(char **argv, int hasLocalFilesystem)
             argv[1] = abspath;
         }
     }
-    errlogPrintf("nfsMount(\"%s\", \"%s\", \"%s\")\n",
-                 server_name, server_path, mount_point);
-    nfsMount(server_name, server_path, mount_point);
-#endif
+    if(server_name && server_path && mount_point) {
+        int ret = nfsMount(server_name, server_path, mount_point);
+        printk("nfsMount(\"%s\", \"%s\", \"%s\") -> %d\n", server_name, server_path, mount_point, ret);
+
+    } else if (!hasLocalFilesystem) {
+        char *path;
+        int pathsize = 200;
+        int l;
+
+        printk("No NFS configuration found.  Falling back to TFTP\n");
+
+        path = mustMalloc(pathsize, "Command path name ");
+        strcpy (path, "/TFTP/BOOTP_HOST/epics/");
+        l = strlen (path);
+        if (gethostname (&path[l], pathsize - l - 10) || (path[l] == '\0'))
+        {
+            LogFatal ("Can't get host name");
+        }
+        strcat (path, "/st.cmd");
+        argv[1] = path;
+
+    } else {
+        printk("Local FS\n");
+    }
 }
 
 static
@@ -433,6 +453,7 @@ set_directory (const char *commandline)
     strncpy(directoryPath, cp, l);
     directoryPath[l] = '/';
     directoryPath[l+1] = '\0';
+    printk(" In %s\n", directoryPath);
     if (chdir (directoryPath) < 0)
         LogFatal ("Can't set initial directory(%s): %s\n", directoryPath, strerror(errno));
     else
@@ -509,6 +530,25 @@ static void nfsMountCallFunc(const iocshArgBuf *args)
 }
 #endif
 
+#ifdef USE_GDBSTUB
+static const iocshArg gdbstartArg0 = { "prio",iocshArgInt};
+static const iocshArg gdbstartArg1 = { "ttyName",iocshArgString};
+static const iocshArg * const gdbstartArgs[3] = {&gdbstartArg0,&gdbstartArg1};
+static const iocshFuncDef gdbstartFuncDef = {"rtems_gdb_start",2,gdbstartArgs};
+static void gdbstartCallFunc(const iocshArgBuf *args)
+{
+    rtems_gdb_start(args[0].ival, args->sval);
+}
+
+static const iocshArg gdbstopArg0 = { "override",iocshArgInt};
+static const iocshArg * const gdbstopArgs[3] = {&gdbstopArg0};
+static const iocshFuncDef gdbstopFuncDef = {"rtems_gdb_stop",1,gdbstopArgs};
+static void gdbstopCallFunc(const iocshArgBuf *args)
+{
+    rtems_gdb_stop(args[0].ival);
+}
+#endif /* USE_GDBSTUB */
+
 /*
  * Register RTEMS-specific commands
  */
@@ -518,6 +558,10 @@ static void iocshRegisterRTEMS (void)
     iocshRegister(&heapSpaceFuncDef, heapSpaceCallFunc);
 #ifndef OMIT_NFS_SUPPORT
     iocshRegister(&nfsMountFuncDef, nfsMountCallFunc);
+#endif
+#ifdef USE_GDBSTUB
+    iocshRegister(&gdbstartFuncDef, gdbstartCallFunc);
+    iocshRegister(&gdbstopFuncDef, gdbstopCallFunc);
 #endif
 }
 
@@ -560,6 +604,11 @@ exitHandler(void)
     rtems_shutdown_executive(0);
 }
 
+extern char *env_rtems_gdb_stub;
+extern int epics_initialized_environment;
+extern void setBootConfigFromNVRAM(void);
+extern void bootpFallbackFromNVRAM(void);
+
 /*
  * RTEMS Startup task
  */
@@ -583,10 +632,8 @@ Init (rtems_task_argument ignored)
      */
     if (epicsRtemsInitPreSetBootConfigFromNVRAM(&rtems_bsdnet_config) != 0)
         delayedPanic("epicsRtemsInitPreSetBootConfigFromNVRAM");
-    if (rtems_bsdnet_config.bootp == NULL) {
-        extern void setBootConfigFromNVRAM(void);
-        setBootConfigFromNVRAM();
-    }
+    epics_initialized_environment = 0;
+    setBootConfigFromNVRAM();
     if (epicsRtemsInitPostSetBootConfigFromNVRAM(&rtems_bsdnet_config) != 0)
         delayedPanic("epicsRtemsInitPostSetBootConfigFromNVRAM");
 
@@ -604,6 +651,10 @@ Init (rtems_task_argument ignored)
     initConsole ();
     putenv ("TERM=xterm");
     putenv ("IOCSH_HISTSIZE=20");
+
+    if(!epics_initialized_environment) {
+        printf("BSP doesn't implement non-volatile memory.\n");
+    }
 
     /*
      * Display some OS information
@@ -627,9 +678,23 @@ Init (rtems_task_argument ignored)
     }
     printf("\n***** Initializing network *****\n");
     rtems_bsdnet_initialize_network();
+    bootpFallbackFromNVRAM();
     printf("\n***** Setting up file system *****\n");
     initialize_remote_filesystem(argv, initialize_local_filesystem(argv));
     fixup_hosts();
+
+
+    if(env_rtems_gdb_stub) {
+#ifdef USE_GDBSTUB
+        char *arg = NULL;
+        if(strcmp(env_rtems_gdb_stub, "yes")!=0)
+            arg = env_rtems_gdb_stub;
+        printf("Start GDB server on %s\n", arg);
+        rtems_gdb_start(0,arg);
+#else
+        printf("GDB server support not enabled.\n");
+#endif
+    }
 
     /*
      * More environment: iocsh prompt and hostname
