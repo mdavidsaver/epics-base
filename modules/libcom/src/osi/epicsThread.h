@@ -65,12 +65,31 @@ epicsShareFunc void epicsThreadRealtimeLock(void);
 
 epicsShareFunc void epicsShareAPI epicsThreadExitMain(void);
 
+typedef struct epicsThreadOpts {
+    /** Thread priority in OSI range (cf. epicsThreadPriority*) */
+    unsigned int priority;
+    /** Thread stack size, as returned by epicsThreadGetStackSize().
+     *
+     * @warning Do not pass enum epicsThreadStackSizeClass directly!
+     */
+    unsigned int stackSize;
+    /** Should thread be joinable? (default (0) is not joinable). */
+    unsigned int joinable;
+} epicsThreadOpts;
+
+epicsShareFunc void epicsThreadOptsDefaults(epicsThreadOpts *opts);
+
+epicsShareFunc epicsThreadId epicsThreadCreateOpt (
+    const char * name,
+    EPICSTHREADFUNC funptr, void * parm,
+    const epicsThreadOpts *opts );
 epicsShareFunc epicsThreadId epicsShareAPI epicsThreadCreate (
     const char * name, unsigned int priority, unsigned int stackSize,
     EPICSTHREADFUNC funptr,void * parm );
 epicsShareFunc epicsThreadId epicsShareAPI epicsThreadMustCreate (
     const char * name, unsigned int priority, unsigned int stackSize,
-    EPICSTHREADFUNC funptr,void * parm ); 
+    EPICSTHREADFUNC funptr,void * parm );
+epicsShareFunc void epicsThreadJoin(epicsThreadId id);
 epicsShareFunc void epicsShareAPI epicsThreadSuspendSelf(void);
 epicsShareFunc void epicsShareAPI epicsThreadResume(epicsThreadId id);
 epicsShareFunc unsigned int epicsShareAPI epicsThreadGetPriority(
@@ -178,6 +197,7 @@ private:
     bool begin;
     bool cancel;
     bool terminated;
+    bool joined;
 
     bool beginWait () throw ();
     epicsThread ( const epicsThread & );
