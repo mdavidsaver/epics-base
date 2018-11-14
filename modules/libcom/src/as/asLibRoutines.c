@@ -358,9 +358,10 @@ void epicsShareAPI asPutMemberPvt(ASMEMBERPVT asMemberPvt,void *userPvt)
     pasgmember->userPvt = userPvt;
     return;
 }
-
-long epicsShareAPI asAddClient(ASCLIENTPVT *pasClientPvt,ASMEMBERPVT asMemberPvt,
-	int asl,const char *user,char *host)
+
+epicsShareFunc long epicsShareAPI asAddClient2(
+        ASCLIENTPVT *pasClientPvt,ASMEMBERPVT asMemberPvt,
+        asClientInfo *info)
 {
     ASGMEMBER	*pasgmember = asMemberPvt;
     ASGCLIENT	*pasgclient;
@@ -368,20 +369,49 @@ long epicsShareAPI asAddClient(ASCLIENTPVT *pasClientPvt,ASMEMBERPVT asMemberPvt
 
     long	status;
     if(!asActive) return(S_asLib_asNotActive);
-    if(!pasgmember) return(S_asLib_badMember);
+    if(!pasgmember || !info) return(S_asLib_badMember);
     pasgclient = freeListCalloc(freeListPvt);
     if(!pasgclient) return(S_asLib_noMemory);
-    len = strlen(host);
+    len = strlen(info->host);
     for (i = 0; i < len; i++) {
-        host[i] = (char)tolower((int)host[i]);
+        info->host[i] = (char)tolower((int)info->host[i]);
     }
     *pasClientPvt = pasgclient;
     pasgclient->pasgMember = asMemberPvt;
-    pasgclient->level = asl;
-    pasgclient->user = user;
-    pasgclient->host = host;
+    pasgclient->level = info->asl;
+    pasgclient->user = info->user;
+    pasgclient->host = info->host;
     LOCK;
     ellAdd(&pasgmember->clientList,&pasgclient->node);
+    status = asComputePvt(pasgclient);
+    UNLOCK;
+    return(status);
+}
+
+long epicsShareAPI asAddClient(ASCLIENTPVT *pasClientPvt,ASMEMBERPVT asMemberPvt,
+    int asl,const char *user,char *host)
+{
+    asClientInfo info = {asl, (char*)user, host};
+    return asAddClient2(pasClientPvt, asMemberPvt, &info);
+}
+
+long epicsShareAPI asChangeClient2(
+    ASCLIENTPVT asClientPvt,asClientInfo *info)
+{
+    ASGCLIENT	*pasgclient = asClientPvt;
+    long	status;
+    int		len, i;
+
+    if(!asActive) return(S_asLib_asNotActive);
+    if(!pasgclient) return(S_asLib_badClient);
+    len = strlen(info->host);
+    for (i = 0; i < len; i++) {
+        info->host[i] = (char)tolower((int)info->host[i]);
+    }
+    LOCK;
+    pasgclient->level = info->asl;
+    pasgclient->user = info->user;
+    pasgclient->host = info->host;
     status = asComputePvt(pasgclient);
     UNLOCK;
     return(status);
@@ -390,23 +420,8 @@ long epicsShareAPI asAddClient(ASCLIENTPVT *pasClientPvt,ASMEMBERPVT asMemberPvt
 long epicsShareAPI asChangeClient(
     ASCLIENTPVT asClientPvt,int asl,const char *user,char *host)
 {
-    ASGCLIENT	*pasgclient = asClientPvt;
-    long	status;
-    int		len, i;
-
-    if(!asActive) return(S_asLib_asNotActive);
-    if(!pasgclient) return(S_asLib_badClient);
-    len = strlen(host);
-    for (i = 0; i < len; i++) {
-        host[i] = (char)tolower((int)host[i]);
-    }
-    LOCK;
-    pasgclient->level = asl;
-    pasgclient->user = user;
-    pasgclient->host = host;
-    status = asComputePvt(pasgclient);
-    UNLOCK;
-    return(status);
+    asClientInfo info = {asl, (char*)user, host};
+    return asChangeClient2(asClientPvt, &info);
 }
 
 long epicsShareAPI asRemoveClient(ASCLIENTPVT *asClientPvt)

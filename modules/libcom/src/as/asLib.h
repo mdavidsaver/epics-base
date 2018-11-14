@@ -34,6 +34,12 @@ typedef enum{
     /*For now this is all*/
 } asClientStatus;
 
+typedef struct asClientInfo {
+    int asl;
+    char *user;
+    char *host;
+} asClientInfo;
+
 typedef void (*ASCLIENTCALLBACK) (ASCLIENTPVT,asClientStatus);
 
 /* The following  routines are macros with the following syntax
@@ -82,13 +88,20 @@ epicsShareFunc long epicsShareAPI asChangeGroup(
 epicsShareFunc void * epicsShareAPI asGetMemberPvt(ASMEMBERPVT asMemberPvt);
 epicsShareFunc void epicsShareAPI asPutMemberPvt(
     ASMEMBERPVT asMemberPvt,void *userPvt);
-/*client must provide permanent storage for user and host*/
+/* user and host must remain valid until asRemoveClient().  host is modified (normalized)*/
 epicsShareFunc long epicsShareAPI asAddClient(
     ASCLIENTPVT *asClientPvt,ASMEMBERPVT asMemberPvt,
     int asl,const char *user,char *host);
-/*client must provide permanent storage for user and host*/
+/* info->user and info->host must remain valid until asRemoveClient().  info->host is modified (normalized)*/
+epicsShareFunc long epicsShareAPI asAddClient2(
+        ASCLIENTPVT *asClientPvt,ASMEMBERPVT asMemberPvt,
+        asClientInfo *info);
+/* user and host must remain valid until asRemoveClient().  host is modified (normalized)*/
 epicsShareFunc long epicsShareAPI asChangeClient(
     ASCLIENTPVT asClientPvt,int asl,const char *user,char *host);
+/* info->user and info->host must remain valid until asRemoveClient().  info->host is modified (normalized)*/
+epicsShareFunc long epicsShareAPI asChangeClient2(
+    ASCLIENTPVT asClientPvt,asClientInfo *info);
 epicsShareFunc long epicsShareAPI asRemoveClient(ASCLIENTPVT *asClientPvt);
 epicsShareFunc void * epicsShareAPI asGetClientPvt(ASCLIENTPVT asClientPvt);
 epicsShareFunc void epicsShareAPI asPutClientPvt(
