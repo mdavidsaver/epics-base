@@ -18,7 +18,8 @@
 #include <asLib.h>
 
 static char *asUser,
-            *asHost;
+            *asHost,
+            *asGroup;
 static int asAsl;
 
 static void setUser(const char *name)
@@ -33,18 +34,31 @@ static void setHost(const char *name)
     asHost = epicsStrDup(name);
 }
 
+static void setGroup(const char *name)
+{
+    free(asGroup);
+    asGroup = name ? epicsStrDup(name) : NULL;
+}
+
 static void testAccess(const char *asg, unsigned mask)
 {
     ASMEMBERPVT asp = 0; /* aka dbCommon::asp */
     ASCLIENTPVT client = 0;
+    asClientInfo info;
     long ret;
+
+    memset(&info, 0, sizeof(info));
+    info.asl = asAsl;
+    info.user = asUser;
+    info.host = asHost;
+    info.groups[0] = asGroup;
 
     ret = asAddMember(&asp, asg);
     if(ret) {
         testFail("testAccess(ASG:%s, USER:%s, HOST:%s, ASL:%d) -> asAddMember error: %s",
                  asg, asUser, asHost, asAsl, errSymMsg(ret));
     } else {
-        ret = asAddClient(&client, asp, asAsl, asUser, asHost);
+        ret = asAddClient2(&client, asp, &info);
     }
     if(ret) {
         testFail("testAccess(ASG:%s, USER:%s, HOST:%s, ASL:%d) -> asAddClient error: %s",
@@ -143,12 +157,49 @@ static void testUseIP(void)
     testAccess("rw", 0);
 }
 
+static void testGroup(void)
+{
+    static const char config[] = ""
+         "UAG(foo) {theuser}"
+         "UAG(bar) {group:thegroup}"
+         "ASG(DEFAULT) {RULE(0, NONE)}"
+         "ASG(ro) {RULE(0, NONE)RULE(1, READ) {UAG(foo)}}"
+         "ASG(rw) {RULE(1, WRITE) {UAG(bar)}}"
+            ;
+    testDiag("testGroup()");
+    asUseIP = 0; /* not relevant, but be clear */
+
+    testOk1(asInitMem(config, NULL)==0);
+
+    setHost("localhost");
+    asAsl = 0;
+
+    setUser("theuser");
+    setGroup(NULL);
+
+    testAccess("ro", 1);
+    testAccess("rw", 0);
+
+    setUser("random");
+    setGroup("group:thegroup");
+
+    testAccess("ro", 0);
+    testAccess("rw", 3);
+
+    setUser("theuser");
+    setGroup("group:thegroup");
+
+    testAccess("ro", 1);
+    testAccess("rw", 3);
+}
+
 MAIN(aslibtest)
 {
-    testPlan(27);
+    testPlan(34);
     testSyntaxErrors();
     testHostNames();
     testUseIP();
+    testGroup();
     errlogFlush();
     return testDone();
 }
