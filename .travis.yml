@@ -5,7 +5,7 @@ matrix:
     - sudo: false
       dist: trusty
       compiler: gcc
-      env: CMPLR=gcc
+      env: CMPLR=gcc EXTRA=LINKER_USE_RPATH=ORIGIN
     - sudo: false
       dist: trusty
       compiler: gcc
