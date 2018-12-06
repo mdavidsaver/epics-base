@@ -99,6 +99,8 @@ def _makebuild():
 
     if OS_CLASS=='Linux':
         build['CPPFLAGS'] += [('_GNU_SOURCE', None), ('_DEFAULT_SOURCE', None), ('linux', None)]
+        # added in binutils 2.26
+        build['LDFLAGS'] += ['-Wl,--compress-debug-sections=zlib']
         # uncomment to force the linker to fail if any symbols are undefined.
         # helps to detect missing sources
         #build['LDFLAGS'] += ['-Wl,--no-undefined', '-Wl,--no-allow-shlib-undefined']
