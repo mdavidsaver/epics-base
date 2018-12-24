@@ -750,7 +750,7 @@ static void periodicTask(void *arg)
     taskwdInsert(0, NULL, NULL);
     epicsEventSignal(startStopEvent);
 
-    epicsTimeGetCurrent(&next);
+    epicsTimeGetMonotonic(&next);
     reported = next;
 
     while (ppsl->scanCtl != ctlExit) {
@@ -761,7 +761,7 @@ static void periodicTask(void *arg)
             scanList(&ppsl->scan_list);
 
         epicsTimeAddSeconds(&next, ppsl->period);
-        epicsTimeGetCurrent(&now);
+        epicsTimeGetMonotonic(&now);
         delay = epicsTimeDiffInSeconds(&next, &now);
         if (delay <= 0.0) {
             if (overtime == 0.0) {
