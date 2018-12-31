@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/perl
 #
 # Use MS Visual C++ compiler version number to determine if
 # we want to use the Manifest Tool (status=1) or not (status=0)

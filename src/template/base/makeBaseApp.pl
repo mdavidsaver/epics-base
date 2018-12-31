@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/perl
 
 # Authors: Ralph Lange, Marty Kraimer, Andrew Johnson and Janet Anderson
 

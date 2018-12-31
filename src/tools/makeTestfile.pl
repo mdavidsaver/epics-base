@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/perl
 #*************************************************************************
 # Copyright (c) 2008 UChicago Argonne LLC, as Operator of Argonne
 #     National Laboratory.
@@ -51,7 +51,7 @@ if( $TA =~ /^win32-x86/ && $HA !~ /^win/ ) {
 open(my $OUT, '>', $target) or die "Can't create $target: $!\n";
 
 print $OUT <<EOF;
-#!/usr/bin/env perl
+#!/usr/bin/perl
 
 use strict;
 use Cwd 'abs_path';

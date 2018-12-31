@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/perl
 #*************************************************************************
 # Copyright (c) 2015 UChicago Argonne LLC, as Operator of Argonne
 #     National Laboratory.

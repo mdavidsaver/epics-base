@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/perl
 #*************************************************************************
 # Copyright (c) 2015 ITER Organization.
 # EPICS BASE is distributed subject to a Software License Agreement found

@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/perl
 #*************************************************************************
 # Copyright (c) 2014 Brookhaven National Laboratory.
 # EPICS BASE is distributed subject to a Software License Agreement found
