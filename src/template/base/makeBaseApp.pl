@@ -65,7 +65,7 @@ sub ReplaceFilename { # (filename)
 	    } elsif (-r "$base\@Common") {	# Default version exists
 		$base = '' unless ($filearch eq "Common" && -s $file);
 	    } else {			# No default version
-		$base = '';
+		$base = '/usr/lib/epics';
 	    }
 	    $file = $base;	# Strip the @... part from the target name
 	}
@@ -179,6 +179,8 @@ sub get_commandline_opts { #no args
     } elsif ($command =~ m|/bin/|) { # assume script was run with full path to base
 	$epics_base = $command;
 	$epics_base =~ s|^(.*)/bin/.*makeBaseApp.*|$1|;
+    } else {
+        $epics_base = "/usr/lib/epics";
     }
     $epics_base and -d "$epics_base" or Cleanup(1, "Can't find EPICS base");
     $app_epics_base = LocalPath($epics_base);
