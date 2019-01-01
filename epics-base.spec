@@ -21,7 +21,7 @@ control systems.
 This package contains host system shared libraries for clients and IOCs.
 
 %package devel
-Requires: epics-base%{?_isa} == %{version}
+Requires: epics-base%{?_isa} == %{version}-%{release}
 Group: Development/Libraries
 Summary: Files needed to develop new EPICS applications
 # some perl modules are missing a package declaration
@@ -35,7 +35,7 @@ Libraries, headers, and utilities needed to develop applications
 targeted to the host system.
 
 %package static
-Requires: epics-base-devel%{?_isa} == %{version}
+Requires: epics-base-devel%{?_isa} == %{version}-%{release}
 Group: Development/Libraries
 Summary: Static libraries of EPICS
 %description static
@@ -46,7 +46,7 @@ control systems.
 Static version of EPICS libraries
 
 %package util
-Requires: epics-base%{?_isa} == %{version}
+Requires: epics-base%{?_isa} == %{version}-%{release}
 Group: Applications/System
 Summary: EPICS CLI utilities including caget
 %description util
@@ -82,6 +82,11 @@ BIN_PERMISSIONS=755 \
 LIB_PERMISSIONS=644 \
 SHRLIB_PERMISSIONS=755
 
+# remove builtroot from various
+sed -i -e 's|%{buildroot}||g' \
+ %{buildroot}%{epics_prefix}/bin/*/caRepeater.service \
+ %{buildroot}%{epics_prefix}/lib/pkgconfig/*.pc
+
 # inject our prefix in case it is different from the patched default
 sed -i -e 's|/usr/lib/epics|%{epics_prefix}|g' %{buildroot}%{epics_prefix}/bin/*/makeBase*
 
@@ -103,7 +108,8 @@ do
   mv %{buildroot}%{epics_prefix}/bin/${EPICS_HOST_ARCH}/${exe} %{buildroot}%{_bindir}/${exe}
 done
 
-# inject trampolines for perl scripts into default PATH (w/o .pl suffix)
+# Inject trampolines for perl scripts into default PATH (w/o .pl suffix).
+# Allows FindBin to continue to work.
 for exe in makeBaseApp.pl makeBaseExt.pl
 do
   cat <<EOF > %{buildroot}%{_bindir}/${exe%%.pl}
@@ -121,7 +127,7 @@ rm -r %{buildroot}%{epics_prefix}/lib/perl/5.*
 rm %{buildroot}%{epics_prefix}/bin/*/capr.pl
 rm -r %{buildroot}%{epics_prefix}/templates/makeBaseApp/top/caPerlApp
 
-# %{_builddir} is included in several generated files
+# %{_builddir} is still included in several generated files
 # in inconsquential places.  eg. bldTop in softIoc_registerRecordDeviceDriver.cpp
 # rather than patching/stripping this all out, disable the check.
 # Would be nice if this were more granular...
