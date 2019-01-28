@@ -584,8 +584,24 @@ long dbProcess(dbCommon *precord)
     if (*ptrace)
         printf("%s: dbProcess of '%s'\n", context, precord->name);
 
-    /* process record */
-    status = prset->process(precord);
+    {
+        epicsThreadId self;
+        int weset = dbRec2Pvt(precord)->procThread==NULL;
+        if(weset) {
+            self = epicsThreadGetIdSelf();
+            dbRec2Pvt(precord)->procThread = self;
+        } else {
+            assert(dbRec2Pvt(precord)->procThread==self);
+        }
+
+        /* process record */
+        status = prset->process(precord);
+
+        if(weset) {
+            assert(dbRec2Pvt(precord)->procThread==self);
+            dbRec2Pvt(precord)->procThread = NULL;
+        }
+    }
 
     /* Print record's fields if PRINT_MASK set in breakpoint field */
     if (lset_stack_count != 0) {

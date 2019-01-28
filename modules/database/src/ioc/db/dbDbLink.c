@@ -56,7 +56,7 @@
 #include "dbAddr.h"
 #include "dbBase.h"
 #include "dbBkpt.h"
-#include "dbCommon.h"
+#include "dbCommonPvt.h"
 #include "dbConvertFast.h"
 #include "dbConvert.h"
 #include "db_field_log.h"
@@ -386,8 +386,10 @@ static long processTarget(dbCommon *psrc, dbCommon *pdst)
 {
     char context[40] = "";
     int trace = dbAccessDebugPUTF && *dbLockSetAddrTrace(psrc);
+    int weset = dbRec2Pvt(psrc)->procThread==NULL;
     long status;
     epicsUInt8 pact = psrc->pact;
+    epicsThreadId self = epicsThreadGetIdSelf();
 
     psrc->pact = TRUE;
 
@@ -408,8 +410,9 @@ static long processTarget(dbCommon *psrc, dbCommon *pdst)
 
         pdst->putf = psrc->putf;
     }
-    else if (psrc->putf) {
-        /* The dst record is busy (awaiting async reprocessing) and
+    else if (psrc->putf && dbRec2Pvt(pdst)->procThread!=self) {
+        /* The dst record is busy (awaiting async reprocessing),
+         * not being processed recursively by us, and
          * we were originally triggered by a call to dbPutField(),
          * so we mark the dst record for reprocessing once the async
          * completion is over.
@@ -430,9 +433,23 @@ static long processTarget(dbCommon *psrc, dbCommon *pdst)
                 context, psrc->name, pdst->name);
     }
 
+    if(weset) {
+        /* duplication of dbProcess() logic to handle cases where
+         * rset::process() is called directly (eg. async. completion)
+         */
+        dbRec2Pvt(psrc)->procThread = self;
+    } else {
+        assert(dbRec2Pvt(psrc)->procThread==self);
+    }
+
     status = dbProcess(pdst);
 
     psrc->pact = pact;
+
+    if(weset) {
+        assert(dbRec2Pvt(psrc)->procThread==self);
+        dbRec2Pvt(psrc)->procThread = NULL;
+    }
 
     return status;
 }
