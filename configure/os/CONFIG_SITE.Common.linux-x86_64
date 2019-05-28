@@ -51,6 +51,10 @@ OPT_CXXFLAGS_YES += -g
 # (e.g. generic, native, core2, nocona, k8, opteron, athlon64, barcelona etc.)
 GNU_TUNE_CFLAGS = -mtune=generic
 
-
 # Developers using a suitable compiler may enable its address sanitizer:
 #ENABLE_ASAN = YES
+
+OP_SYS_CFLAGS += -fstack-protector-strong -Wformat -Werror=format-security
+OP_SYS_CXXFLAGS += -fstack-protector-strong -Wformat -Werror=format-security
+OP_SYS_CPPFLAGS += -Wdate-time -D_FORTIFY_SOURCE=2
+#OP_SYS_CPPFLAGS += -DEPICS_FREELIST_DEBUG

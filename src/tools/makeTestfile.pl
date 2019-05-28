@@ -36,6 +36,10 @@ if( $TA =~ /^win32-x86/ && $HA !~ /^win/ ) {
 } elsif( $TA =~ /^windows-x64/ && $HA !~ /^win/ ) {
   $exec = "wine64 $exe";
 
+# Run mvme3100 test harness w/ QEMU
+} elsif( $TA =~ /^RTEMS-mvme3100$/ ) {
+  $exec = "\/home\/mdavidsaver\/projects\/qemu\/build\/ppc-softmmu\/qemu-system-ppc -M mvme3100-1152 -bios \/home\/mdavidsaver\/projects\/simpleos-ppc\/tomload.bin -no-reboot -serial stdio -display none -net nic -net user -kernel $exe.boot";
+
 # Run pc386 test harness w/ QEMU
 } elsif( $TA =~ /^RTEMS-pc386-qemu$/ ) {
   $exec = "qemu-system-i386 -m 64 -no-reboot -serial stdio -display none -net nic,model=ne2k_pci -net user,restrict=yes -kernel $exe";

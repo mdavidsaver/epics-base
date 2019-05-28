@@ -73,7 +73,7 @@ rtems_task Init (rtems_task_argument argument);
  * Detects stack overflow on task exit.
  * Enables the "stackuse" monitor command to show actual usage.
  */
-//#define STACK_CHECKER_ON
+#define STACK_CHECKER_ON
 
 #include <bsp.h>
 #include <rtems/confdefs.h>

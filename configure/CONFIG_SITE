@@ -109,6 +109,11 @@
 #  may override this setting.
 CROSS_COMPILER_TARGET_ARCHS=
 #CROSS_COMPILER_TARGET_ARCHS=vxWorks-ppc32
+CROSS_COMPILER_TARGET_ARCHS+=$(EPICS_HOST_ARCH)-debug
+#CROSS_COMPILER_TARGET_ARCHS+=win32-x86-mingw
+CROSS_COMPILER_TARGET_ARCHS+=windows-x64-mingw
+#CROSS_COMPILER_TARGET_ARCHS+=RTEMS-pc386
+CROSS_COMPILER_TARGET_ARCHS+=RTEMS-mvme3100
 
 # If only some of your host architectures can compile the
 #  above CROSS_COMPILER_TARGET_ARCHS specify those host
@@ -184,3 +189,12 @@ LINKER_ORIGIN_ROOT = $(INSTALL_LOCATION)
 
 # Overrides for the settings above may appear in a CONFIG_SITE.local file
 -include $(CONFIG)/CONFIG_SITE.local
+
+LINKER_USE_RPATH = ORIGIN
+LINKER_ORIGIN_ROOT = /home/mdavidsaver
+
+#USE_RTEMS_GDBSTUB_RTEMS-mvme3100 = YES
+
+RTEMS_QEMU_FIXUPS=YES
+
+CROSS_COMPILER_RUNTEST_ARCHS += RTEMS-mvme3100

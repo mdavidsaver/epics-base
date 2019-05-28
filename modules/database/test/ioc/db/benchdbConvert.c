@@ -41,9 +41,11 @@ static void runBench(size_t nelem, size_t niter, size_t nrep)
     size_t i;
     testData tdat;
     double *reptimes;
+    /*
     testDiag("Using %lu element arrays.",(unsigned long)nelem);
     testDiag("run %lu reps with %lu iterations each",
              (unsigned long)nrep, (unsigned long)niter);
+             */
 
     reptimes = callocMustSucceed(nrep, sizeof(*reptimes), "runBench");
     tdat.output = callocMustSucceed(nelem, sizeof(*tdat.output), "runBench");
@@ -67,7 +69,7 @@ static void runBench(size_t nelem, size_t niter, size_t nrep)
     {
         epicsTimeStamp start, stop;
 
-        if(epicsTimeGetCurrent(&start)!=epicsTimeOK) {
+        if(epicsTimeGetMonotonic(&start)!=epicsTimeOK) {
             testAbort("Failed to get timestamp");
             goto done;
         }
@@ -75,17 +77,18 @@ static void runBench(size_t nelem, size_t niter, size_t nrep)
         if(runRep(&tdat))
             goto done;
 
-        if(epicsTimeGetCurrent(&stop)!=epicsTimeOK) {
+        if(epicsTimeGetMonotonic(&stop)!=epicsTimeOK) {
             testAbort("Failed to get timestamp");
             goto done;
         }
 
         reptimes[i] = epicsTimeDiffInSeconds(&stop, &start);
-
+/*
         testDiag("%lu bytes in %.03f ms.  %.1f MB/s",
                  (unsigned long)(nelem*niter),
                  reptimes[i]*1e3,
                  (nelem*niter)/reptimes[i]/1e6);
+                 */
     }
 
     {
@@ -95,12 +98,14 @@ static void runBench(size_t nelem, size_t niter, size_t nrep)
             sum2 += reptimes[i]*reptimes[i];
         }
 
+        sum /= niter;
+        sum2/= niter*niter;
+
         mean = sum/nrep;
-        testDiag("Final: %.04f ms +- %.05f ms.  %.1f MB/s  (for %lu elements)",
+        testDiag("[%zu, %g, %g],",
+                 nelem,
                  mean*1e3,
-                 sqrt(sum2/nrep - mean*mean)*1e3,
-                 (nelem*niter)/mean/1e6,
-                 (unsigned long)nelem);
+                 sqrt(sum2/nrep - mean*mean)*1e3);
     }
 
 done:
@@ -112,13 +117,16 @@ done:
 MAIN(benchdbConvert)
 {
     testPlan(0);
+    testDiag("Timer resolution %llu", (unsigned long long)epicsMonotonicResolution());
     runBench(1, 10000000, 10);
     runBench(2,  5000000, 10);
     runBench(10, 1000000, 10);
     runBench(100, 100000, 10);
+    runBench(1000, 10000, 10);
     runBench(10000, 1000, 10);
     runBench(100000, 100, 10);
     runBench(1000000, 10, 10);
     runBench(10000000, 1, 10);
+    runBench(100000000,1, 10);
     return testDone();
 }

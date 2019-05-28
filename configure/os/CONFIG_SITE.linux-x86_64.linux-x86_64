@@ -4,3 +4,5 @@
 #-------------------------------------------------------
 
 
+#OP_SYS_CFLAGS += -fvisibility=hidden
+#OP_SYS_CXXFLAGS += -fvisibility-inlines-hidden

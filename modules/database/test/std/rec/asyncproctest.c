@@ -49,7 +49,7 @@ MAIN(asyncproctest)
     testdbReadDatabase("asyncproctest.dbd", NULL, NULL);
     asyncproctest_registerRecordDeviceDriver(pdbbase);
     registryFunctionAdd("doneSubr", (REGISTRYFUNCTION) doneSubr);
-    testdbReadDatabase("asyncproctest.db", NULL, "TPRO=0");
+    testdbReadDatabase("asyncproctest.db", NULL, "TPRO=1");
 
     dbAccessDebugPUTF = 1;
 
