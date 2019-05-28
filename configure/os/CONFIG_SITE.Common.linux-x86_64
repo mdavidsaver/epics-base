@@ -41,3 +41,11 @@ GNU_TUNE_CFLAGS = -mtune=generic
 
 # Developers using a suitable compiler may enable its address sanitizer:
 #ENABLE_ASAN = YES
+
+OP_SYS_CFLAGS += -fstack-protector-strong -Wformat -Werror=format-security
+OP_SYS_CXXFLAGS += -fstack-protector-strong -Wformat -Werror=format-security
+OP_SYS_CPPFLAGS += -Wdate-time -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3
+OP_SYS_LDFLAGS += -Wl,-z,relro
+#OP_SYS_CPPFLAGS += -DEPICS_FREELIST_DEBUG
+
+OPT_CFLAGS_NO += -O1

@@ -6,8 +6,8 @@
 # Early versions of the MinGW cross-build tools can only build
 # static (non-DLL) libraries. RHEL's cross-build of gcc 4.4.6
 # needs these uncommented, cross-gcc 4.6.3 from Ubuntu does not:
-#SHARED_LIBRARIES = NO
-#STATIC_BUILD = YES
+SHARED_LIBRARIES = YES
+STATIC_BUILD = NO
 
 # The cross-build tools are in $(GNU_DIR)/bin
 # Default is /usr

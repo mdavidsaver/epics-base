@@ -4,14 +4,16 @@
 #-------------------------------------------------------
 
 # Set GNU crosscompiler target name
-GNU_TARGET = arm-xilinx-linux-gnueabi
+GNU_TARGET = arm-linux-gnueabihf
 
 # Set GNU tools install path
 # Examples are installations at the APS:
 #GNU_DIR = /usr/local/vw/zynq-2011.09
-GNU_DIR = /usr/local/vw/zynq-2016.1/gnu/arm/lin
+GNU_DIR = /usr
 #GNU_DIR = /usr/local/Xilinx/SDK/2016.3/gnu/arm/lin
 #GNU_DIR = /APSshare/XilinxSDK/2015.4/gnu/arm/lin
+
+READLINE_DIR=/usr/arm-linux-gnueabihf/include
 
 # If cross-building shared libraries and the paths on the target machine are
 # different than on the build host, you should uncomment the lines below to
@@ -28,7 +30,7 @@ GNU_DIR = /usr/local/vw/zynq-2016.1/gnu/arm/lin
 #READLINE_DIR = $(GNU_DIR)
 #READLINE_DIR = /tools/cross/linux-x86.linux-arm/readline
 # See CONFIG_SITE.Common.linux-arm for other COMMANDLINE_LIBRARY values
-#COMMANDLINE_LIBRARY = READLINE
+COMMANDLINE_LIBRARY = EPICS
 
 # If you're building this architecture you _probably_ want to
 # run the tests for it under QEMU, but if not you can turn
