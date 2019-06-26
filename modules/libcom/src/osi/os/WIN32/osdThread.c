@@ -32,6 +32,7 @@
 #include "epicsAssert.h"
 #include "ellLib.h"
 #include "epicsExit.h"
+#include "epicsAtomic.h"
 
 epicsShareFunc void osdThreadHooksRun(epicsThreadId id);
 
@@ -46,6 +47,7 @@ typedef struct win32ThreadGlobal {
 
 typedef struct epicsThreadOSD {
     ELLNODE node;
+    int refcnt;
     HANDLE handle;
     EPICSTHREADFUNC funptr;
     void * parm;
@@ -53,6 +55,7 @@ typedef struct epicsThreadOSD {
     DWORD id;
     unsigned epicsPriority;
     char isSuspended;
+    char joinable;
 } win32ThreadParam;
 
 typedef struct epicsThreadPrivateOSD {
@@ -238,6 +241,8 @@ static void epicsParmCleanupWIN32 ( win32ThreadParam * pParm )
     }
 
     if ( pParm ) {
+        if(epicsAtomicDecrIntT(&pParm->refcnt) > 0) return;
+
         /* fprintf ( stderr, "thread %s is exiting\n", pParm->pName ); */
         EnterCriticalSection ( & pGbl->mutex );
         ellDelete ( & pGbl->threadList, & pParm->node );
@@ -464,6 +469,13 @@ epicsShareFunc unsigned int epicsShareAPI
     return stackSizeTable[stackSizeClass];
 }
 
+static const epicsThreadOpts opts_default = {epicsThreadPriorityLow, STACK_SIZE(1), 0};
+
+void epicsThreadOptsDefaults(epicsThreadOpts *opts)
+{
+    *opts = opts_default;
+}
+
 void epicsThreadCleanupWIN32 ()
 {
     win32ThreadGlobal * pGbl = fetchWin32ThreadGlobal ();
@@ -526,6 +538,7 @@ static win32ThreadParam * epicsThreadParmCreate ( const char *pName )
         pParmWIN32->pName = (char *) ( pParmWIN32 + 1 );
         strcpy ( pParmWIN32->pName, pName );
         pParmWIN32->isSuspended = 0;
+        epicsAtomicIncrIntT(&pParmWIN32->refcnt);
     }
     return pParmWIN32;
 }
@@ -579,8 +592,10 @@ static win32ThreadParam * epicsThreadImplicitCreate ( void )
 /*
  * epicsThreadCreate ()
  */
-epicsShareFunc epicsThreadId epicsShareAPI epicsThreadCreate (const char *pName,
-    unsigned int priority, unsigned int stackSize, EPICSTHREADFUNC pFunc,void *pParm)
+epicsThreadId epicsThreadCreateOpt (
+    const char * pName,
+    EPICSTHREADFUNC pFunc, void * pParm,
+    const epicsThreadOpts *opts )
 {
     win32ThreadGlobal * pGbl = fetchWin32ThreadGlobal ();
     win32ThreadParam * pParmWIN32;
@@ -592,18 +607,20 @@ epicsShareFunc epicsThreadId epicsShareAPI epicsThreadCreate (const char *pName,
         return NULL;
     }
 
+    if(!opts) opts = &opts_default;
+
     pParmWIN32 = epicsThreadParmCreate ( pName );
     if ( pParmWIN32 == 0 ) {
         return ( epicsThreadId ) pParmWIN32;
     }
     pParmWIN32->funptr = pFunc;
     pParmWIN32->parm = pParm;
-    pParmWIN32->epicsPriority = priority;
+    pParmWIN32->epicsPriority = opts->priority;
 
     {
         unsigned threadId;
         pParmWIN32->handle = (HANDLE) _beginthreadex ( 
-            0, stackSize, epicsWin32ThreadEntry, 
+            0, opts->stackSize, epicsWin32ThreadEntry,
             pParmWIN32, 
             CREATE_SUSPENDED | STACK_SIZE_PARAM_IS_A_RESERVATION, 
             & threadId );
@@ -615,7 +632,7 @@ epicsShareFunc epicsThreadId epicsShareAPI epicsThreadCreate (const char *pName,
         pParmWIN32->id = ( DWORD ) threadId ;
     }
 
-    osdPriority = epicsThreadGetOsdPriorityValue (priority);
+    osdPriority = epicsThreadGetOsdPriorityValue (opts->priority);
     bstat = SetThreadPriority ( pParmWIN32->handle, osdPriority );
     if (!bstat) {
         CloseHandle ( pParmWIN32->handle ); 
@@ -637,7 +654,46 @@ epicsShareFunc epicsThreadId epicsShareAPI epicsThreadCreate (const char *pName,
         return NULL;
     }
 
+    if(opts->joinable) {
+        pParmWIN32->joinable = 1;
+        epicsAtomicIncrIntT(&pParmWIN32->refcnt);
+    }
+
     return ( epicsThreadId ) pParmWIN32;
+}
+
+void epicsThreadMustJoin(epicsThreadId id)
+{
+    win32ThreadParam * pParmWIN32 = id;
+
+    if(!id) {
+        /* no-op */
+    } else if(!pParmWIN32->joinable) {
+        if(epicsThreadGetIdSelf()==id) {
+            fprintf(stderr, "Warning: %s thread self-join of unjoinable\n", pParmWIN32->pName);
+
+        } else {
+            /* try to error nicely, however in all likelyhood de-ref of
+             * 'id' has already caused SIGSEGV as we are racing thread exit,
+             * which free's 'id'.
+             */
+            cantProceed("Error: %s thread not joinable.\n", pParmWIN32->pName);
+        }
+        return;
+
+    } else if(epicsThreadGetIdSelf() != id) {
+        DWORD status = WaitForSingleObject(pParmWIN32->handle, INFINITE);
+        if(status != WAIT_OBJECT_0) {
+            /* TODO: signal error? */
+        }
+
+        pParmWIN32->joinable = 0;
+        epicsParmCleanupWIN32(pParmWIN32);
+    } else {
+        /* join self silently does nothing */
+        pParmWIN32->joinable = 0;
+        epicsParmCleanupWIN32(pParmWIN32);
+    }
 }
 
 /*

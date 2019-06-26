@@ -8,5 +8,8 @@
 * in file LICENSE that is included with this distribution. 
 \*************************************************************************/
 
+/* This target supports joining threads */
+#define EPICS_THREAD_CAN_JOIN (1)
+
 int epicsThreadGetOssPriorityValue(unsigned int osiPriority);
 

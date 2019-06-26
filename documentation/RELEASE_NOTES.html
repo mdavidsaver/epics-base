@@ -30,27 +30,8 @@ release.</p>
 
 -->
 
-<h1 align="center">EPICS Release 7.0.2.2</h1>
 
-<h3>Build System changes</h3>
 
-<ul>
-
-<li>The GNUmake build targets <tt>cvsclean</tt> and <tt>depclean</tt> are now
-available from any directory; previously they were only available from
-application top directories.</li>
-
-<li>The approach that EPICS Base uses for building submodules inside the parent
-module looks useful for support modules too. The rules for building submodules
-have been modified and extracted into a new <tt>RULES_MODULES</tt> file, so a
-support module will be able to use them too without having to copy them into its
-own <tt>modules/Makefile</tt>. There are some specific requirements that support
-modules and their submodules must follow, which are described as comments in the
-new <tt>base/configure/RULES_MODULES</tt> file itself.</li>
-
-</ul>
-
-<h3>EPICS_BASE_VERSION Update Policy change</h3>
 
 <p>In the past, a build of EPICS using sources checked out from the repository
 branch between official releases would have shown the version number of the

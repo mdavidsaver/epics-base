@@ -38,6 +38,7 @@
 #include "errlog.h"
 #include "epicsAssert.h"
 #include "epicsExit.h"
+#include "epicsAtomic.h"
 
 epicsShareFunc void epicsThreadShowInfo(epicsThreadOSD *pthreadInfo, unsigned int level);
 epicsShareFunc void osdThreadHooksRun(epicsThreadId id);
@@ -167,12 +168,14 @@ static epicsThreadOSD * create_threadInfo(const char *name)
         return NULL;
     }
     strcpy(pthreadInfo->name, name);
+    epicsAtomicIncrIntT(&pthreadInfo->refcnt); /* initial ref for the thread itself */
     return pthreadInfo;
 }
 
 static epicsThreadOSD * init_threadInfo(const char *name,
     unsigned int priority, unsigned int stackSize,
-    EPICSTHREADFUNC funptr,void *parm)
+    EPICSTHREADFUNC funptr,void *parm,
+    unsigned joinable)
 {
     epicsThreadOSD *pthreadInfo;
     int status;
@@ -182,12 +185,15 @@ static epicsThreadOSD * init_threadInfo(const char *name,
         return NULL;
     pthreadInfo->createFunc = funptr;
     pthreadInfo->createArg = parm;
+    pthreadInfo->joinable = joinable;
     status = pthread_attr_init(&pthreadInfo->attr);
     checkStatusOnce(status,"pthread_attr_init");
     if(status) return 0;
-    status = pthread_attr_setdetachstate(
-        &pthreadInfo->attr, PTHREAD_CREATE_DETACHED);
-    checkStatusOnce(status,"pthread_attr_setdetachstate");
+    if(!joinable){
+        status = pthread_attr_setdetachstate(
+            &pthreadInfo->attr, PTHREAD_CREATE_DETACHED);
+        checkStatusOnce(status,"pthread_attr_setdetachstate");
+    }
 #if defined (_POSIX_THREAD_ATTR_STACKSIZE)
 #if ! defined (OSITHREAD_USE_DEFAULT_STACK)
     status = pthread_attr_setstacksize( &pthreadInfo->attr,(size_t)stackSize);
@@ -203,6 +209,8 @@ static epicsThreadOSD * init_threadInfo(const char *name,
 static void free_threadInfo(epicsThreadOSD *pthreadInfo)
 {
     int status;
+
+    if(epicsAtomicDecrIntT(&pthreadInfo->refcnt) > 0) return;
 
     status = mutexLock(&listLock);
     checkStatusQuit(status,"pthread_mutex_lock","free_threadInfo");
@@ -366,7 +374,7 @@ static void once(void)
     if(errVerbose) fprintf(stderr,"task priorities are not implemented\n");
 #endif /* _POSIX_THREAD_PRIORITY_SCHEDULING */
 
-    pthreadInfo = init_threadInfo("_main_",0,epicsThreadGetStackSize(epicsThreadStackSmall),0,0);
+    pthreadInfo = init_threadInfo("_main_",0,epicsThreadGetStackSize(epicsThreadStackSmall),0,0,0);
     assert(pthreadInfo!=NULL);
     status = pthread_setspecific(getpthreadInfo,(void *)pthreadInfo);
     checkStatusOnceQuit(status,"pthread_setspecific","epicsThreadInit");
@@ -445,15 +453,22 @@ void epicsThreadRealtimeLock(void)
 #endif
 }
 
-epicsShareFunc unsigned int epicsShareAPI epicsThreadGetStackSize (epicsThreadStackSizeClass stackSizeClass)
-{
 #if defined (OSITHREAD_USE_DEFAULT_STACK)
-    return 0;
+#define STACK_SIZE(f) (0)
 #elif defined(_POSIX_THREAD_ATTR_STACKSIZE) && _POSIX_THREAD_ATTR_STACKSIZE > 0
     #define STACK_SIZE(f) (f * 0x10000 * sizeof(void *))
     static const unsigned stackSizeTable[epicsThreadStackBig+1] = {
         STACK_SIZE(1), STACK_SIZE(2), STACK_SIZE(4)
     };
+#else
+#define STACK_SIZE(f) (0)
+#endif /*_POSIX_THREAD_ATTR_STACKSIZE*/
+
+epicsShareFunc unsigned int epicsShareAPI epicsThreadGetStackSize (epicsThreadStackSizeClass stackSizeClass)
+{
+#if defined (OSITHREAD_USE_DEFAULT_STACK)
+    return 0;
+#elif defined(_POSIX_THREAD_ATTR_STACKSIZE) && _POSIX_THREAD_ATTR_STACKSIZE > 0
     if (stackSizeClass<epicsThreadStackSmall) {
         errlogPrintf("epicsThreadGetStackSize illegal argument (too small)");
         return stackSizeTable[epicsThreadStackBig];
@@ -468,6 +483,13 @@ epicsShareFunc unsigned int epicsShareAPI epicsThreadGetStackSize (epicsThreadSt
 #else
     return 0;
 #endif /*_POSIX_THREAD_ATTR_STACKSIZE*/
+}
+
+static const epicsThreadOpts opts_default = {epicsThreadPriorityLow, STACK_SIZE(1), 0};
+
+void epicsThreadOptsDefaults(epicsThreadOpts *opts)
+{
+    *opts = opts_default;
 }
 
 epicsShareFunc void epicsShareAPI epicsThreadOnce(epicsThreadOnceId *id, void (*func)(void *), void *arg)
@@ -511,19 +533,22 @@ epicsShareFunc void epicsShareAPI epicsThreadOnce(epicsThreadOnceId *id, void (*
     checkStatusQuit(status,"pthread_mutex_unlock","epicsThreadOnce");
 }
 
-epicsShareFunc epicsThreadId epicsShareAPI epicsThreadCreate(const char *name,
-    unsigned int priority, unsigned int stackSize,
-    EPICSTHREADFUNC funptr,void *parm)
+epicsThreadId
+epicsThreadCreateOpt (
+    const char * name,
+    EPICSTHREADFUNC funptr, void * parm, const epicsThreadOpts *opts )
 {
     epicsThreadOSD *pthreadInfo;
     int status;
     sigset_t blockAllSig, oldSig;
 
+    if(!opts) opts = &opts_default;
+
     epicsThreadInit();
     assert(pcommonAttr);
     sigfillset(&blockAllSig);
     pthread_sigmask(SIG_SETMASK,&blockAllSig,&oldSig);
-    pthreadInfo = init_threadInfo(name,priority,stackSize,funptr,parm);
+    pthreadInfo = init_threadInfo(name,opts->priority,opts->stackSize,funptr,parm,opts->joinable);
     if(pthreadInfo==0) return 0;
     pthreadInfo->isEpicsThread = 1;
     setSchedulingPolicy(pthreadInfo,SCHED_FIFO);
@@ -533,7 +558,7 @@ epicsShareFunc epicsThreadId epicsShareAPI epicsThreadCreate(const char *name,
     if(status==EPERM){
         /* Try again without SCHED_FIFO*/
         free_threadInfo(pthreadInfo);
-        pthreadInfo = init_threadInfo(name,priority,stackSize,funptr,parm);
+        pthreadInfo = init_threadInfo(name,opts->priority,opts->stackSize,funptr,parm,opts->joinable);
         if(pthreadInfo==0) return 0;
         pthreadInfo->isEpicsThread = 1;
         status = pthread_create(&pthreadInfo->tid,&pthreadInfo->attr,
@@ -546,6 +571,10 @@ epicsShareFunc epicsThreadId epicsShareAPI epicsThreadCreate(const char *name,
     }
     status = pthread_sigmask(SIG_SETMASK,&oldSig,NULL);
     checkStatusOnce(status,"pthread_sigmask");
+    if(pthreadInfo->joinable) {
+        /* extra ref for epicsThreadMustJoin() */
+        epicsAtomicIncrIntT(&pthreadInfo->refcnt);
+    }
     return(pthreadInfo);
 }
 
@@ -584,7 +613,40 @@ static epicsThreadOSD *createImplicit(void)
     }
     return pthreadInfo;
 }
-
+
+void epicsThreadMustJoin(epicsThreadId id)
+{
+    void *ret = NULL;
+    int status;
+
+    if(!id) {
+        return;
+    } else if(!id->joinable) {
+        if(epicsThreadGetIdSelf()==id) {
+            errlogPrintf("Warning: %s thread self-join of unjoinable\n", id->name);
+
+        } else {
+            /* try to error nicely, however in all likelyhood de-ref of
+             * 'id' has already caused SIGSEGV as we are racing thread exit,
+             * which free's 'id'.
+             */
+            cantProceed("Error: %s thread not joinable.\n", id->name);
+        }
+        return;
+    }
+
+    status = pthread_join(id->tid, &ret);
+    if(status == EDEADLK) {
+        /* Thread can't join itself (directly or indirectly)
+         * so we detach instead.
+         */
+        status = pthread_detach(id->tid);
+        checkStatusOnce(status, "pthread_detach");
+    } else checkStatusOnce(status, "pthread_join");
+    id->joinable = 0;
+    free_threadInfo(id);
+}
+
 epicsShareFunc void epicsShareAPI epicsThreadSuspendSelf(void)
 {
     epicsThreadOSD *pthreadInfo;

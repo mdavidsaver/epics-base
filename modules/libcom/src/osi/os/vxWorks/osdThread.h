@@ -10,4 +10,13 @@
 #ifndef osdThreadh
 #define osdThreadh
 
+/* VxWorks 6.9 and later can support joining threads */
+
+#if (_WRS_VXWORKS_MAJOR > 6) || \
+    (_WRS_VXWORKS_MAJOR == 6 && _WRS_VXWORKS_MINOR >= 9)
+#   define EPICS_THREAD_CAN_JOIN (1)
+#else
+#   define EPICS_THREAD_CAN_JOIN (0)
+#endif
+
 #endif /* osdThreadh */
