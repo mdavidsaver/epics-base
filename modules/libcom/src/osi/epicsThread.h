@@ -235,6 +235,12 @@ epicsShareFunc void * epicsShareAPI epicsThreadPrivateGet(epicsThreadPrivateId);
 
 #ifdef __cplusplus
 
+#include <sstream>
+
+#if __cplusplus>=201103L
+#  include <functional>
+#endif
+
 #include "epicsEvent.h"
 #include "epicsMutex.h"
 
@@ -262,12 +268,32 @@ class epicsShareClass epicsThread {
 public:
     /** Create a new thread with the provided information.
      *
+     * @param fn The thread main method
+     * @param name The name of this thread
+     * @param stackSize Requested thread stack size in bytes (use epicsThreadGetStackSize() ).
+     * @param priority Thread priority.  use epicsThreadPriority*
+     *
      * cf. epicsThreadOpts
      * @note Threads must be start() ed.
      * @throws epicsThread::unableToCreateThread on error.
      */
-    epicsThread ( epicsThreadRunable &,const char *name, unsigned int stackSize,
+    epicsThread ( epicsThreadRunable & fn,const char *name, unsigned int stackSize=0u,
         unsigned int priority=epicsThreadPriorityLow );
+#if __cplusplus>=201103L
+    /** Create a new thread with the provided information.
+     *
+     * @param fn The thread main function
+     * @param name The name of this thread
+     * @param stackSize Requested thread stack size in bytes (use epicsThreadGetStackSize() ).
+     * @param priority Thread priority.  use epicsThreadPriority*
+     *
+     * cf. epicsThreadOpts
+     * @note Threads must be start() ed.
+     * @throws epicsThread::unableToCreateThread on error.
+     */
+    epicsThread ( std::function<void()>&& fn ,const char *name, unsigned int stackSize=0u,
+        unsigned int priority=epicsThreadPriorityLow );
+#endif
     ~epicsThread () throw ();
     //! Actually start the thread.
     void start () throw ();
@@ -308,7 +334,10 @@ public:
     /* exceptions */
     class unableToCreateThread;
 private:
-    epicsThreadRunable & runable;
+    epicsThreadRunable* runable;
+#if __cplusplus>=201103L
+    std::function<void()> fn;
+#endif
     epicsThreadId id;
     epicsMutex mutex;
     epicsEvent event;
@@ -319,6 +348,7 @@ private:
     bool terminated;
     bool joined;
 
+    void _init(const char * pName, unsigned stackSize, unsigned priority);
     bool beginWait () throw ();
     epicsThread ( const epicsThread & );
     epicsThread & operator = ( const epicsThread & );

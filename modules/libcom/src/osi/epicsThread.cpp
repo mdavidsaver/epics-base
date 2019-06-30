@@ -92,7 +92,16 @@ extern "C" void epicsThreadCallEntryPoint ( void * pPvt )
     try {
         pThread->pThreadDestroyed = & threadDestroyed;
         if ( pThread->beginWait () ) {
-            pThread->runable.run ();
+#if __cplusplus>=201103L
+            if(pThread->fn) {
+                std::function<void()> fn(std::move(pThread->fn));
+                fn();
+            } else if(pThread->runable) {
+#else
+            {
+#endif
+                pThread->runable->run ();
+            }
             // The run() routine may have destroyed the epicsThread
             // object by now; pThread can only be used below here
             // when the threadDestroyed flag is false.
@@ -198,18 +207,47 @@ bool epicsThread::exitWait ( const double delay ) throw ()
     return this->terminated;
 }
 
-epicsThread::epicsThread (
-    epicsThreadRunable & runableIn, const char * pName,
-        unsigned stackSize, unsigned priority ) :
-    runable ( runableIn ), id ( 0 ), pThreadDestroyed ( 0 ),
-    begin ( false ), cancel ( false ), terminated ( false )
-  , joined(false)
+epicsThread::epicsThread (epicsThreadRunable & runableIn,
+                          const char * pName,
+                          unsigned stackSize,
+                          unsigned priority )
+    :runable (&runableIn)
+    ,id(0)
+    ,pThreadDestroyed(0)
+    ,begin(false)
+    ,cancel(false)
+    ,terminated(false)
+    ,joined(false)
+{_init(pName, stackSize, priority);}
+
+#if __cplusplus>=201103L
+epicsThread::epicsThread (std::function<void()>&& fn,
+                          const char * pName,
+                          unsigned stackSize,
+                          unsigned priority )
+    :runable (0)
+    ,fn ( std::move(fn) )
+    ,id(0)
+    ,pThreadDestroyed(0)
+    ,begin(false)
+    ,cancel(false)
+    ,terminated(false)
+    ,joined(false)
+{_init(pName, stackSize, priority);}
+#endif
+
+void epicsThread::_init(const char * pName, unsigned stackSize, unsigned priority)
 {
     epicsThreadOpts opts;
     epicsThreadOptsDefaults(&opts);
     opts.stackSize = stackSize;
     opts.priority = priority;
     opts.joinable = 1;
+
+    if(opts.stackSize==0) {
+        // c++ threads on some targets (eg. RTEMS) need a big stack
+        opts.stackSize = epicsThreadGetStackSize(epicsThreadStackBig);
+    }
 
     this->id = epicsThreadCreateOpt(
         pName, epicsThreadCallEntryPoint,
@@ -335,7 +373,9 @@ void epicsThread :: show ( unsigned level ) const throw ()
                 this->begin ? 'T' : 'F',
                 this->cancel ? 'T' : 'F',
                 this->terminated ? 'T' : 'F' );
-            this->runable.show ( level - 2u );
+            if(this->runable) {
+                this->runable->show ( level - 2u );
+            }
             this->mutex.show ( level - 2u );
             ::printf ( "general purpose event\n" );
             this->event.show ( level - 2u );
