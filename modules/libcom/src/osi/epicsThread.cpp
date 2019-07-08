@@ -162,11 +162,13 @@ bool epicsThread::exitWait ( const double delay ) throw ()
             if ( this->pThreadDestroyed ) {
                 *this->pThreadDestroyed = true;
             }
-            if(!joined) {
-                {
-                    epicsGuard < epicsMutex > guard ( this->mutex );
-                    joined = true;
-                }
+            bool j;
+            {
+                epicsGuard < epicsMutex > guard ( this->mutex );
+                j = joined;
+                joined = true;
+            }
+            if(!j) {
                 epicsThreadMustJoin(this->id);
             }
             return true;
