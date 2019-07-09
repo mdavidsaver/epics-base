@@ -135,3 +135,9 @@ echo [INFO] Perl version
 perl --version
 
 %MAKE% %MAKEARGS% %*
+
+echo %CD%
+
+cd modules/libcom/test/O.%EPICS_HOST_ARCH%
+
+blockingSockTest

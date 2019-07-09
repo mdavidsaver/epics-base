@@ -74,4 +74,5 @@ if [ "$TEST" != "NO" ]
 then
    make -j2 tapfiles
    make -s test-results
+   ./modules/libcom/test/O.$EPICS_HOST_ARCH/blockingSockTest
 fi
