@@ -65,19 +65,5 @@ sub msi {
     my ($args) = @_;
     my $msi = '@TOP@/bin/@ARCH@/msi';
     $msi .= '.exe' if ($^O eq 'MSWin32') || ($^O eq 'cygwin');
-    my $result;
-    if ($args =~ m/-o / && $args !~ m/-D/) {
-        # An empty result is expected
-        $result = `$msi $args`;
-    }
-    else {
-        # Try up to 5 times, sometimes msi fails on Windows
-        my $count = 5;
-        do {
-            $result = `$msi $args`;
-            print "# result of '$msi $args' empty, retrying\n"
-                if $result eq '';
-        } while ($result eq '') && (--$count > 0);
-    }
-    return $result;
+    return `$msi $args`;
 }
