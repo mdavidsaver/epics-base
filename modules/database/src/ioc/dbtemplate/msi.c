@@ -84,6 +84,7 @@ static int opt_V = 0;
 static int opt_D = 0;
 
 static char *outFile = 0;
+static FILE *outFP;
 static int numDeps = 0, depHashes[MAX_DEPS];
 
 
@@ -97,6 +98,8 @@ int main(int argc,char **argv)
     char *templateName = 0;
     int  i;
     int  localScope = 1;
+
+    outFP = stdout;
 
     inputConstruct(&inputPvt);
     macCreateHandle(&macPvt, 0);
@@ -156,7 +159,7 @@ int main(int argc,char **argv)
         }
         printf("%s:", outFile);
     }
-    else if (outFile && freopen(outFile, "w", stdout) == NULL) {
+    else if (outFile && (outFP = fopen(outFile, "w")) == NULL) {
         fprintf(stderr, "msi: Can't open %s for writing: %s\n",
             outFile, strerror(errno));
         exit(1);
@@ -211,7 +214,12 @@ int main(int argc,char **argv)
     macDeleteHandle(macPvt);
     inputDestruct(inputPvt);
     if (opt_D) {
-        printf("\n");
+        fprintf(outFP, "\n");
+    }
+    fflush(outFP);
+    if (outFile) {
+        fclose(outFP);
+        outFP = NULL;
     }
     free(templateName);
     free(substitutionName);
@@ -238,8 +246,10 @@ void usageExit(int status)
 
 void abortExit(int status)
 {
+    fflush(outFP);
     if (outFile) {
-        fclose(stdout);
+        fclose(outFP);
+        outFP = NULL;
         unlink(outFile);
     }
     exit(status);
@@ -350,7 +360,7 @@ endcmd:
         if (expand && !opt_D) {
             STEP("Expanding to output stream");
             n = macExpandString(macPvt, input, buffer, MAX_BUFFER_SIZE - 1);
-            fputs(buffer, stdout);
+            fputs(buffer, outFP);
             if (opt_V == 1 && n < 0) {
                 fprintf(stderr, "msi: Error - undefined macros present\n");
                 opt_V++;
@@ -578,7 +588,7 @@ static void inputOpenFile(inputData *pinputData,char *filename)
         if (!match) {
             const char *wrap = numDeps ? " \\\n" : "";
 
-            printf("%s %s", wrap, pinputFile->filename);
+            fprintf(outFP, "%s %s", wrap, pinputFile->filename);
             if (numDeps < MAX_DEPS) {
                 depHashes[numDeps++] = hash;
             }
