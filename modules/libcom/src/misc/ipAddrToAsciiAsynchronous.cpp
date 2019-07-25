@@ -171,7 +171,6 @@ ipAddrToAsciiEngine & ipAddrToAsciiEngine::allocate ()
 }
 
 ipAddrToAsciiGlobal::ipAddrToAsciiGlobal () :
-    mutex(__FILE__, __LINE__),
     thread ( *this, "ipToAsciiProxy",
         epicsThreadGetStackSize(epicsThreadStackBig),
         epicsThreadPriorityLow ),
