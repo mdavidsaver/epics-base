@@ -89,6 +89,11 @@ epicsShareFunc int epicsShareAPI iocshCmd(const char *cmd);
 epicsShareFunc int epicsShareAPI iocshLoad(const char *pathname, const char* macros);
 epicsShareFunc int epicsShareAPI iocshRun(const char *cmd, const char* macros);
 
+/** @brief Signal error from an IOC shell function.
+ *
+ * @param err 0 - success (no op), !=0 - error
+ * @return The err argument value.
+ */
 epicsShareFunc int iocshSetError(int err);
 
 /* Makes macros that shadow environment variables work correctly with epicsEnvSet */
