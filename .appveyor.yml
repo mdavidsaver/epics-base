@@ -83,6 +83,11 @@ build_script:
 test_script:
   - cmd: .ci/appveyor-make.bat runtests
 
+artifacts:
+  - path: '**/*.tap'
+    name: tap.zip
+    type: zip
+
 #---------------------------------#
 #         notifications           #
 #---------------------------------#
