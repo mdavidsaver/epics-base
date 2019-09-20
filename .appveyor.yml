@@ -33,26 +33,15 @@ skip_commits:
 # Build Configurations: dll/static, regular/debug
 configuration:
   - dynamic
-  - static
-  - dynamic-debug
-  - static-debug
 
 # Environment variables: compiler toolchain
 environment:
   matrix:
   - TOOLCHAIN: 10.0
-  - TOOLCHAIN: 11.0
-  - TOOLCHAIN: 12.0
-  - TOOLCHAIN: 14.0
-  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-    TOOLCHAIN: 2017
-  - TOOLCHAIN: cygwin
-  - TOOLCHAIN: mingw
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+    APPVEYOR_RDP_PASSWORD: St0pidM$
 
 # Platform: architecture
 platform:
-  - x86
   - x64
 
 # Matrix configuration: allow specific failing jobs
@@ -88,18 +77,6 @@ artifacts:
     name: tap.zip
     type: zip
 
-#---------------------------------#
-#         notifications           #
-#---------------------------------#
-
-notifications:
-
-  - provider: Email
-    to:
-      - core-talk@aps.anl.gov
-    on_build_success: false
-
-  - provider: GitHubPullRequest
-
-on_failure
+on_failure:
   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
