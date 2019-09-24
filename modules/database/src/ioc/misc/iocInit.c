@@ -194,6 +194,8 @@ int iocBuild(void)
 {
     int status;
 
+    errlogToSyslog();
+
     status = iocBuild_1();
     if (status) return status;
 

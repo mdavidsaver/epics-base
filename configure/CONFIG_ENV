@@ -53,3 +53,7 @@ EPICS_IOC_IGNORE_SERVERS=""
 # EPICS_IOC_LOG_PORT Log server port number etc.
 EPICS_IOC_LOG_PORT=7004
 
+# Log Client:
+# If set, log to local syslog() with this identifier
+EPICS_IOC_LOG_PREFIX=
+

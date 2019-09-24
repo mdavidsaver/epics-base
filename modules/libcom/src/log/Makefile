@@ -12,6 +12,7 @@ INC += iocLog.h
 INC += logClient.h
 Com_SRCS += iocLog.c
 Com_SRCS += logClient.c
+Com_SRCS += syslogSink.c
 
 PROD_HOST += iocLogServer
 

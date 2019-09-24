@@ -84,6 +84,14 @@ epicsShareFunc int errlogVprintfNoConsole(const char *pformat,va_list pvar);
 
 epicsShareFunc void errSymLookup(long status, char *pBuf, size_t bufLength);
 
+/** @brief (maybe) send errlog message to syslog.
+ *
+ * If supported (!WIN32 && !vxWorks), and if $EPICS_IOC_LOG_PREFIX is set,
+ * then errlog messages will be passed to syslog().
+ * The value of $EPICS_IOC_LOG_PREFIX is used as the syslog identifier.
+ */
+epicsShareFunc void errlogToSyslog(void);
+
 #ifdef __cplusplus
 }
 #endif
