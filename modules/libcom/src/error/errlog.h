@@ -84,6 +84,14 @@ LIBCOM_API int errlogVprintfNoConsole(const char *pformat,va_list pvar);
 
 LIBCOM_API void errSymLookup(long status, char *pBuf, size_t bufLength);
 
+/** @brief (maybe) send errlog message to syslog.
+ *
+ * If supported (!WIN32 && !vxWorks), and if $EPICS_IOC_LOG_PREFIX is set,
+ * then errlog messages will be passed to syslog().
+ * The value of $EPICS_IOC_LOG_PREFIX is used as the syslog identifier.
+ */
+LIBCOM_API void errlogToSyslog(void);
+
 #ifdef __cplusplus
 }
 #endif
