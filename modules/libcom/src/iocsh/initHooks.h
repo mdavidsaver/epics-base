@@ -47,6 +47,14 @@ typedef enum {
     initHookAfterDatabasePaused,
     initHookAfterIocPaused,         /* End of iocPause command */
 
+    initHookAtShutdown,             /* Start of iocShutdown commands */
+    initHookAfterCloseLinks,
+    initHookAfterStopScan,          /* conditional */
+    initHookAfterStopCallback,      /* conditional */
+    initHookAfterStopLinks,
+    initHookBeforeFree,             /* conditional */
+    initHookAfterShutdown,          /* End of iocShutdown commands */
+
 /* Deprecated states, provided for backwards compatibility.
  * These states are announced at the same point they were before,
  * but will not be repeated if the IOC gets paused and restarted.
