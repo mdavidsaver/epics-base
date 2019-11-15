@@ -87,8 +87,8 @@
  *
  * #ifdef interfacePDQ_epicsExportSharedSymbols
  * #   define epicsExportSharedSymbols
- * #   include "shareLib.h"
  * #endif
+ * #include "shareLib.h"
  *
  * epicsShareFunc int myExtFunc ( int arg );
  * epicsShareExtern int myExtVar;
