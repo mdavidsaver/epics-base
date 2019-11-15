@@ -24,4 +24,9 @@
 #  define LIBCOMSTD_API
 #endif
 
+/* workaround for unfortunately ubiquitous example
+ * to workaround ordering issues...
+ */
+#include <shareLib.h>
+
 #endif /* LIBCOMAPI_H */
