@@ -19,7 +19,7 @@
  * EPICS include files needed by this file
  */
 #include "ellLib.h"
-#include "shareLib.h"
+#include "libComAPI.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,8 +46,8 @@ typedef struct {
 /*
  * Function prototypes (core library)
  */
-epicsShareFunc long             /* 0 = OK; <0 = ERROR */
-epicsShareAPI macCreateHandle(
+LIBCOM_API long             /* 0 = OK; <0 = ERROR */
+LIBCOMSTD_API macCreateHandle(
     MAC_HANDLE  **handle,       /* address of variable to receive pointer */
                                 /* to new macro substitution context */
 
@@ -57,16 +57,16 @@ epicsShareAPI macCreateHandle(
                                 /* argument implies no macros */
 );
 
-epicsShareFunc void
-epicsShareAPI macSuppressWarning(
+LIBCOM_API void
+LIBCOMSTD_API macSuppressWarning(
     MAC_HANDLE  *handle,        /* opaque handle */
 
     int         falseTrue       /*0 means issue, 1 means suppress*/
 );
 
-epicsShareFunc long             /* strlen(dest), <0 if any macros are */
+LIBCOM_API long             /* strlen(dest), <0 if any macros are */
                                 /* undefined */
-epicsShareAPI macExpandString(
+LIBCOMSTD_API macExpandString(
     MAC_HANDLE  *handle,        /* opaque handle */
 
     const char  *src,           /* source string */
@@ -77,8 +77,8 @@ epicsShareAPI macExpandString(
 );
 
 
-epicsShareFunc long             /* strlen(value) */
-epicsShareAPI macPutValue(
+LIBCOM_API long             /* strlen(value) */
+LIBCOMSTD_API macPutValue(
     MAC_HANDLE  *handle,        /* opaque handle */
 
     const char  *name,          /* macro name */
@@ -86,8 +86,8 @@ epicsShareAPI macPutValue(
     const char  *value          /* macro value */
 );
 
-epicsShareFunc long             /* strlen(value), <0 if undefined */
-epicsShareAPI macGetValue(
+LIBCOM_API long             /* strlen(value), <0 if undefined */
+LIBCOMSTD_API macGetValue(
     MAC_HANDLE  *handle,        /* opaque handle */
 
     const char  *name,          /* macro name or reference */
@@ -98,31 +98,31 @@ epicsShareAPI macGetValue(
     long        capacity        /* capacity of destination buffer (value) */
 );
 
-epicsShareFunc long             /* 0 = OK; <0 = ERROR */
-epicsShareAPI macDeleteHandle(
+LIBCOM_API long             /* 0 = OK; <0 = ERROR */
+LIBCOMSTD_API macDeleteHandle(
     MAC_HANDLE  *handle         /* opaque handle */
 );
 
-epicsShareFunc long             /* 0 = OK; <0 = ERROR */
-epicsShareAPI macPushScope(
+LIBCOM_API long             /* 0 = OK; <0 = ERROR */
+LIBCOMSTD_API macPushScope(
     MAC_HANDLE  *handle         /* opaque handle */
 );
 
-epicsShareFunc long             /* 0 = OK; <0 = ERROR */
-epicsShareAPI macPopScope(
+LIBCOM_API long             /* 0 = OK; <0 = ERROR */
+LIBCOMSTD_API macPopScope(
     MAC_HANDLE  *handle         /* opaque handle */
 );
 
-epicsShareFunc long             /* 0 = OK; <0 = ERROR */
-epicsShareAPI macReportMacros(
+LIBCOM_API long             /* 0 = OK; <0 = ERROR */
+LIBCOMSTD_API macReportMacros(
     MAC_HANDLE  *handle         /* opaque handle */
 );
 
 /*
  * Function prototypes (utility library)
  */
-epicsShareFunc long             /* #defns encountered; <0 = ERROR */
-epicsShareAPI macParseDefns(
+LIBCOM_API long             /* #defns encountered; <0 = ERROR */
+LIBCOMSTD_API macParseDefns(
     MAC_HANDLE  *handle,        /* opaque handle; can be NULL if default */
                                 /* special characters are to be used */
 
@@ -135,8 +135,8 @@ epicsShareAPI macParseDefns(
                                 /* allocated contiguously */
 );
 
-epicsShareFunc long             /* #macros defined; <0 = ERROR */
-epicsShareAPI macInstallMacros(
+LIBCOM_API long             /* #macros defined; <0 = ERROR */
+LIBCOMSTD_API macInstallMacros(
     MAC_HANDLE  *handle,        /* opaque handle */
 
     char        *pairs[]        /* pointer to NULL-terminated array of */
@@ -145,13 +145,13 @@ epicsShareAPI macInstallMacros(
                                 /* argument implies no macros */
 );
 
-epicsShareFunc char *           /* expanded string; NULL if any undefined macros */
-epicsShareAPI macEnvExpand(
+LIBCOM_API char *           /* expanded string; NULL if any undefined macros */
+LIBCOMSTD_API macEnvExpand(
     const char *str             /* string to be expanded */
 );
 
-epicsShareFunc char *           /* expanded string; NULL if any undefined macros */
-epicsShareAPI macDefExpand(
+LIBCOM_API char *           /* expanded string; NULL if any undefined macros */
+LIBCOMSTD_API macDefExpand(
     const char *str,            /* string to be expanded */
     MAC_HANDLE *macros          /* opaque handle; can be NULL if default */
                                 /* special characters are to be used */

@@ -24,7 +24,7 @@
  */
 
 #include "epicsSpin.h"
-#include "shareLib.h"
+#include "libComAPI.h"
 
 #ifdef __cplusplus
 template <class T>
@@ -65,22 +65,22 @@ extern "C" {
 typedef void *epicsRingPointerId;
 typedef void const *epicsRingPointerIdConst;
 
-epicsShareFunc epicsRingPointerId  epicsShareAPI epicsRingPointerCreate(int size);
+LIBCOM_API epicsRingPointerId  LIBCOMSTD_API epicsRingPointerCreate(int size);
 /* Same, but secured by a spinlock */
-epicsShareFunc epicsRingPointerId  epicsShareAPI epicsRingPointerLockedCreate(int size);
-epicsShareFunc void epicsShareAPI epicsRingPointerDelete(epicsRingPointerId id);
+LIBCOM_API epicsRingPointerId  LIBCOMSTD_API epicsRingPointerLockedCreate(int size);
+LIBCOM_API void LIBCOMSTD_API epicsRingPointerDelete(epicsRingPointerId id);
 /*ringPointerPush returns (0,1) if p (was not, was) put on ring*/
-epicsShareFunc int  epicsShareAPI epicsRingPointerPush(epicsRingPointerId id,void *p);
+LIBCOM_API int  LIBCOMSTD_API epicsRingPointerPush(epicsRingPointerId id,void *p);
 /*ringPointerPop returns 0 if ring is empty*/
-epicsShareFunc void* epicsShareAPI epicsRingPointerPop(epicsRingPointerId id) ;
-epicsShareFunc void epicsShareAPI epicsRingPointerFlush(epicsRingPointerId id);
-epicsShareFunc int  epicsShareAPI epicsRingPointerGetFree(epicsRingPointerId id);
-epicsShareFunc int  epicsShareAPI epicsRingPointerGetUsed(epicsRingPointerId id);
-epicsShareFunc int  epicsShareAPI epicsRingPointerGetSize(epicsRingPointerId id);
-epicsShareFunc int  epicsShareAPI epicsRingPointerIsEmpty(epicsRingPointerId id);
-epicsShareFunc int  epicsShareAPI epicsRingPointerIsFull(epicsRingPointerId id);
-epicsShareFunc int  epicsShareAPI epicsRingPointerGetHighWaterMark(epicsRingPointerIdConst id);
-epicsShareFunc void epicsShareAPI epicsRingPointerResetHighWaterMark(epicsRingPointerId id);
+LIBCOM_API void* LIBCOMSTD_API epicsRingPointerPop(epicsRingPointerId id) ;
+LIBCOM_API void LIBCOMSTD_API epicsRingPointerFlush(epicsRingPointerId id);
+LIBCOM_API int  LIBCOMSTD_API epicsRingPointerGetFree(epicsRingPointerId id);
+LIBCOM_API int  LIBCOMSTD_API epicsRingPointerGetUsed(epicsRingPointerId id);
+LIBCOM_API int  LIBCOMSTD_API epicsRingPointerGetSize(epicsRingPointerId id);
+LIBCOM_API int  LIBCOMSTD_API epicsRingPointerIsEmpty(epicsRingPointerId id);
+LIBCOM_API int  LIBCOMSTD_API epicsRingPointerIsFull(epicsRingPointerId id);
+LIBCOM_API int  LIBCOMSTD_API epicsRingPointerGetHighWaterMark(epicsRingPointerIdConst id);
+LIBCOM_API void LIBCOMSTD_API epicsRingPointerResetHighWaterMark(epicsRingPointerId id);
 
 /* This routine was incorrectly named in previous releases */
 #define epicsRingPointerSize epicsRingPointerGetSize

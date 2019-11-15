@@ -12,7 +12,7 @@
 #ifndef INCasTrapWriteh
 #define INCasTrapWriteh
 
-#include "shareLib.h"
+#include "libComAPI.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,9 +32,9 @@ typedef struct asTrapWriteMessage {
 typedef void *asTrapWriteId;
 typedef void(*asTrapWriteListener)(asTrapWriteMessage *pmessage,int after);
 
-epicsShareFunc asTrapWriteId epicsShareAPI asTrapWriteRegisterListener(
+LIBCOM_API asTrapWriteId LIBCOMSTD_API asTrapWriteRegisterListener(
     asTrapWriteListener func);
-epicsShareFunc void epicsShareAPI asTrapWriteUnregisterListener(
+LIBCOM_API void LIBCOMSTD_API asTrapWriteUnregisterListener(
     asTrapWriteId id);
 
 /*

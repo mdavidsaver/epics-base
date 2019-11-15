@@ -13,18 +13,18 @@
 #define INCfreeListh
 
 #include <stddef.h>
-#include "shareLib.h"
+#include "libComAPI.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-epicsShareFunc void epicsShareAPI freeListInitPvt(void **ppvt,int size,int nmalloc);
-epicsShareFunc void * epicsShareAPI freeListCalloc(void *pvt);
-epicsShareFunc void * epicsShareAPI freeListMalloc(void *pvt);
-epicsShareFunc void epicsShareAPI freeListFree(void *pvt,void*pmem);
-epicsShareFunc void epicsShareAPI freeListCleanup(void *pvt);
-epicsShareFunc size_t epicsShareAPI freeListItemsAvail(void *pvt);
+LIBCOM_API void LIBCOMSTD_API freeListInitPvt(void **ppvt,int size,int nmalloc);
+LIBCOM_API void * LIBCOMSTD_API freeListCalloc(void *pvt);
+LIBCOM_API void * LIBCOMSTD_API freeListMalloc(void *pvt);
+LIBCOM_API void LIBCOMSTD_API freeListFree(void *pvt,void*pmem);
+LIBCOM_API void LIBCOMSTD_API freeListCleanup(void *pvt);
+LIBCOM_API size_t LIBCOMSTD_API freeListItemsAvail(void *pvt);
 
 #ifdef __cplusplus
 }

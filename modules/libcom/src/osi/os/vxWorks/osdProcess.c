@@ -22,11 +22,10 @@
 
 #include <remLib.h>
 
-#define epicsExportSharedSymbols
 #include "osiProcess.h"
 #include "errlog.h"
 
-epicsShareFunc osiGetUserNameReturn epicsShareAPI osiGetUserName (char *pBuf, unsigned bufSizeIn)
+LIBCOM_API osiGetUserNameReturn LIBCOMSTD_API osiGetUserName (char *pBuf, unsigned bufSizeIn)
 {
 	char pName[MAX_IDENTITY_LEN];
     unsigned uiLength;
@@ -49,7 +48,7 @@ epicsShareFunc osiGetUserNameReturn epicsShareAPI osiGetUserName (char *pBuf, un
     return osiGetUserNameSuccess;
 }
 
-epicsShareFunc osiSpawnDetachedProcessReturn epicsShareAPI osiSpawnDetachedProcess
+LIBCOM_API osiSpawnDetachedProcessReturn LIBCOMSTD_API osiSpawnDetachedProcess
     (const char *pProcessName, const char *pBaseExecutableName)
 {
     return osiSpawnDetachedProcessNoSupport;

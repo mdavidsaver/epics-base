@@ -24,10 +24,9 @@
 #define STRICT
 #include <windows.h>
 
-#define epicsExportSharedSymbols
 #include "osiProcess.h"
 
-epicsShareFunc osiGetUserNameReturn epicsShareAPI osiGetUserName (char *pBuf, unsigned bufSizeIn)
+LIBCOM_API osiGetUserNameReturn LIBCOMSTD_API osiGetUserName (char *pBuf, unsigned bufSizeIn)
 {
     DWORD bufsize;
 
@@ -48,7 +47,7 @@ epicsShareFunc osiGetUserNameReturn epicsShareAPI osiGetUserName (char *pBuf, un
     return osiGetUserNameSuccess;
 }
 
-epicsShareFunc osiSpawnDetachedProcessReturn epicsShareAPI osiSpawnDetachedProcess 
+LIBCOM_API osiSpawnDetachedProcessReturn LIBCOMSTD_API osiSpawnDetachedProcess 
     ( const char *pProcessName, const char *pBaseExecutableName )
 {
 	BOOL status;

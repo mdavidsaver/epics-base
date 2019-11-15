@@ -16,7 +16,7 @@
 #ifndef INC_alarm_H
 #define INC_alarm_H
 
-#include "shareLib.h"
+#include "libComAPI.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -97,8 +97,8 @@ typedef enum {
 
 /* Name string arrays */
 
-epicsShareExtern const char *epicsAlarmSeverityStrings [ALARM_NSEV];
-epicsShareExtern const char *epicsAlarmConditionStrings [ALARM_NSTATUS];
+LIBCOM_API extern const char *epicsAlarmSeverityStrings [ALARM_NSEV];
+LIBCOM_API extern const char *epicsAlarmConditionStrings [ALARM_NSTATUS];
 
 
 #ifdef __cplusplus

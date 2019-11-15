@@ -18,7 +18,7 @@
  */
 
 #include <stdlib.h>
-#include "shareLib.h"
+#include "libComAPI.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,7 +31,7 @@ extern "C" {
  *
  * this routine is called quite frequently so an efficent implementation is important
  */
-epicsShareFunc int epicsShareAPI osiSufficentSpaceInPool ( size_t contiguousBlockSize );
+LIBCOM_API int LIBCOMSTD_API osiSufficentSpaceInPool ( size_t contiguousBlockSize );
 
 #ifdef __cplusplus
 }

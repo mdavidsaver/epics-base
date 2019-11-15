@@ -12,7 +12,7 @@
 
 #include <stddef.h>
 
-#include "shareLib.h"
+#include "libComAPI.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,7 +46,7 @@ typedef enum {
 } epicsThreadBooleanStatus;
 
 /** Lookup target specific default stack size */
-epicsShareFunc unsigned int epicsShareAPI epicsThreadGetStackSize(
+LIBCOM_API unsigned int LIBCOMSTD_API epicsThreadGetStackSize(
     epicsThreadStackSizeClass size);
 
 /* (epicsThreadId)0 is guaranteed to be an invalid thread id */
@@ -69,16 +69,16 @@ typedef epicsThreadId epicsThreadOnceId;
  * }
  * @endcode
  */
-epicsShareFunc void epicsShareAPI epicsThreadOnce(
+LIBCOM_API void LIBCOMSTD_API epicsThreadOnce(
     epicsThreadOnceId *id, EPICSTHREADFUNC, void *arg);
 
 /* When real-time scheduling is active, attempt any post-init operations
  * that preserve real-time performance. For POSIX targets this locks the
  * process into RAM, preventing swap-related VM faults.
  */
-epicsShareFunc void epicsThreadRealtimeLock(void);
+LIBCOM_API void epicsThreadRealtimeLock(void);
 
-epicsShareFunc void epicsShareAPI epicsThreadExitMain(void);
+LIBCOM_API void LIBCOMSTD_API epicsThreadExitMain(void);
 
 /** For use with epicsThreadCreateOpt() */
 typedef struct epicsThreadOpts {
@@ -110,69 +110,69 @@ typedef struct epicsThreadOpts {
  * @param opts Modifiers for the new thread, or NULL to use target specific defaults.
  * @return NULL on error
  */
-epicsShareFunc epicsThreadId epicsThreadCreateOpt (
+LIBCOM_API epicsThreadId epicsThreadCreateOpt (
     const char * name,
     EPICSTHREADFUNC funptr, void * parm,
     const epicsThreadOpts *opts );
 /** Short-hand for epicsThreadCreateOpt() to create an un-joinable thread. */
-epicsShareFunc epicsThreadId epicsShareAPI epicsThreadCreate (
+LIBCOM_API epicsThreadId LIBCOMSTD_API epicsThreadCreate (
     const char * name, unsigned int priority, unsigned int stackSize,
     EPICSTHREADFUNC funptr,void * parm );
 /** Short-hand for epicsThreadCreateOpt() to create an un-joinable thread.
  * On error calls cantProceed()
  */
-epicsShareFunc epicsThreadId epicsShareAPI epicsThreadMustCreate (
+LIBCOM_API epicsThreadId LIBCOMSTD_API epicsThreadMustCreate (
     const char * name, unsigned int priority, unsigned int stackSize,
     EPICSTHREADFUNC funptr,void * parm );
 
 /* This gets undefined in osdThread.h on VxWorks < 6.9 */
 #define EPICS_THREAD_CAN_JOIN
 /** Wait for a joinable thread to exit (return from its main function) */
-epicsShareFunc void epicsThreadMustJoin(epicsThreadId id);
+LIBCOM_API void epicsThreadMustJoin(epicsThreadId id);
 /** Block the current thread until epicsThreadResume(). */
-epicsShareFunc void epicsShareAPI epicsThreadSuspendSelf(void);
+LIBCOM_API void LIBCOMSTD_API epicsThreadSuspendSelf(void);
 /** Resume a thread suspended with epicsThreadSuspendSelf() */
-epicsShareFunc void epicsShareAPI epicsThreadResume(epicsThreadId id);
+LIBCOM_API void LIBCOMSTD_API epicsThreadResume(epicsThreadId id);
 /** Return thread OSI priority */
-epicsShareFunc unsigned int epicsShareAPI epicsThreadGetPriority(
+LIBCOM_API unsigned int LIBCOMSTD_API epicsThreadGetPriority(
     epicsThreadId id);
 /** Return thread OSI priority */
-epicsShareFunc unsigned int epicsShareAPI epicsThreadGetPrioritySelf(void);
+LIBCOM_API unsigned int LIBCOMSTD_API epicsThreadGetPrioritySelf(void);
 /** Change OSI priority of target thread. */
-epicsShareFunc void epicsShareAPI epicsThreadSetPriority(
+LIBCOM_API void LIBCOMSTD_API epicsThreadSetPriority(
     epicsThreadId id,unsigned int priority);
 /** Lookup the next usage OSI priority such that priority > *pPriorityJustBelow
  *  if this is possible with the current target configuration and privlages.
  */
-epicsShareFunc epicsThreadBooleanStatus epicsShareAPI
+LIBCOM_API epicsThreadBooleanStatus LIBCOMSTD_API
     epicsThreadHighestPriorityLevelBelow (
         unsigned int priority, unsigned *pPriorityJustBelow);
 /** Lookup the next usage OSI priority such that priority < *pPriorityJustBelow
  *  if this is possible with the current target configuration and privlages.
  */
-epicsShareFunc epicsThreadBooleanStatus epicsShareAPI
+LIBCOM_API epicsThreadBooleanStatus LIBCOMSTD_API
     epicsThreadLowestPriorityLevelAbove (
         unsigned int priority, unsigned *pPriorityJustAbove);
 /** Test if two thread IDs actually refer to the same OS thread */
-epicsShareFunc int epicsShareAPI epicsThreadIsEqual(
+LIBCOM_API int LIBCOMSTD_API epicsThreadIsEqual(
     epicsThreadId id1, epicsThreadId id2);
 /** Test if thread has been suspended with epicsThreadSuspendSelf() */
-epicsShareFunc int epicsShareAPI epicsThreadIsSuspended(epicsThreadId id);
+LIBCOM_API int LIBCOMSTD_API epicsThreadIsSuspended(epicsThreadId id);
 /** @brief Block the calling thread for at least the specified time.
  * @param seconds Time to wait in seconds.  Values <=0 blocks for the shortest possible time.
  */
-epicsShareFunc void epicsShareAPI epicsThreadSleep(double seconds);
+LIBCOM_API void LIBCOMSTD_API epicsThreadSleep(double seconds);
 /** @brief Query a value approximating the OS timer/scheduler resolution.
  * @return A value in seconds >=0
  *
  * @warning On targets other than vxWorks and RTEMS, the quantum value often isn't
  *          meaningful.  Use of this function is discouraged in portable code.
  */
-epicsShareFunc double epicsShareAPI epicsThreadSleepQuantum(void);
+LIBCOM_API double LIBCOMSTD_API epicsThreadSleepQuantum(void);
 /** Find an epicsThreadId associated with the current thread.
  * For non-EPICS threads, a new epicsThreadId may be allocated.
  */
-epicsShareFunc epicsThreadId epicsShareAPI epicsThreadGetIdSelf(void);
+LIBCOM_API epicsThreadId LIBCOMSTD_API epicsThreadGetIdSelf(void);
 /** Attempt to find the first instance of a thread by name.
  * @return An epicsThreadId, or NULL if no such thread is currently running.
  *         Note that a non-NULL ID may still be invalid if this call races
@@ -181,12 +181,12 @@ epicsShareFunc epicsThreadId epicsShareAPI epicsThreadGetIdSelf(void);
  * @warning Safe use of this function requires external knowledge that this
  *          thread will not return.
  */
-epicsShareFunc epicsThreadId epicsShareAPI epicsThreadGetId(const char *name);
+LIBCOM_API epicsThreadId LIBCOMSTD_API epicsThreadGetId(const char *name);
 /** Return a value approximating the number of threads which this target
  *  can run in parallel.  This value is advisory.
  * @return >=1
  */
-epicsShareFunc int epicsThreadGetCPUs(void);
+LIBCOM_API int epicsThreadGetCPUs(void);
 
 /** Return the name of the current thread.
  *
@@ -195,7 +195,7 @@ epicsShareFunc int epicsThreadGetCPUs(void);
  * This is either a copy of the string passed to epicsThread*Create*(),
  * or an arbitrary unique string for non-EPICS threads.
  */
-epicsShareFunc const char * epicsShareAPI epicsThreadGetNameSelf(void);
+LIBCOM_API const char * LIBCOMSTD_API epicsThreadGetNameSelf(void);
 
 /** Copy out the thread name into the provided buffer.
  *
@@ -203,39 +203,39 @@ epicsShareFunc const char * epicsShareAPI epicsThreadGetNameSelf(void);
  * size is number of bytes in buffer to hold name (including terminator).
  * Failure results in an empty string stored in name.
  */
-epicsShareFunc void epicsShareAPI epicsThreadGetName(
+LIBCOM_API void LIBCOMSTD_API epicsThreadGetName(
     epicsThreadId id, char *name, size_t size);
 
-epicsShareFunc int epicsShareAPI epicsThreadIsOkToBlock(void);
-epicsShareFunc void epicsShareAPI epicsThreadSetOkToBlock(int isOkToBlock);
+LIBCOM_API int LIBCOMSTD_API epicsThreadIsOkToBlock(void);
+LIBCOM_API void LIBCOMSTD_API epicsThreadSetOkToBlock(int isOkToBlock);
 
 /** Print to stdout information about all running EPICS threads.
  * @param level 0 prints minimal output.  Higher values print more details.
  */
-epicsShareFunc void epicsShareAPI epicsThreadShowAll(unsigned int level);
+LIBCOM_API void LIBCOMSTD_API epicsThreadShowAll(unsigned int level);
 /** Print info about a single EPICS thread. */
-epicsShareFunc void epicsShareAPI epicsThreadShow(
+LIBCOM_API void LIBCOMSTD_API epicsThreadShow(
     epicsThreadId id,unsigned int level);
 
 /* Hooks called when a thread starts, map function called once for every thread */
 typedef void (*EPICS_THREAD_HOOK_ROUTINE)(epicsThreadId id);
-epicsShareFunc int epicsThreadHookAdd(EPICS_THREAD_HOOK_ROUTINE hook);
-epicsShareFunc int epicsThreadHookDelete(EPICS_THREAD_HOOK_ROUTINE hook);
-epicsShareFunc void epicsThreadHooksShow(void);
-epicsShareFunc void epicsThreadMap(EPICS_THREAD_HOOK_ROUTINE func);
+LIBCOM_API int epicsThreadHookAdd(EPICS_THREAD_HOOK_ROUTINE hook);
+LIBCOM_API int epicsThreadHookDelete(EPICS_THREAD_HOOK_ROUTINE hook);
+LIBCOM_API void epicsThreadHooksShow(void);
+LIBCOM_API void epicsThreadMap(EPICS_THREAD_HOOK_ROUTINE func);
 
 /** Thread local storage */
 typedef struct epicsThreadPrivateOSD * epicsThreadPrivateId;
 /** Allocate a new thread local variable.
  * This variable will initially hold NULL for each thread.
  */
-epicsShareFunc epicsThreadPrivateId epicsShareAPI epicsThreadPrivateCreate(void);
+LIBCOM_API epicsThreadPrivateId LIBCOMSTD_API epicsThreadPrivateCreate(void);
 /** Free a thread local variable */
-epicsShareFunc void epicsShareAPI epicsThreadPrivateDelete(epicsThreadPrivateId id);
+LIBCOM_API void LIBCOMSTD_API epicsThreadPrivateDelete(epicsThreadPrivateId id);
 /** Update thread local variable */
-epicsShareFunc void epicsShareAPI epicsThreadPrivateSet(epicsThreadPrivateId,void *);
+LIBCOM_API void LIBCOMSTD_API epicsThreadPrivateSet(epicsThreadPrivateId,void *);
 /** Fetch the current value of a thread local variable */
-epicsShareFunc void * epicsShareAPI epicsThreadPrivateGet(epicsThreadPrivateId);
+LIBCOM_API void * LIBCOMSTD_API epicsThreadPrivateGet(epicsThreadPrivateId);
 
 #ifdef __cplusplus
 }
@@ -247,7 +247,7 @@ epicsShareFunc void * epicsShareAPI epicsThreadPrivateGet(epicsThreadPrivateId);
 #include "epicsMutex.h"
 
 //! Interface used with class epicsThread
-class epicsShareClass epicsThreadRunable {
+class LIBCOM_API epicsThreadRunable {
 public:
     virtual ~epicsThreadRunable () = 0;
     //! Thread main function.
@@ -266,7 +266,7 @@ extern "C" void epicsThreadCallEntryPoint ( void * );
  *
  * @note Threads must be start() ed.
  */
-class epicsShareClass epicsThread {
+class LIBCOM_API epicsThread {
 public:
     /** Create a new thread with the provided information.
      *
@@ -338,7 +338,7 @@ private:
     class exitException {};
 };
 
-class epicsShareClass epicsThreadPrivateBase {
+class LIBCOM_API epicsThreadPrivateBase {
 public:
     class unableToCreateThreadPrivate {}; /* exception */
 protected:

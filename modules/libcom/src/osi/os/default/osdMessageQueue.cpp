@@ -19,7 +19,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define epicsExportSharedSymbols
 #include "epicsMessageQueue.h"
 #include <ellLib.h>
 #include <epicsAssert.h>
@@ -68,7 +67,7 @@ struct epicsMessageQueueOSD {
     bool            full;
 };
 
-epicsShareFunc epicsMessageQueueId epicsShareAPI epicsMessageQueueCreate(
+LIBCOM_API epicsMessageQueueId LIBCOMSTD_API epicsMessageQueueCreate(
     unsigned int capacity,
     unsigned int maxMessageSize)
 {
@@ -115,7 +114,7 @@ freeEventNode(struct eventNode *enode)
     free(enode);
 }
 
-epicsShareFunc void epicsShareAPI
+LIBCOM_API void LIBCOMSTD_API
 epicsMessageQueueDestroy(epicsMessageQueueId pmsg)
 {
     struct eventNode *evp;
@@ -241,21 +240,21 @@ mySend(epicsMessageQueueId pmsg, void *message, unsigned int size,
     return 0;
 }
 
-epicsShareFunc int epicsShareAPI
+LIBCOM_API int LIBCOMSTD_API
 epicsMessageQueueTrySend(epicsMessageQueueId pmsg, void *message,
     unsigned int size)
 {
     return mySend(pmsg, message, size, 0);
 }
 
-epicsShareFunc int epicsShareAPI
+LIBCOM_API int LIBCOMSTD_API
 epicsMessageQueueSend(epicsMessageQueueId pmsg, void *message,
     unsigned int size)
 {
     return mySend(pmsg, message, size, -1);
 }
 
-epicsShareFunc int epicsShareAPI
+LIBCOM_API int LIBCOMSTD_API
 epicsMessageQueueSendWithTimeout(epicsMessageQueueId pmsg, void *message,
     unsigned int size, double timeout)
 {
@@ -358,28 +357,28 @@ myReceive(epicsMessageQueueId pmsg, void *message, unsigned int size,
     return -1;
 }
 
-epicsShareFunc int epicsShareAPI
+LIBCOM_API int LIBCOMSTD_API
 epicsMessageQueueTryReceive(epicsMessageQueueId pmsg, void *message,
     unsigned int size)
 {
     return myReceive(pmsg, message, size, 0);
 }
 
-epicsShareFunc int epicsShareAPI
+LIBCOM_API int LIBCOMSTD_API
 epicsMessageQueueReceive(epicsMessageQueueId pmsg, void *message,
     unsigned int size)
 {
     return myReceive(pmsg, message, size, -1);
 }
 
-epicsShareFunc int epicsShareAPI
+LIBCOM_API int LIBCOMSTD_API
 epicsMessageQueueReceiveWithTimeout(epicsMessageQueueId pmsg, void *message,
     unsigned int size, double timeout)
 {
     return myReceive(pmsg, message, size, timeout);
 }
 
-epicsShareFunc int epicsShareAPI
+LIBCOM_API int LIBCOMSTD_API
 epicsMessageQueuePending(epicsMessageQueueId pmsg)
 {
     char *myInPtr, *myOutPtr;
@@ -398,7 +397,7 @@ epicsMessageQueuePending(epicsMessageQueueId pmsg)
     return nmsg;
 }
 
-epicsShareFunc void epicsShareAPI
+LIBCOM_API void LIBCOMSTD_API
 epicsMessageQueueShow(epicsMessageQueueId pmsg, int level)
 {
     printf("Message Queue Used:%d  Slots:%lu", epicsMessageQueuePending(pmsg), pmsg->capacity);

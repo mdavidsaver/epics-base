@@ -18,7 +18,6 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
-#define epicsExportSharedSymbols
 #include "epicsTempFile.h"
 
 //
@@ -28,7 +27,7 @@
 // TMP environment varianble
 //
 extern "C"
-epicsShareFunc FILE * epicsShareAPI epicsTempFile ()
+LIBCOM_API FILE * LIBCOMSTD_API epicsTempFile ()
 {
     char * pName = _tempnam ( "c:\\tmp", "epics" );
     if( ! pName ) {

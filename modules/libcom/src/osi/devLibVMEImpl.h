@@ -20,7 +20,7 @@
 #define INCdevLibImplh 1
 
 #include "dbDefs.h"
-#include "shareLib.h"
+#include "libComAPI.h"
 #include "devLib.h"
 
 #ifdef __cplusplus
@@ -89,7 +89,7 @@ typedef struct devLibVME {
 	int (*pDevInterruptInUseVME) (unsigned vectorNumber);
 }devLibVME;
 
-epicsShareExtern devLibVME *pdevLibVME;
+LIBCOM_API extern devLibVME *pdevLibVME;
 
 #ifndef NO_DEVLIB_COMPAT
 #  define pdevLibVirtualOS pdevLibVME

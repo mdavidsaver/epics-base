@@ -13,12 +13,12 @@
 extern "C" {
 #endif
 
-#include <shareLib.h>
+#include <libComAPI.h>
 #include <stdio.h>
 
-epicsShareFunc void * epicsShareAPI epicsReadlineBegin (FILE *in);
-epicsShareFunc char * epicsShareAPI epicsReadline (const char *prompt, void *context);
-epicsShareFunc void   epicsShareAPI epicsReadlineEnd (void *context);
+LIBCOM_API void * LIBCOMSTD_API epicsReadlineBegin (FILE *in);
+LIBCOM_API char * LIBCOMSTD_API epicsReadline (const char *prompt, void *context);
+LIBCOM_API void   LIBCOMSTD_API epicsReadlineEnd (void *context);
 
 #ifdef __cplusplus
 }

@@ -14,7 +14,7 @@
 #ifndef INCpostfixh
 #define INCpostfixh
 
-#include "shareLib.h"
+#include "libComAPI.h"
 
 #define CALCPERFORM_NARGS 12
 #define CALCPERFORM_STACK 80
@@ -67,19 +67,19 @@
 extern "C" {
 #endif
 
-epicsShareFunc long
+LIBCOM_API long
     postfix(const char *pinfix, char *ppostfix, short *perror);
 
-epicsShareFunc long
+LIBCOM_API long
     calcPerform(double *parg, double *presult, const char *ppostfix);
 
-epicsShareFunc long
+LIBCOM_API long
     calcArgUsage(const char *ppostfix, unsigned long *pinputs, unsigned long *pstores);
 
-epicsShareFunc const char *
+LIBCOM_API const char *
     calcErrorStr(short error);
 
-epicsShareFunc void
+LIBCOM_API void
     calcExprDump(const char *pinst);
 
 #ifdef __cplusplus

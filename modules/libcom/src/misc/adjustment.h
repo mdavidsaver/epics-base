@@ -11,13 +11,13 @@
 
 #ifndef INCadjustmenth
 #define INCadjustmenth
-#include "shareLib.h"
+#include "libComAPI.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-epicsShareFunc size_t adjustToWorstCaseAlignment(size_t size);
+LIBCOM_API size_t adjustToWorstCaseAlignment(size_t size);
 
 #ifdef __cplusplus
 }

@@ -10,11 +10,10 @@
 
 #include <string.h>
 
-#define epicsExportSharedSymbols
 #include "epicsTempFile.h"
 
 extern "C"
-epicsShareFunc FILE * epicsShareAPI epicsTempFile ( void )
+LIBCOM_API FILE * LIBCOMSTD_API epicsTempFile ( void )
 {
     return tmpfile ();
 }

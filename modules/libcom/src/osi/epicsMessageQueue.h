@@ -20,13 +20,13 @@
 #define epicsMessageQueueh
 
 #include "epicsAssert.h"
-#include "shareLib.h"
+#include "libComAPI.h"
 
 typedef struct epicsMessageQueueOSD *epicsMessageQueueId;
 
 #ifdef __cplusplus
 
-class epicsShareClass epicsMessageQueue {
+class LIBCOM_API epicsMessageQueue {
 public:
     epicsMessageQueue ( unsigned int capacity,
                         unsigned int maximumMessageSize );
@@ -52,40 +52,40 @@ private: /* Prevent compiler-generated member functions */
 extern "C" {
 #endif /*__cplusplus */
 
-epicsShareFunc epicsMessageQueueId epicsShareAPI epicsMessageQueueCreate(
+LIBCOM_API epicsMessageQueueId LIBCOMSTD_API epicsMessageQueueCreate(
     unsigned int capacity,
     unsigned int maximumMessageSize);
-epicsShareFunc void epicsShareAPI epicsMessageQueueDestroy(
+LIBCOM_API void LIBCOMSTD_API epicsMessageQueueDestroy(
     epicsMessageQueueId id);
-epicsShareFunc int epicsShareAPI epicsMessageQueueTrySend(
+LIBCOM_API int LIBCOMSTD_API epicsMessageQueueTrySend(
     epicsMessageQueueId id,
     void *message,
     unsigned int messageSize);
-epicsShareFunc int epicsShareAPI epicsMessageQueueSend(
+LIBCOM_API int LIBCOMSTD_API epicsMessageQueueSend(
     epicsMessageQueueId id,
     void *message,
     unsigned int messageSize);
-epicsShareFunc int epicsShareAPI epicsMessageQueueSendWithTimeout(
+LIBCOM_API int LIBCOMSTD_API epicsMessageQueueSendWithTimeout(
     epicsMessageQueueId id,
     void *message,
     unsigned int messageSize,
     double timeout);
-epicsShareFunc int epicsShareAPI epicsMessageQueueTryReceive(
+LIBCOM_API int LIBCOMSTD_API epicsMessageQueueTryReceive(
     epicsMessageQueueId id,
     void *message,
     unsigned int size);
-epicsShareFunc int epicsShareAPI epicsMessageQueueReceive(
+LIBCOM_API int LIBCOMSTD_API epicsMessageQueueReceive(
     epicsMessageQueueId id,
     void *message,
     unsigned int size);
-epicsShareFunc int epicsShareAPI epicsMessageQueueReceiveWithTimeout(
+LIBCOM_API int LIBCOMSTD_API epicsMessageQueueReceiveWithTimeout(
     epicsMessageQueueId id,
     void *message,
     unsigned int size,
     double timeout);
-epicsShareFunc int epicsShareAPI epicsMessageQueuePending(
+LIBCOM_API int LIBCOMSTD_API epicsMessageQueuePending(
     epicsMessageQueueId id);
-epicsShareFunc void epicsShareAPI epicsMessageQueueShow(
+LIBCOM_API void LIBCOMSTD_API epicsMessageQueueShow(
     epicsMessageQueueId id,
     int level);
 

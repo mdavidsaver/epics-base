@@ -10,7 +10,7 @@
 #ifndef INC_epicsGeneralTime_H
 #define INC_epicsGeneralTime_H
 
-#include "shareLib.h"
+#include "libComAPI.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,22 +23,22 @@ extern "C" {
 /* NUM_TIME_EVENTS are now allowed if supported by a custom time provider */
 /* which should provide its own advancing timestamp validation. */
 
-epicsShareFunc void generalTime_Init(void);
+LIBCOM_API void generalTime_Init(void);
 
-epicsShareFunc int  installLastResortEventProvider(void);
+LIBCOM_API int  installLastResortEventProvider(void);
 
-epicsShareFunc void generalTimeResetErrorCounts(void);
-epicsShareFunc int  generalTimeGetErrorCounts(void);
+LIBCOM_API void generalTimeResetErrorCounts(void);
+LIBCOM_API int  generalTimeGetErrorCounts(void);
 
-epicsShareFunc const char * generalTimeCurrentProviderName(void);
-epicsShareFunc const char * generalTimeEventProviderName(void);
-epicsShareFunc const char * generalTimeHighestCurrentName(void);
+LIBCOM_API const char * generalTimeCurrentProviderName(void);
+LIBCOM_API const char * generalTimeEventProviderName(void);
+LIBCOM_API const char * generalTimeHighestCurrentName(void);
 
 /* Original names, for compatibility */
 #define generalTimeCurrentTpName generalTimeCurrentProviderName
 #define generalTimeEventTpName generalTimeEventProviderName
 
-epicsShareFunc long generalTimeReport(int interest);
+LIBCOM_API long generalTimeReport(int interest);
 
 #ifdef __cplusplus
 }

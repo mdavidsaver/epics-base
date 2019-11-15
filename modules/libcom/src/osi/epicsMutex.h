@@ -12,7 +12,7 @@
 
 #include "epicsAssert.h"
 
-#include "shareLib.h"
+#include "libComAPI.h"
 
 typedef struct epicsMutexParm *epicsMutexId;
 typedef enum {
@@ -26,7 +26,7 @@ typedef enum {
 
 #define newEpicsMutex new epicsMutex(__FILE__,__LINE__)
 
-class epicsShareClass epicsMutex {
+class LIBCOM_API epicsMutex {
 public:
     typedef epicsGuard<epicsMutex> guard_t;
     typedef epicsGuard<epicsMutex> release_t;
@@ -49,7 +49,7 @@ private:
     epicsMutex & operator = ( const epicsMutex & );
 };
 
-class epicsShareClass epicsDeadlockDetectMutex {
+class LIBCOM_API epicsDeadlockDetectMutex {
 public:
     typedef epicsGuard<epicsDeadlockDetectMutex> guard_t;
     typedef epicsGuard<epicsDeadlockDetectMutex> release_t;
@@ -75,24 +75,24 @@ extern "C" {
 #endif /*__cplusplus*/
 
 #define epicsMutexCreate() epicsMutexOsiCreate(__FILE__,__LINE__)
-epicsShareFunc epicsMutexId epicsShareAPI epicsMutexOsiCreate(
+LIBCOM_API epicsMutexId LIBCOMSTD_API epicsMutexOsiCreate(
     const char *pFileName,int lineno);
 #define epicsMutexMustCreate() epicsMutexOsiMustCreate(__FILE__,__LINE__)
-epicsShareFunc epicsMutexId epicsShareAPI epicsMutexOsiMustCreate(
+LIBCOM_API epicsMutexId LIBCOMSTD_API epicsMutexOsiMustCreate(
     const char *pFileName,int lineno);
-epicsShareFunc void epicsShareAPI epicsMutexDestroy(epicsMutexId id);
-epicsShareFunc void epicsShareAPI epicsMutexUnlock(epicsMutexId id);
-epicsShareFunc epicsMutexLockStatus epicsShareAPI epicsMutexLock(
+LIBCOM_API void LIBCOMSTD_API epicsMutexDestroy(epicsMutexId id);
+LIBCOM_API void LIBCOMSTD_API epicsMutexUnlock(epicsMutexId id);
+LIBCOM_API epicsMutexLockStatus LIBCOMSTD_API epicsMutexLock(
     epicsMutexId id);
 #define epicsMutexMustLock(ID) {                        \
     epicsMutexLockStatus status = epicsMutexLock(ID);   \
     assert(status == epicsMutexLockOK);                 \
 }
-epicsShareFunc epicsMutexLockStatus epicsShareAPI epicsMutexTryLock(
+LIBCOM_API epicsMutexLockStatus LIBCOMSTD_API epicsMutexTryLock(
     epicsMutexId id);
-epicsShareFunc void epicsShareAPI epicsMutexShow(
+LIBCOM_API void LIBCOMSTD_API epicsMutexShow(
     epicsMutexId id,unsigned  int level);
-epicsShareFunc void epicsShareAPI epicsMutexShowAll(
+LIBCOM_API void LIBCOMSTD_API epicsMutexShowAll(
     int onlyLocked,unsigned  int level);
 
 /*NOTES:

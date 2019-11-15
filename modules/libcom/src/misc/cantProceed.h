@@ -12,15 +12,15 @@
 #include <stdlib.h>
 
 #include "compilerDependencies.h"
-#include "shareLib.h"
+#include "libComAPI.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-epicsShareFunc void cantProceed(const char *errorMessage, ...) EPICS_PRINTF_STYLE(1,2);
-epicsShareFunc void * callocMustSucceed(size_t count, size_t size, const char *errorMessage);
-epicsShareFunc void * mallocMustSucceed(size_t size, const char *errorMessage);
+LIBCOM_API void cantProceed(const char *errorMessage, ...) EPICS_PRINTF_STYLE(1,2);
+LIBCOM_API void * callocMustSucceed(size_t count, size_t size, const char *errorMessage);
+LIBCOM_API void * mallocMustSucceed(size_t size, const char *errorMessage);
 
 #ifdef __cplusplus
 }

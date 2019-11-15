@@ -20,7 +20,7 @@
 #include "dbDefs.h"
 #include "osdVME.h"
 #include "errMdef.h"
-#include "shareLib.h"
+#include "libComAPI.h"
 #include "devLib.h"
 
 #ifdef __cplusplus
@@ -44,7 +44,7 @@ typedef enum {
  * pointer to an array of strings for each of
  * the above address types
  */
-epicsShareExtern const char *epicsAddressTypeName[];
+LIBCOM_API extern const char *epicsAddressTypeName[];
 
 #ifdef __cplusplus
 }
@@ -67,14 +67,14 @@ extern "C" {
  *  This section applies to all bus types
  */
 
-epicsShareFunc long devAddressMap(void); /* print an address map */
+LIBCOM_API long devAddressMap(void); /* print an address map */
 
 /*
  * devBusToLocalAddr()
  *
  * OSI routine to translate bus addresses their local CPU address mapping
  */
-epicsShareFunc long devBusToLocalAddr (
+LIBCOM_API long devBusToLocalAddr (
 		epicsAddressType addrType,
 		size_t busAddr,
 		volatile void **ppLocalAddr);
@@ -84,7 +84,7 @@ epicsShareFunc long devBusToLocalAddr (
  * a bus error safe "wordSize" read at the specified address which returns 
  * unsuccessful status if the device isnt present
  */
-epicsShareFunc long devReadProbe (
+LIBCOM_API long devReadProbe (
     unsigned wordSize, volatile const void *ptr, void *pValueRead);
 
 /*
@@ -97,7 +97,7 @@ epicsShareFunc long devReadProbe (
  * Checks all naturally aligned word sizes between char and long for
  * the entire specified range of bytes.
  */
-epicsShareFunc long devNoResponseProbe(
+LIBCOM_API long devNoResponseProbe(
 			epicsAddressType addrType,
 			size_t base,
 			size_t size
@@ -109,17 +109,17 @@ epicsShareFunc long devNoResponseProbe(
  * a bus error safe "wordSize" write at the specified address which returns 
  * unsuccessful status if the device isnt present
  */
-epicsShareFunc long devWriteProbe (
+LIBCOM_API long devWriteProbe (
     unsigned wordSize, volatile void *ptr, const void *pValueWritten);
 
-epicsShareFunc long devRegisterAddress(
+LIBCOM_API long devRegisterAddress(
 			const char *pOwnerName,
 			epicsAddressType addrType,
 			size_t logicalBaseAddress,
 			size_t size, /* bytes */
 			volatile void **pPhysicalAddress);
 
-epicsShareFunc long devUnregisterAddress(
+LIBCOM_API long devUnregisterAddress(
 			epicsAddressType addrType,
 			size_t logicalBaseAddress,
 			const char *pOwnerName);
@@ -127,7 +127,7 @@ epicsShareFunc long devUnregisterAddress(
 /*
  * allocate and register an unoccupied address block
  */
-epicsShareFunc long devAllocAddress(
+LIBCOM_API long devAllocAddress(
 			const char *pOwnerName,
 			epicsAddressType addrType,
 			size_t size,
@@ -143,7 +143,7 @@ epicsShareFunc long devAllocAddress(
 /*
  * connect ISR to a VME interrupt vector
  */
-epicsShareFunc long devConnectInterruptVME(
+LIBCOM_API long devConnectInterruptVME(
 			unsigned vectorNumber,
 			void (*pFunction)(void *),
 			void  *parameter);
@@ -155,7 +155,7 @@ epicsShareFunc long devConnectInterruptVME(
  * was connected. It is used as a key to prevent a driver from inadvertently
  * removing an interrupt handler that it didn't install 
  */
-epicsShareFunc long devDisconnectInterruptVME(
+LIBCOM_API long devDisconnectInterruptVME(
 			unsigned vectorNumber,
 			void (*pFunction)(void *));
 
@@ -164,25 +164,25 @@ epicsShareFunc long devDisconnectInterruptVME(
  *
  * returns boolean
  */
-epicsShareFunc int devInterruptInUseVME (unsigned vectorNumber);
+LIBCOM_API int devInterruptInUseVME (unsigned vectorNumber);
 
 /*
  * enable VME interrupt level
  */
-epicsShareFunc long devEnableInterruptLevelVME (unsigned level);
+LIBCOM_API long devEnableInterruptLevelVME (unsigned level);
 
 /*
  * disable VME interrupt level
  */
-epicsShareFunc long devDisableInterruptLevelVME (unsigned level);
+LIBCOM_API long devDisableInterruptLevelVME (unsigned level);
 
 /*
  * Routines to allocate and free memory in the A24 memory region.
  *
  */
-epicsShareFunc void *devLibA24Malloc(size_t);
-epicsShareFunc void *devLibA24Calloc(size_t);
-epicsShareFunc void devLibA24Free(void *pBlock);
+LIBCOM_API void *devLibA24Malloc(size_t);
+LIBCOM_API void *devLibA24Calloc(size_t);
+LIBCOM_API void devLibA24Free(void *pBlock);
 
 /*
  * ISA API
@@ -195,7 +195,7 @@ epicsShareFunc void devLibA24Free(void *pBlock);
  * (not implemented)
  * (API should be reviewed)
  */
-epicsShareFunc long devConnectInterruptISA(
+LIBCOM_API long devConnectInterruptISA(
 			unsigned interruptLevel,
 			void (*pFunction)(void *),
 			void  *parameter);
@@ -209,7 +209,7 @@ epicsShareFunc long devConnectInterruptISA(
  * was connected. It is used as a key to prevent a driver from inadvertently
  * removing an interrupt handler that it didn't install 
  */
-epicsShareFunc long devDisconnectInterruptISA(
+LIBCOM_API long devDisconnectInterruptISA(
 			unsigned interruptLevel,
 			void (*pFunction)(void *));
 
@@ -219,17 +219,17 @@ epicsShareFunc long devDisconnectInterruptISA(
  *
  * returns boolean
  */
-epicsShareFunc int devInterruptLevelInUseISA (unsigned interruptLevel);
+LIBCOM_API int devInterruptLevelInUseISA (unsigned interruptLevel);
 
 /*
  * enable ISA interrupt level
  */
-epicsShareFunc long devEnableInterruptLevelISA (unsigned level);
+LIBCOM_API long devEnableInterruptLevelISA (unsigned level);
 
 /*
  * disable ISA interrupt level
  */
-epicsShareFunc long devDisableInterruptLevelISA (unsigned level);
+LIBCOM_API long devDisableInterruptLevelISA (unsigned level);
 
 /*
  * Deprecated interface
@@ -247,7 +247,7 @@ typedef enum {intVME, intVXI, intISA} epicsInterruptType;
  * devConnectInterruptISA etc. devConnectInterrupt will be removed 
  * in a future release.
  */
-epicsShareFunc long devConnectInterrupt(
+LIBCOM_API long devConnectInterrupt(
 			epicsInterruptType intType,
 			unsigned vectorNumber,
 			void (*pFunction)(void *),
@@ -261,7 +261,7 @@ epicsShareFunc long devConnectInterrupt(
  * devDisconnectInterruptISA etc. devDisconnectInterrupt will be removed 
  * in a future release.
  */
-epicsShareFunc long devDisconnectInterrupt(
+LIBCOM_API long devDisconnectInterrupt(
 			epicsInterruptType      intType,
 			unsigned                vectorNumber,
 			void		        (*pFunction)(void *));
@@ -274,7 +274,7 @@ epicsShareFunc long devDisconnectInterrupt(
  * devEnableInterruptLevelISA etc. devEnableInterruptLevel will be removed 
  * in a future release.
  */
-epicsShareFunc long devEnableInterruptLevel(
+LIBCOM_API long devEnableInterruptLevel(
     epicsInterruptType intType, unsigned level);
 
 /*
@@ -285,7 +285,7 @@ epicsShareFunc long devEnableInterruptLevel(
  * devDisableInterruptLevelPCI etc. devDisableInterruptLevel will be removed 
  * in a future release.
  */
-epicsShareFunc long devDisableInterruptLevel (
+LIBCOM_API long devDisableInterruptLevel (
     epicsInterruptType intType, unsigned level);
 
 /*
@@ -295,7 +295,7 @@ epicsShareFunc long devDisableInterruptLevel (
  * Please use devNoResponseProbe(). locationProbe() will be removed 
  * in a future release.
  */
-epicsShareFunc long locationProbe (epicsAddressType addrType, char *pLocation);
+LIBCOM_API long locationProbe (epicsAddressType addrType, char *pLocation);
 
 #endif /* NO_DEVLIB_OLD_INTERFACE */
 

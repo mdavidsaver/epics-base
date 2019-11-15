@@ -21,7 +21,6 @@
 // The following is required for Solaris builds
 #undef __EXTENSIONS__
 
-#define epicsExportSharedSymbols
 #include "epicsAlgorithm.h"
 #include "epicsTime.h"
 #include "epicsThread.h"
@@ -31,7 +30,7 @@
 
 using namespace std;
 
-epicsThreadId epicsShareAPI epicsThreadCreate (
+epicsThreadId LIBCOMSTD_API epicsThreadCreate (
     const char * name, unsigned int priority, unsigned int stackSize,
     EPICSTHREADFUNC funptr,void * parm )
 {
@@ -356,7 +355,7 @@ extern "C" {
         okToBlockPrivate = epicsThreadPrivateCreate();
     }
 
-    int epicsShareAPI epicsThreadIsOkToBlock(void)
+    int LIBCOMSTD_API epicsThreadIsOkToBlock(void)
     {
         const int *pokToBlock;
         epicsThreadOnce(&okToBlockOnce, epicsThreadOnceIdInit, NULL);
@@ -364,7 +363,7 @@ extern "C" {
         return (pokToBlock ? *pokToBlock : 0);
     }
 
-    void epicsShareAPI epicsThreadSetOkToBlock(int isOkToBlock)
+    void LIBCOMSTD_API epicsThreadSetOkToBlock(int isOkToBlock)
     {
         const int *pokToBlock;
         epicsThreadOnce(&okToBlockOnce, epicsThreadOnceIdInit, NULL);
@@ -372,7 +371,7 @@ extern "C" {
         epicsThreadPrivateSet(okToBlockPrivate, (void *)pokToBlock);
     }
 
-    epicsThreadId epicsShareAPI epicsThreadMustCreate (
+    epicsThreadId LIBCOMSTD_API epicsThreadMustCreate (
         const char *name, unsigned int priority, unsigned int stackSize,
         EPICSTHREADFUNC funptr,void *parm)
     {

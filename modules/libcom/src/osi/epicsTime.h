@@ -14,7 +14,7 @@
 
 #include <time.h>
 
-#include "shareLib.h"
+#include "libComAPI.h"
 #include "epicsTypes.h"
 #include "osdTime.h"
 #include "errMdef.h"
@@ -65,7 +65,7 @@ struct time_t_wrapper {
     time_t ts;
 };
 
-class epicsShareClass epicsTimeEvent
+class LIBCOM_API epicsTimeEvent
 {
 public:
     epicsTimeEvent (const int &number);
@@ -74,7 +74,7 @@ private:
     int eventNumber;
 };
 
-class epicsShareClass epicsTime
+class LIBCOM_API epicsTime
 {
 public:
     /* exceptions */
@@ -189,85 +189,85 @@ extern "C" {
 #define epicsTimeEventDeviceTime -2
 
 /* These are implemented in the "generalTime" framework */
-epicsShareFunc int epicsShareAPI epicsTimeGetCurrent ( epicsTimeStamp * pDest );
-epicsShareFunc int epicsShareAPI epicsTimeGetEvent (
+LIBCOM_API int LIBCOMSTD_API epicsTimeGetCurrent ( epicsTimeStamp * pDest );
+LIBCOM_API int LIBCOMSTD_API epicsTimeGetEvent (
     epicsTimeStamp *pDest, int eventNumber);
-epicsShareFunc int epicsTimeGetMonotonic ( epicsTimeStamp * pDest );
+LIBCOM_API int epicsTimeGetMonotonic ( epicsTimeStamp * pDest );
 
 /* These are callable from an Interrupt Service Routine */
-epicsShareFunc int epicsTimeGetCurrentInt(epicsTimeStamp *pDest);
-epicsShareFunc int epicsTimeGetEventInt(epicsTimeStamp *pDest, int eventNumber);
+LIBCOM_API int epicsTimeGetCurrentInt(epicsTimeStamp *pDest);
+LIBCOM_API int epicsTimeGetEventInt(epicsTimeStamp *pDest, int eventNumber);
 
 /* convert to and from ANSI C's "time_t" */
-epicsShareFunc int epicsShareAPI epicsTimeToTime_t (
+LIBCOM_API int LIBCOMSTD_API epicsTimeToTime_t (
     time_t * pDest, const epicsTimeStamp * pSrc );
-epicsShareFunc int epicsShareAPI epicsTimeFromTime_t (
+LIBCOM_API int LIBCOMSTD_API epicsTimeFromTime_t (
     epicsTimeStamp * pDest, time_t src );
 
 /* convert to and from ANSI C's "struct tm" with nano seconds */
-epicsShareFunc int epicsShareAPI epicsTimeToTM (
+LIBCOM_API int LIBCOMSTD_API epicsTimeToTM (
     struct tm * pDest, unsigned long * pNSecDest, const epicsTimeStamp * pSrc );
-epicsShareFunc int epicsShareAPI epicsTimeToGMTM (
+LIBCOM_API int LIBCOMSTD_API epicsTimeToGMTM (
     struct tm * pDest, unsigned long * pNSecDest, const epicsTimeStamp * pSrc );
-epicsShareFunc int epicsShareAPI epicsTimeFromTM (
+LIBCOM_API int LIBCOMSTD_API epicsTimeFromTM (
     epicsTimeStamp * pDest, const struct tm * pSrc, unsigned long nSecSrc );
-epicsShareFunc int epicsShareAPI epicsTimeFromGMTM (
+LIBCOM_API int LIBCOMSTD_API epicsTimeFromGMTM (
     epicsTimeStamp * pDest, const struct tm * pSrc, unsigned long nSecSrc );
 
 /* convert to and from POSIX RT's "struct timespec" */
-epicsShareFunc int epicsShareAPI epicsTimeToTimespec (
+LIBCOM_API int LIBCOMSTD_API epicsTimeToTimespec (
     struct timespec * pDest, const epicsTimeStamp * pSrc );
-epicsShareFunc int epicsShareAPI epicsTimeFromTimespec (
+LIBCOM_API int LIBCOMSTD_API epicsTimeFromTimespec (
     epicsTimeStamp * pDest, const struct timespec * pSrc );
 
 /* convert to and from BSD's "struct timeval" */
-epicsShareFunc int epicsShareAPI epicsTimeToTimeval (
+LIBCOM_API int LIBCOMSTD_API epicsTimeToTimeval (
     struct timeval * pDest, const epicsTimeStamp * pSrc );
-epicsShareFunc int epicsShareAPI epicsTimeFromTimeval (
+LIBCOM_API int LIBCOMSTD_API epicsTimeFromTimeval (
     epicsTimeStamp * pDest, const struct timeval * pSrc );
 
 /*arithmetic operations */
-epicsShareFunc double epicsShareAPI epicsTimeDiffInSeconds (
+LIBCOM_API double LIBCOMSTD_API epicsTimeDiffInSeconds (
     const epicsTimeStamp * pLeft, const epicsTimeStamp * pRight );/* left - right */
-epicsShareFunc void epicsShareAPI epicsTimeAddSeconds (
+LIBCOM_API void LIBCOMSTD_API epicsTimeAddSeconds (
     epicsTimeStamp * pDest, double secondsToAdd ); /* adds seconds to *pDest */
 
 /*comparison operations: returns (0,1) if (false,true) */
-epicsShareFunc int epicsShareAPI epicsTimeEqual (
+LIBCOM_API int LIBCOMSTD_API epicsTimeEqual (
     const epicsTimeStamp * pLeft, const epicsTimeStamp * pRight);
-epicsShareFunc int epicsShareAPI epicsTimeNotEqual (
+LIBCOM_API int LIBCOMSTD_API epicsTimeNotEqual (
     const epicsTimeStamp * pLeft, const epicsTimeStamp * pRight);
-epicsShareFunc int epicsShareAPI epicsTimeLessThan (
+LIBCOM_API int LIBCOMSTD_API epicsTimeLessThan (
     const epicsTimeStamp * pLeft, const epicsTimeStamp * pRight); /*true if left < right */
-epicsShareFunc int epicsShareAPI epicsTimeLessThanEqual (
+LIBCOM_API int LIBCOMSTD_API epicsTimeLessThanEqual (
     const epicsTimeStamp * pLeft, const epicsTimeStamp * pRight); /*true if left <= right) */
-epicsShareFunc int epicsShareAPI epicsTimeGreaterThan (
+LIBCOM_API int LIBCOMSTD_API epicsTimeGreaterThan (
     const epicsTimeStamp * pLeft, const epicsTimeStamp * pRight); /*true if left > right */
-epicsShareFunc int epicsShareAPI epicsTimeGreaterThanEqual (
+LIBCOM_API int LIBCOMSTD_API epicsTimeGreaterThanEqual (
     const epicsTimeStamp * pLeft, const epicsTimeStamp * pRight); /*true if left >= right */
 
 /*convert to ASCII string */
-epicsShareFunc size_t epicsShareAPI epicsTimeToStrftime (
+LIBCOM_API size_t LIBCOMSTD_API epicsTimeToStrftime (
     char * pBuff, size_t bufLength, const char * pFormat, const epicsTimeStamp * pTS );
 
 /* dump current state to standard out */
-epicsShareFunc void epicsShareAPI epicsTimeShow (
+LIBCOM_API void LIBCOMSTD_API epicsTimeShow (
     const epicsTimeStamp *, unsigned interestLevel );
 
 /* OS dependent reentrant versions of the ANSI C interface because */
 /* vxWorks gmtime_r interface does not match POSIX standards */
-epicsShareFunc int epicsShareAPI epicsTime_localtime ( const time_t * clock, struct tm * result );
-epicsShareFunc int epicsShareAPI epicsTime_gmtime ( const time_t * clock, struct tm * result );
+LIBCOM_API int LIBCOMSTD_API epicsTime_localtime ( const time_t * clock, struct tm * result );
+LIBCOM_API int LIBCOMSTD_API epicsTime_gmtime ( const time_t * clock, struct tm * result );
 
 /* Advertised monotonic counter resolution (may not be accurate).
  * Minimum non-zero difference between two calls to epicsMonotonicGet()
  */
-epicsShareFunc epicsUInt64 epicsMonotonicResolution(void);
+LIBCOM_API epicsUInt64 epicsMonotonicResolution(void);
 /* Fetch monotonic counter, return is nano-seconds since an unspecified time */
-epicsShareFunc epicsUInt64 epicsMonotonicGet(void);
+LIBCOM_API epicsUInt64 epicsMonotonicGet(void);
 
 #ifdef EPICS_EXPOSE_LIBCOM_MONOTONIC_PRIVATE
-epicsShareFunc void osdMonotonicInit(void);
+LIBCOM_API void osdMonotonicInit(void);
 #endif
 
 #ifdef __cplusplus

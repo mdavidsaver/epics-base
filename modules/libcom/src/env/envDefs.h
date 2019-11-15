@@ -32,7 +32,7 @@
 extern "C" {
 #endif
 
-#include "shareLib.h"
+#include "libComAPI.h"
 
 typedef struct envParam {
     char	*name;		/* text name of the parameter */
@@ -40,65 +40,65 @@ typedef struct envParam {
 } ENV_PARAM;
 
 /*
- * bldEnvData.pl looks for "epicsShareExtern const ENV_PARAM <name>;"
+ * bldEnvData.pl looks for "LIBCOM_API extern const ENV_PARAM <name>;"
  */
-epicsShareExtern const ENV_PARAM EPICS_CA_ADDR_LIST;
-epicsShareExtern const ENV_PARAM EPICS_CA_CONN_TMO;
-epicsShareExtern const ENV_PARAM EPICS_CA_AUTO_ADDR_LIST;
-epicsShareExtern const ENV_PARAM EPICS_CA_REPEATER_PORT;
-epicsShareExtern const ENV_PARAM EPICS_CA_SERVER_PORT;
-epicsShareExtern const ENV_PARAM EPICS_CA_MAX_ARRAY_BYTES;
-epicsShareExtern const ENV_PARAM EPICS_CA_AUTO_ARRAY_BYTES;
-epicsShareExtern const ENV_PARAM EPICS_CA_MAX_SEARCH_PERIOD;
-epicsShareExtern const ENV_PARAM EPICS_CA_NAME_SERVERS;
-epicsShareExtern const ENV_PARAM EPICS_CA_MCAST_TTL;
-epicsShareExtern const ENV_PARAM EPICS_CAS_INTF_ADDR_LIST;
-epicsShareExtern const ENV_PARAM EPICS_CAS_IGNORE_ADDR_LIST;
-epicsShareExtern const ENV_PARAM EPICS_CAS_AUTO_BEACON_ADDR_LIST;
-epicsShareExtern const ENV_PARAM EPICS_CAS_BEACON_ADDR_LIST;
-epicsShareExtern const ENV_PARAM EPICS_CAS_SERVER_PORT;
-epicsShareExtern const ENV_PARAM EPICS_CA_BEACON_PERIOD; /* deprecated */
-epicsShareExtern const ENV_PARAM EPICS_CAS_BEACON_PERIOD;
-epicsShareExtern const ENV_PARAM EPICS_CAS_BEACON_PORT;
-epicsShareExtern const ENV_PARAM EPICS_BUILD_COMPILER_CLASS;
-epicsShareExtern const ENV_PARAM EPICS_BUILD_OS_CLASS;
-epicsShareExtern const ENV_PARAM EPICS_BUILD_TARGET_ARCH;
-epicsShareExtern const ENV_PARAM EPICS_TZ;
-epicsShareExtern const ENV_PARAM EPICS_TS_NTP_INET;
-epicsShareExtern const ENV_PARAM EPICS_IOC_IGNORE_SERVERS;
-epicsShareExtern const ENV_PARAM EPICS_IOC_LOG_PORT;
-epicsShareExtern const ENV_PARAM EPICS_IOC_LOG_INET;
-epicsShareExtern const ENV_PARAM EPICS_IOC_LOG_FILE_LIMIT;
-epicsShareExtern const ENV_PARAM EPICS_IOC_LOG_FILE_NAME;
-epicsShareExtern const ENV_PARAM EPICS_IOC_LOG_FILE_COMMAND;
-epicsShareExtern const ENV_PARAM IOCSH_PS1;
-epicsShareExtern const ENV_PARAM IOCSH_HISTSIZE;
-epicsShareExtern const ENV_PARAM IOCSH_HISTEDIT_DISABLE;
+LIBCOM_API extern const ENV_PARAM EPICS_CA_ADDR_LIST;
+LIBCOM_API extern const ENV_PARAM EPICS_CA_CONN_TMO;
+LIBCOM_API extern const ENV_PARAM EPICS_CA_AUTO_ADDR_LIST;
+LIBCOM_API extern const ENV_PARAM EPICS_CA_REPEATER_PORT;
+LIBCOM_API extern const ENV_PARAM EPICS_CA_SERVER_PORT;
+LIBCOM_API extern const ENV_PARAM EPICS_CA_MAX_ARRAY_BYTES;
+LIBCOM_API extern const ENV_PARAM EPICS_CA_AUTO_ARRAY_BYTES;
+LIBCOM_API extern const ENV_PARAM EPICS_CA_MAX_SEARCH_PERIOD;
+LIBCOM_API extern const ENV_PARAM EPICS_CA_NAME_SERVERS;
+LIBCOM_API extern const ENV_PARAM EPICS_CA_MCAST_TTL;
+LIBCOM_API extern const ENV_PARAM EPICS_CAS_INTF_ADDR_LIST;
+LIBCOM_API extern const ENV_PARAM EPICS_CAS_IGNORE_ADDR_LIST;
+LIBCOM_API extern const ENV_PARAM EPICS_CAS_AUTO_BEACON_ADDR_LIST;
+LIBCOM_API extern const ENV_PARAM EPICS_CAS_BEACON_ADDR_LIST;
+LIBCOM_API extern const ENV_PARAM EPICS_CAS_SERVER_PORT;
+LIBCOM_API extern const ENV_PARAM EPICS_CA_BEACON_PERIOD; /* deprecated */
+LIBCOM_API extern const ENV_PARAM EPICS_CAS_BEACON_PERIOD;
+LIBCOM_API extern const ENV_PARAM EPICS_CAS_BEACON_PORT;
+LIBCOM_API extern const ENV_PARAM EPICS_BUILD_COMPILER_CLASS;
+LIBCOM_API extern const ENV_PARAM EPICS_BUILD_OS_CLASS;
+LIBCOM_API extern const ENV_PARAM EPICS_BUILD_TARGET_ARCH;
+LIBCOM_API extern const ENV_PARAM EPICS_TZ;
+LIBCOM_API extern const ENV_PARAM EPICS_TS_NTP_INET;
+LIBCOM_API extern const ENV_PARAM EPICS_IOC_IGNORE_SERVERS;
+LIBCOM_API extern const ENV_PARAM EPICS_IOC_LOG_PORT;
+LIBCOM_API extern const ENV_PARAM EPICS_IOC_LOG_INET;
+LIBCOM_API extern const ENV_PARAM EPICS_IOC_LOG_FILE_LIMIT;
+LIBCOM_API extern const ENV_PARAM EPICS_IOC_LOG_FILE_NAME;
+LIBCOM_API extern const ENV_PARAM EPICS_IOC_LOG_FILE_COMMAND;
+LIBCOM_API extern const ENV_PARAM IOCSH_PS1;
+LIBCOM_API extern const ENV_PARAM IOCSH_HISTSIZE;
+LIBCOM_API extern const ENV_PARAM IOCSH_HISTEDIT_DISABLE;
 
-epicsShareExtern const ENV_PARAM *env_param_list[];
+LIBCOM_API extern const ENV_PARAM *env_param_list[];
 
 struct in_addr;
 
-epicsShareFunc char * epicsShareAPI 
+LIBCOM_API char * LIBCOMSTD_API 
 	envGetConfigParam(const ENV_PARAM *pParam, int bufDim, char *pBuf);
-epicsShareFunc const char * epicsShareAPI 
+LIBCOM_API const char * LIBCOMSTD_API 
 	envGetConfigParamPtr(const ENV_PARAM *pParam);
-epicsShareFunc long epicsShareAPI 
+LIBCOM_API long LIBCOMSTD_API 
 	envPrtConfigParam(const ENV_PARAM *pParam);
-epicsShareFunc long epicsShareAPI 
+LIBCOM_API long LIBCOMSTD_API 
 	envGetInetAddrConfigParam(const ENV_PARAM *pParam, struct in_addr *pAddr);
-epicsShareFunc long epicsShareAPI 
+LIBCOM_API long LIBCOMSTD_API 
 	envGetDoubleConfigParam(const ENV_PARAM *pParam, double *pDouble);
-epicsShareFunc long epicsShareAPI 
+LIBCOM_API long LIBCOMSTD_API 
 	envGetLongConfigParam(const ENV_PARAM *pParam, long *pLong);
-epicsShareFunc unsigned short epicsShareAPI envGetInetPortConfigParam 
+LIBCOM_API unsigned short LIBCOMSTD_API envGetInetPortConfigParam 
         (const ENV_PARAM *pEnv, unsigned short defaultPort);
-epicsShareFunc long epicsShareAPI
+LIBCOM_API long LIBCOMSTD_API
     envGetBoolConfigParam(const ENV_PARAM *pParam, int *pBool);
-epicsShareFunc long epicsShareAPI epicsPrtEnvParams(void);
-epicsShareFunc void epicsShareAPI epicsEnvSet (const char *name, const char *value);
-epicsShareFunc void epicsShareAPI epicsEnvUnset (const char *name);
-epicsShareFunc void epicsShareAPI epicsEnvShow (const char *name);
+LIBCOM_API long LIBCOMSTD_API epicsPrtEnvParams(void);
+LIBCOM_API void LIBCOMSTD_API epicsEnvSet (const char *name, const char *value);
+LIBCOM_API void LIBCOMSTD_API epicsEnvUnset (const char *name);
+LIBCOM_API void LIBCOMSTD_API epicsEnvShow (const char *name);
 
 #ifdef __cplusplus
 }

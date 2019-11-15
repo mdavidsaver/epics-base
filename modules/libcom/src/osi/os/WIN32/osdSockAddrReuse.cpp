@@ -13,7 +13,6 @@
  * Author: Jeff Hill
  */
 
-#define epicsExportSharedSymbols
 #include "osiSock.h"
 #include "errlog.h"
 
@@ -24,12 +23,12 @@
  * Also, servers are always enabled to reuse a port immediately after 
  * they exit ( even if SO_REUSEADDR isnt set ).
  */
-epicsShareFunc void epicsShareAPI 
+LIBCOM_API void LIBCOMSTD_API 
     epicsSocketEnableAddressReuseDuringTimeWaitState ( SOCKET s )
 {
 }
 
-epicsShareFunc void epicsShareAPI 
+LIBCOM_API void LIBCOMSTD_API 
     epicsSocketEnableAddressUseForDatagramFanout ( SOCKET s )
 {
     int yes = true;

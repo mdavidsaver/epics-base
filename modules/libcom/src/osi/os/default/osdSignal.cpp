@@ -8,14 +8,13 @@
  * in file LICENSE that is included with this distribution. 
 \*************************************************************************/
 
-#define epicsExportSharedSymbols
 #include "epicsSignal.h"
 
 /*
  * All NOOPs if the os isnt POSIX
  */
-epicsShareFunc void epicsShareAPI epicsSignalInstallSigHupIgnore ( void ) {}
-epicsShareFunc void epicsShareAPI epicsSignalInstallSigPipeIgnore ( void ) {}
-epicsShareFunc void epicsShareAPI epicsSignalInstallSigAlarmIgnore ( void ) {}
-epicsShareFunc void epicsShareAPI epicsSignalRaiseSigAlarm ( struct epicsThreadOSD * /* threadId */ ) {}
+LIBCOM_API void LIBCOMSTD_API epicsSignalInstallSigHupIgnore ( void ) {}
+LIBCOM_API void LIBCOMSTD_API epicsSignalInstallSigPipeIgnore ( void ) {}
+LIBCOM_API void LIBCOMSTD_API epicsSignalInstallSigAlarmIgnore ( void ) {}
+LIBCOM_API void LIBCOMSTD_API epicsSignalRaiseSigAlarm ( struct epicsThreadOSD * /* threadId */ ) {}
 

@@ -16,7 +16,7 @@
 #ifndef INC_epicsAssert_H
 #define INC_epicsAssert_H
 
-#include "shareLib.h"
+#include "libComAPI.h"
 #include "compilerDependencies.h"
 
 #ifdef __cplusplus
@@ -34,7 +34,7 @@ extern "C" {
 #   define assert(ignore) ((void) 0)
 #else /* NDEBUG */
 
-epicsShareFunc void epicsAssert (const char *pFile, const unsigned line,
+LIBCOM_API void epicsAssert (const char *pFile, const unsigned line,
     const char *pExp, const char *pAuthorName);
 
 #   define assert(exp) ((exp) ? (void)0 : \

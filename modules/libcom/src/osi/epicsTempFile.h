@@ -14,13 +14,13 @@
 
 #include <stdio.h>
 
-#include "shareLib.h"
+#include "libComAPI.h"
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
-epicsShareFunc FILE * epicsShareAPI epicsTempFile(void);
+LIBCOM_API FILE * LIBCOMSTD_API epicsTempFile(void);
 
 #ifdef  __cplusplus
 }

@@ -22,7 +22,6 @@
 #include <stdio.h>
 
 #define EPICS_PRIVATE_API
-#define epicsExportSharedSymbols
 #include "dbDefs.h"
 #include "epicsEvent.h"
 #include "iocLog.h"
@@ -200,7 +199,7 @@ static void sendMessageChunk(logClient * pClient, const char * message) {
 /* 
  * logClientSend ()
  */
-void epicsShareAPI logClientSend ( logClientId id, const char * message )
+void LIBCOMSTD_API logClientSend ( logClientId id, const char * message )
 {
     logClient * pClient = ( logClient * ) id;
 
@@ -219,7 +218,7 @@ void epicsShareAPI logClientSend ( logClientId id, const char * message )
 }
 
 
-void epicsShareAPI logClientFlush ( logClientId id )
+void LIBCOMSTD_API logClientFlush ( logClientId id )
 {
     unsigned nSent;
     int status = 0;
@@ -448,7 +447,7 @@ static void logClientRestart ( logClientId id )
 /*
  *  logClientCreate()
  */
-logClientId epicsShareAPI logClientCreate (
+logClientId LIBCOMSTD_API logClientCreate (
     struct in_addr server_addr, unsigned short server_port)
 {
     logClient *pClient;
@@ -511,7 +510,7 @@ logClientId epicsShareAPI logClientCreate (
 /*
  * logClientShow ()
  */
-void epicsShareAPI logClientShow (logClientId id, unsigned level)
+void LIBCOMSTD_API logClientShow (logClientId id, unsigned level)
 {
     logClient *pClient = (logClient *) id;
 
@@ -543,7 +542,7 @@ void epicsShareAPI logClientShow (logClientId id, unsigned level)
 /*
  * iocLogPrefix()
  */
-void epicsShareAPI iocLogPrefix(const char * prefix)
+void LIBCOMSTD_API iocLogPrefix(const char * prefix)
 {
 
     /* If we have already established a log prefix, don't let the user change

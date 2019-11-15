@@ -10,23 +10,23 @@
 #ifndef INCregistryh
 #define INCregistryh
 
-#include "shareLib.h"
+#include "libComAPI.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define DEFAULT_TABLE_SIZE 1024
 
-epicsShareFunc int epicsShareAPI registryAdd(
+LIBCOM_API int LIBCOMSTD_API registryAdd(
     void *registryID,const char *name,void *data);
-epicsShareFunc void *epicsShareAPI registryFind(
+LIBCOM_API void *LIBCOMSTD_API registryFind(
     void *registryID,const char *name);
-epicsShareFunc int epicsShareAPI registryChange(
+LIBCOM_API int LIBCOMSTD_API registryChange(
     void *registryID,const char *name,void *data);
 
-epicsShareFunc int epicsShareAPI registrySetTableSize(int size);
-epicsShareFunc void epicsShareAPI registryFree(void);
-epicsShareFunc int epicsShareAPI registryDump(void);
+LIBCOM_API int LIBCOMSTD_API registrySetTableSize(int size);
+LIBCOM_API void LIBCOMSTD_API registryFree(void);
+LIBCOM_API int LIBCOMSTD_API registryDump(void);
 
 #ifdef __cplusplus
 }

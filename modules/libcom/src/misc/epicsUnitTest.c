@@ -20,7 +20,6 @@
 #  include <crtdbg.h>
 #endif
 
-#define epicsExportSharedSymbols
 #include "epicsThread.h"
 #include "epicsMutex.h"
 #include "epicsUnitTest.h"

@@ -9,7 +9,7 @@
 #define LIBCOMVERSION_H
 
 #include <epicsVersion.h>
-#include <shareLib.h>
+#include <libComAPI.h>
 
 #ifndef VERSION_INT
 #  define VERSION_INT(V,R,M,P) ( ((V)<<24) | ((R)<<16) | ((M)<<8) | (P))

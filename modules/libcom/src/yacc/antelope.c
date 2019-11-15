@@ -8,7 +8,6 @@
 \*************************************************************************/
 #include <signal.h>
 #include "defs.h"
-#define epicsExportSharedSymbols
 #include "epicsTempFile.h"
 #undef epicsExportSharedSymbols
 

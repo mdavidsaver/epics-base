@@ -21,27 +21,27 @@
 extern "C" {
 #endif
 
-#include "shareLib.h"
+#include "libComAPI.h"
 
 typedef void *epicsRingBytesId;
 typedef void const *epicsRingBytesIdConst;
 
-epicsShareFunc epicsRingBytesId  epicsShareAPI epicsRingBytesCreate(int nbytes);
+LIBCOM_API epicsRingBytesId  LIBCOMSTD_API epicsRingBytesCreate(int nbytes);
 /* Same, but secured by a spinlock */
-epicsShareFunc epicsRingBytesId  epicsShareAPI epicsRingBytesLockedCreate(int nbytes);
-epicsShareFunc void epicsShareAPI epicsRingBytesDelete(epicsRingBytesId id);
-epicsShareFunc int  epicsShareAPI epicsRingBytesGet(
+LIBCOM_API epicsRingBytesId  LIBCOMSTD_API epicsRingBytesLockedCreate(int nbytes);
+LIBCOM_API void LIBCOMSTD_API epicsRingBytesDelete(epicsRingBytesId id);
+LIBCOM_API int  LIBCOMSTD_API epicsRingBytesGet(
     epicsRingBytesId id, char *value,int nbytes);
-epicsShareFunc int  epicsShareAPI epicsRingBytesPut(
+LIBCOM_API int  LIBCOMSTD_API epicsRingBytesPut(
     epicsRingBytesId id, char *value,int nbytes);
-epicsShareFunc void epicsShareAPI epicsRingBytesFlush(epicsRingBytesId id);
-epicsShareFunc int  epicsShareAPI epicsRingBytesFreeBytes(epicsRingBytesId id);
-epicsShareFunc int  epicsShareAPI epicsRingBytesUsedBytes(epicsRingBytesId id);
-epicsShareFunc int  epicsShareAPI epicsRingBytesSize(epicsRingBytesId id);
-epicsShareFunc int  epicsShareAPI epicsRingBytesIsEmpty(epicsRingBytesId id);
-epicsShareFunc int  epicsShareAPI epicsRingBytesIsFull(epicsRingBytesId id);
-epicsShareFunc int  epicsShareAPI epicsRingBytesHighWaterMark(epicsRingBytesIdConst id);
-epicsShareFunc void epicsShareAPI epicsRingBytesResetHighWaterMark(epicsRingBytesId id);
+LIBCOM_API void LIBCOMSTD_API epicsRingBytesFlush(epicsRingBytesId id);
+LIBCOM_API int  LIBCOMSTD_API epicsRingBytesFreeBytes(epicsRingBytesId id);
+LIBCOM_API int  LIBCOMSTD_API epicsRingBytesUsedBytes(epicsRingBytesId id);
+LIBCOM_API int  LIBCOMSTD_API epicsRingBytesSize(epicsRingBytesId id);
+LIBCOM_API int  LIBCOMSTD_API epicsRingBytesIsEmpty(epicsRingBytesId id);
+LIBCOM_API int  LIBCOMSTD_API epicsRingBytesIsFull(epicsRingBytesId id);
+LIBCOM_API int  LIBCOMSTD_API epicsRingBytesHighWaterMark(epicsRingBytesIdConst id);
+LIBCOM_API void LIBCOMSTD_API epicsRingBytesResetHighWaterMark(epicsRingBytesId id);
 
 #ifdef __cplusplus
 }

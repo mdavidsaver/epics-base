@@ -14,7 +14,7 @@
 #ifndef INC_gpHash_H
 #define INC_gpHash_H
 
-#include "shareLib.h"
+#include "libComAPI.h"
 
 #include "ellLib.h"
 
@@ -32,19 +32,19 @@ extern "C" {
 #endif
 
 /*tableSize must be power of 2 in range 256 to 65536*/
-epicsShareFunc void epicsShareAPI
+LIBCOM_API void LIBCOMSTD_API
     gphInitPvt(struct gphPvt **ppvt, int tableSize);
-epicsShareFunc GPHENTRY * epicsShareAPI
+LIBCOM_API GPHENTRY * LIBCOMSTD_API
     gphFind(struct gphPvt *pvt, const char *name, void *pvtid);
-epicsShareFunc GPHENTRY * epicsShareAPI
+LIBCOM_API GPHENTRY * LIBCOMSTD_API
     gphFindParse(struct gphPvt *pvt, const char *name, size_t len, void *pvtid);
-epicsShareFunc GPHENTRY * epicsShareAPI
+LIBCOM_API GPHENTRY * LIBCOMSTD_API
     gphAdd(struct gphPvt *pvt, const char *name, void *pvtid);
-epicsShareFunc void epicsShareAPI
+LIBCOM_API void LIBCOMSTD_API
     gphDelete(struct gphPvt *pvt, const char *name, void *pvtid);
-epicsShareFunc void epicsShareAPI gphFreeMem(struct gphPvt *pvt);
-epicsShareFunc void epicsShareAPI gphDump(struct gphPvt *pvt);
-epicsShareFunc void epicsShareAPI gphDumpFP(FILE *fp, struct gphPvt *pvt);
+LIBCOM_API void LIBCOMSTD_API gphFreeMem(struct gphPvt *pvt);
+LIBCOM_API void LIBCOMSTD_API gphDump(struct gphPvt *pvt);
+LIBCOM_API void LIBCOMSTD_API gphDumpFP(FILE *fp, struct gphPvt *pvt);
 
 #ifdef __cplusplus
 }

@@ -25,7 +25,7 @@ extern "C" {
 
 #include "errMdef.h"
 #include "epicsTypes.h"
-#include "shareLib.h"
+#include "libComAPI.h"
 
 typedef	unsigned 	BUCKETID;
 
@@ -46,32 +46,32 @@ typedef struct bucket{
         unsigned        nInUse;
 }BUCKET;
 
-epicsShareFunc BUCKET * epicsShareAPI bucketCreate (unsigned nHashTableEntries);
-epicsShareFunc int epicsShareAPI bucketFree (BUCKET *prb);
-epicsShareFunc int epicsShareAPI bucketShow (BUCKET *pb);
+LIBCOM_API BUCKET * LIBCOMSTD_API bucketCreate (unsigned nHashTableEntries);
+LIBCOM_API int LIBCOMSTD_API bucketFree (BUCKET *prb);
+LIBCOM_API int LIBCOMSTD_API bucketShow (BUCKET *pb);
 
 /*
  * !! Identifier must exist (and remain constant) at the specified address until
  * the item is deleted from the bucket !!
  */
-epicsShareFunc int epicsShareAPI bucketAddItemUnsignedId (BUCKET *prb, 
+LIBCOM_API int LIBCOMSTD_API bucketAddItemUnsignedId (BUCKET *prb, 
 		const unsigned *pId, const void *pApp);
-epicsShareFunc int epicsShareAPI bucketAddItemPointerId (BUCKET *prb, 
+LIBCOM_API int LIBCOMSTD_API bucketAddItemPointerId (BUCKET *prb, 
 		void * const *pId, const void *pApp);
-epicsShareFunc int epicsShareAPI bucketAddItemStringId (BUCKET *prb, 
+LIBCOM_API int LIBCOMSTD_API bucketAddItemStringId (BUCKET *prb, 
 		const char *pId, const void *pApp);
 
-epicsShareFunc int epicsShareAPI bucketRemoveItemUnsignedId (BUCKET *prb, const unsigned *pId);
-epicsShareFunc int epicsShareAPI bucketRemoveItemPointerId (BUCKET *prb, void * const *pId);
-epicsShareFunc int epicsShareAPI bucketRemoveItemStringId (BUCKET *prb, const char *pId);
+LIBCOM_API int LIBCOMSTD_API bucketRemoveItemUnsignedId (BUCKET *prb, const unsigned *pId);
+LIBCOM_API int LIBCOMSTD_API bucketRemoveItemPointerId (BUCKET *prb, void * const *pId);
+LIBCOM_API int LIBCOMSTD_API bucketRemoveItemStringId (BUCKET *prb, const char *pId);
 
-epicsShareFunc void * epicsShareAPI bucketLookupItemUnsignedId (BUCKET *prb, const unsigned *pId);
-epicsShareFunc void * epicsShareAPI bucketLookupItemPointerId (BUCKET *prb, void * const *pId);
-epicsShareFunc void * epicsShareAPI bucketLookupItemStringId (BUCKET *prb, const char *pId);
+LIBCOM_API void * LIBCOMSTD_API bucketLookupItemUnsignedId (BUCKET *prb, const unsigned *pId);
+LIBCOM_API void * LIBCOMSTD_API bucketLookupItemPointerId (BUCKET *prb, void * const *pId);
+LIBCOM_API void * LIBCOMSTD_API bucketLookupItemStringId (BUCKET *prb, const char *pId);
 
-epicsShareFunc void * epicsShareAPI bucketLookupAndRemoveItemUnsignedId (BUCKET *prb, const unsigned *pId);
-epicsShareFunc void * epicsShareAPI bucketLookupAndRemoveItemPointerId (BUCKET *prb, void * const *pId);
-epicsShareFunc void * epicsShareAPI bucketLookupAndRemoveItemStringId (BUCKET *prb, const char *pId);
+LIBCOM_API void * LIBCOMSTD_API bucketLookupAndRemoveItemUnsignedId (BUCKET *prb, const unsigned *pId);
+LIBCOM_API void * LIBCOMSTD_API bucketLookupAndRemoveItemPointerId (BUCKET *prb, void * const *pId);
+LIBCOM_API void * LIBCOMSTD_API bucketLookupAndRemoveItemStringId (BUCKET *prb, const char *pId);
 
 
 /*

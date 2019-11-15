@@ -9,7 +9,7 @@
 #ifndef epicsEventh
 #define epicsEventh
 
-#include "shareLib.h"
+#include "libComAPI.h"
 
 typedef struct epicsEventOSD *epicsEventId;
 
@@ -31,7 +31,7 @@ typedef enum {
 
 #ifdef __cplusplus
 
-class epicsShareClass epicsEvent {
+class LIBCOM_API epicsEvent {
 public:
     epicsEvent ( epicsEventInitialState initial = epicsEventEmpty );
     ~epicsEvent ();
@@ -52,23 +52,23 @@ private:
 extern "C" {
 #endif /*__cplusplus */
 
-epicsShareFunc epicsEventId epicsEventCreate(
+LIBCOM_API epicsEventId epicsEventCreate(
     epicsEventInitialState initialState);
-epicsShareFunc epicsEventId epicsEventMustCreate (
+LIBCOM_API epicsEventId epicsEventMustCreate (
     epicsEventInitialState initialState);
-epicsShareFunc void epicsEventDestroy(epicsEventId id);
-epicsShareFunc epicsEventStatus epicsEventTrigger(
+LIBCOM_API void epicsEventDestroy(epicsEventId id);
+LIBCOM_API epicsEventStatus epicsEventTrigger(
     epicsEventId id);
-epicsShareFunc void epicsEventMustTrigger(epicsEventId id);
+LIBCOM_API void epicsEventMustTrigger(epicsEventId id);
 #define epicsEventSignal(ID) epicsEventMustTrigger(ID)
-epicsShareFunc epicsEventStatus epicsEventWait(
+LIBCOM_API epicsEventStatus epicsEventWait(
     epicsEventId id);
-epicsShareFunc void epicsEventMustWait(epicsEventId id);
-epicsShareFunc epicsEventStatus epicsEventWaitWithTimeout(
+LIBCOM_API void epicsEventMustWait(epicsEventId id);
+LIBCOM_API epicsEventStatus epicsEventWaitWithTimeout(
     epicsEventId id, double timeOut);
-epicsShareFunc epicsEventStatus epicsEventTryWait(
+LIBCOM_API epicsEventStatus epicsEventTryWait(
     epicsEventId id);
-epicsShareFunc void epicsEventShow(
+LIBCOM_API void epicsEventShow(
     epicsEventId id, unsigned int level);
 
 #ifdef __cplusplus

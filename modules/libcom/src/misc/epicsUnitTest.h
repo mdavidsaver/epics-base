@@ -15,36 +15,36 @@
 #include <stdarg.h>
 
 #include "compilerDependencies.h"
-#include "shareLib.h"
+#include "libComAPI.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-epicsShareFunc void testPlan(int tests);
-epicsShareFunc int  testOkV(int pass, const char *fmt, va_list pvar);
-epicsShareFunc int  testOk(int pass, const char *fmt, ...)
+LIBCOM_API void testPlan(int tests);
+LIBCOM_API int  testOkV(int pass, const char *fmt, va_list pvar);
+LIBCOM_API int  testOk(int pass, const char *fmt, ...)
 						EPICS_PRINTF_STYLE(2, 3);
-epicsShareFunc void testPass(const char *fmt, ...)
+LIBCOM_API void testPass(const char *fmt, ...)
 						EPICS_PRINTF_STYLE(1, 2);
-epicsShareFunc void testFail(const char *fmt, ...)
+LIBCOM_API void testFail(const char *fmt, ...)
 						EPICS_PRINTF_STYLE(1, 2);
-epicsShareFunc void testSkip(int skip, const char *why);
-epicsShareFunc void testTodoBegin(const char *why);
-epicsShareFunc void testTodoEnd(void);
-epicsShareFunc int  testDiag(const char *fmt, ...)
+LIBCOM_API void testSkip(int skip, const char *why);
+LIBCOM_API void testTodoBegin(const char *why);
+LIBCOM_API void testTodoEnd(void);
+LIBCOM_API int  testDiag(const char *fmt, ...)
 						EPICS_PRINTF_STYLE(1, 2);
-epicsShareFunc void testAbort(const char *fmt, ...)
+LIBCOM_API void testAbort(const char *fmt, ...)
 						EPICS_PRINTF_STYLE(1, 2);
-epicsShareFunc int  testDone(void);
+LIBCOM_API int  testDone(void);
 
 #define testOk1(cond) testOk(cond, "%s", #cond)
 
 
 typedef int (*TESTFUNC)(void);
-epicsShareFunc void testHarness(void);
-epicsShareFunc void testHarnessExit(void *dummy);
-epicsShareFunc void runTestFunc(const char *name, TESTFUNC func);
+LIBCOM_API void testHarness(void);
+LIBCOM_API void testHarnessExit(void *dummy);
+LIBCOM_API void runTestFunc(const char *name, TESTFUNC func);
 
 #define runTest(func) runTestFunc(#func, func)
 #define testHarnessDone() testHarnessExit(0)

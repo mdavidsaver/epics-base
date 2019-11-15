@@ -8,20 +8,19 @@
 
 #include <dlfcn.h>
 
-#define epicsExportSharedSymbols
 #include "epicsFindSymbol.h"
 
-epicsShareFunc void * epicsLoadLibrary(const char *name)
+LIBCOM_API void * epicsLoadLibrary(const char *name)
 {
     return dlopen(name, RTLD_LAZY | RTLD_GLOBAL);
 }
 
-epicsShareFunc const char *epicsLoadError(void)
+LIBCOM_API const char *epicsLoadError(void)
 {
     return dlerror();
 }
 
-epicsShareFunc void * epicsShareAPI epicsFindSymbol(const char *name)
+LIBCOM_API void * LIBCOMSTD_API epicsFindSymbol(const char *name)
 {
     return dlsym(0, name);
 }

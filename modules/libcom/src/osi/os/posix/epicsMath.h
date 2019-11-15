@@ -11,7 +11,7 @@
 #define epicsMathh
 
 #include <math.h>
-#include <shareLib.h>
+#include <libComAPI.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,8 +22,8 @@ extern "C" {
 #  define finite(x) isfinite((double)(x))
 #endif
 
-epicsShareExtern float epicsNAN;
-epicsShareExtern float epicsINF;
+LIBCOM_API extern float epicsNAN;
+LIBCOM_API extern float epicsINF;
 
 #ifdef __cplusplus
 }

@@ -9,7 +9,7 @@
 /*epicsExit.h*/
 #ifndef epicsExith
 #define epicsExith
-#include <shareLib.h>
+#include <libComAPI.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,14 +17,14 @@ extern "C" {
 
 typedef void (*epicsExitFunc)(void *arg);
 
-epicsShareFunc void epicsExit(int status);
-epicsShareFunc void epicsExitLater(int status);
-epicsShareFunc void epicsExitCallAtExits(void);
-epicsShareFunc int epicsAtExit3(epicsExitFunc func, void *arg, const char* name);
+LIBCOM_API void epicsExit(int status);
+LIBCOM_API void epicsExitLater(int status);
+LIBCOM_API void epicsExitCallAtExits(void);
+LIBCOM_API int epicsAtExit3(epicsExitFunc func, void *arg, const char* name);
 #define epicsAtExit(F,A) epicsAtExit3(F,A,#F)
 
-epicsShareFunc void epicsExitCallAtThreadExits(void);
-epicsShareFunc int epicsAtThreadExit(epicsExitFunc func, void *arg);
+LIBCOM_API void epicsExitCallAtThreadExits(void);
+LIBCOM_API int epicsAtThreadExit(epicsExitFunc func, void *arg);
 
 
 #ifdef __cplusplus

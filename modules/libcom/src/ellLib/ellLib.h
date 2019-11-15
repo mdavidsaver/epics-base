@@ -13,7 +13,7 @@
 #ifndef INC_ellLib_H
 #define INC_ellLib_H
 
-#include "shareLib.h"
+#include "libComAPI.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,20 +46,20 @@ typedef void (*FREEFUNC)(void *);
 #define ellPrevious(PNODE) ((PNODE)->previous)
 #define ellFree(PLIST)     ellFree2(PLIST, free)
 
-epicsShareFunc void ellAdd (ELLLIST *pList, ELLNODE *pNode);
-epicsShareFunc void ellConcat (ELLLIST *pDstList, ELLLIST *pAddList);
-epicsShareFunc void ellDelete (ELLLIST *pList, ELLNODE *pNode);
-epicsShareFunc void ellExtract (ELLLIST *pSrcList, ELLNODE *pStartNode, ELLNODE *pEndNode, ELLLIST *pDstList);
-epicsShareFunc ELLNODE * ellGet (ELLLIST *pList);
-epicsShareFunc ELLNODE * ellPop (ELLLIST *pList);
-epicsShareFunc void ellInsert (ELLLIST *plist, ELLNODE *pPrev, ELLNODE *pNode);
-epicsShareFunc ELLNODE * ellNth (ELLLIST *pList, int nodeNum);
-epicsShareFunc ELLNODE * ellNStep (ELLNODE *pNode, int nStep);
-epicsShareFunc int  ellFind (ELLLIST *pList, ELLNODE *pNode);
+LIBCOM_API void ellAdd (ELLLIST *pList, ELLNODE *pNode);
+LIBCOM_API void ellConcat (ELLLIST *pDstList, ELLLIST *pAddList);
+LIBCOM_API void ellDelete (ELLLIST *pList, ELLNODE *pNode);
+LIBCOM_API void ellExtract (ELLLIST *pSrcList, ELLNODE *pStartNode, ELLNODE *pEndNode, ELLLIST *pDstList);
+LIBCOM_API ELLNODE * ellGet (ELLLIST *pList);
+LIBCOM_API ELLNODE * ellPop (ELLLIST *pList);
+LIBCOM_API void ellInsert (ELLLIST *plist, ELLNODE *pPrev, ELLNODE *pNode);
+LIBCOM_API ELLNODE * ellNth (ELLLIST *pList, int nodeNum);
+LIBCOM_API ELLNODE * ellNStep (ELLNODE *pNode, int nStep);
+LIBCOM_API int  ellFind (ELLLIST *pList, ELLNODE *pNode);
 typedef int (*pListCmp)(const ELLNODE* A, const ELLNODE* B);
-epicsShareFunc void ellSortStable(ELLLIST *pList, pListCmp);
-epicsShareFunc void ellFree2 (ELLLIST *pList, FREEFUNC freeFunc);
-epicsShareFunc void ellVerify (ELLLIST *pList);
+LIBCOM_API void ellSortStable(ELLLIST *pList, pListCmp);
+LIBCOM_API void ellFree2 (ELLLIST *pList, FREEFUNC freeFunc);
+LIBCOM_API void ellVerify (ELLLIST *pList);
 
 #ifdef __cplusplus
 }

@@ -25,7 +25,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define epicsExportSharedSymbols
 #include "dbDefs.h"
 #include "errlog.h"
 #include "dbmf.h"
@@ -98,7 +97,7 @@ static char *Strdup( const char *string );
  * of macro definitions
  */
 long                            /* 0 = OK; <0 = ERROR */
-epicsShareAPI macCreateHandle(
+LIBCOMSTD_API macCreateHandle(
     MAC_HANDLE  **pHandle,      /* address of variable to receive pointer */
                                 /* to new macro substitution context */
 
@@ -152,7 +151,7 @@ epicsShareAPI macCreateHandle(
  * for the given handle
  */
 void
-epicsShareAPI macSuppressWarning(
+LIBCOMSTD_API macSuppressWarning(
     MAC_HANDLE  *handle,        /* opaque handle */
     int         suppress        /* 0 means issue, 1 means suppress */
 )
@@ -172,7 +171,7 @@ epicsShareAPI macSuppressWarning(
  */
 long                            /* strlen(dest), <0 if any macros are */
                                 /* undefined */
-epicsShareAPI macExpandString(
+LIBCOMSTD_API macExpandString(
     MAC_HANDLE  *handle,        /* opaque handle */
 
     const char  *src,           /* source string */
@@ -231,7 +230,7 @@ epicsShareAPI macExpandString(
  * already existed
  */
 long                            /* strlen(value) */
-epicsShareAPI macPutValue(
+LIBCOMSTD_API macPutValue(
     MAC_HANDLE  *handle,        /* opaque handle */
 
     const char  *name,          /* macro name */
@@ -299,7 +298,7 @@ epicsShareAPI macPutValue(
  * Return the value of a macro
  */
 long                            /* strlen(value), <0 if undefined */
-epicsShareAPI macGetValue(
+LIBCOMSTD_API macGetValue(
     MAC_HANDLE  *handle,        /* opaque handle */
 
     const char  *name,          /* macro name or reference */
@@ -358,7 +357,7 @@ epicsShareAPI macGetValue(
  * context
  */
 long                            /* 0 = OK; <0 = ERROR */
-epicsShareAPI macDeleteHandle(
+LIBCOMSTD_API macDeleteHandle(
     MAC_HANDLE  *handle )       /* opaque handle */
 {
     MAC_ENTRY *entry, *nextEntry;
@@ -390,7 +389,7 @@ epicsShareAPI macDeleteHandle(
  * Mark the start of a new scoping level
  */
 long                            /* 0 = OK; <0 = ERROR */
-epicsShareAPI macPushScope(
+LIBCOMSTD_API macPushScope(
     MAC_HANDLE  *handle )       /* opaque handle */
 {
     MAC_ENTRY *entry;
@@ -425,7 +424,7 @@ epicsShareAPI macPushScope(
  * Pop all macros defined since the last call to macPushScope()
  */
 long                            /* 0 = OK; <0 = ERROR */
-epicsShareAPI macPopScope(
+LIBCOMSTD_API macPopScope(
     MAC_HANDLE  *handle )       /* opaque handle */
 {
     MAC_ENTRY *entry, *nextEntry;
@@ -469,7 +468,7 @@ epicsShareAPI macPopScope(
  * Report macro details to standard output
  */
 long                            /* 0 = OK; <0 = ERROR */
-epicsShareAPI macReportMacros(
+LIBCOMSTD_API macReportMacros(
     MAC_HANDLE  *handle )       /* opaque handle */
 {
     const char *format = "%-1s %-16s %-16s %s\n";

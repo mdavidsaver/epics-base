@@ -19,7 +19,6 @@
 #include <ctype.h>
 #include <errno.h>
 
-#define epicsExportSharedSymbols
 #include "epicsMath.h"
 #include "errlog.h"
 #include "macLib.h"
@@ -39,7 +38,7 @@ extern "C" {
 /*
  * Global link to pdbbase
  */
-epicsShareDef struct dbBase **iocshPpdbbase;
+struct dbBase **iocshPpdbbase;
 
 /*
  * File-local information
@@ -109,7 +108,7 @@ iocshTableUnlock (void)
 /*
  * Register a command
  */
-void epicsShareAPI iocshRegister (const iocshFuncDef *piocshFuncDef,
+void LIBCOMSTD_API iocshRegister (const iocshFuncDef *piocshFuncDef,
     iocshCallFunc func)
 {
     struct iocshCommand *l, *p, *n;
@@ -152,7 +151,7 @@ void epicsShareAPI iocshRegister (const iocshFuncDef *piocshFuncDef,
 /*
  * Retrieves a previously registered function with the given name.
  */
-const iocshCmdDef * epicsShareAPI iocshFindCommand(const char *name)
+const iocshCmdDef * LIBCOMSTD_API iocshFindCommand(const char *name)
 {
     return (iocshCmdDef *) registryFind(iocshCmdID, name);
 }
@@ -165,7 +164,7 @@ static const iocshArg varCmdArg1 = { "[value]]", iocshArgString};
 static const iocshArg *varCmdArgs[2] = {&varCmdArg0, &varCmdArg1};
 static const iocshFuncDef varFuncDef = {"var", 2, varCmdArgs};
 
-void epicsShareAPI iocshRegisterVariable (const iocshVarDef *piocshVarDef)
+void LIBCOMSTD_API iocshRegisterVariable (const iocshVarDef *piocshVarDef)
 {
     struct iocshVariable *l, *p, *n;
     int i;
@@ -220,7 +219,7 @@ void epicsShareAPI iocshRegisterVariable (const iocshVarDef *piocshVarDef)
 /*
  * Retrieves a previously registered variable with the given name.
  */
-const iocshVarDef * epicsShareAPI iocshFindVariable(const char *name)
+const iocshVarDef * LIBCOMSTD_API iocshFindVariable(const char *name)
 {
     struct iocshVariable *temp = (iocshVariable *) registryFind(iocshVarID, name);
     return temp ? temp->pVarDef : 0;
@@ -229,7 +228,7 @@ const iocshVarDef * epicsShareAPI iocshFindVariable(const char *name)
 /*
  * Free storage created by iocshRegister/iocshRegisterVariable
  */
-void epicsShareAPI iocshFree(void) 
+void LIBCOMSTD_API iocshFree(void) 
 {
     struct iocshCommand *pc;
     struct iocshVariable *pv;
@@ -995,19 +994,19 @@ iocshBody (const char *pathname, const char *commandLine, const char *macros)
 /*
  * External access to the command interpreter
  */
-int epicsShareAPI
+int LIBCOMSTD_API
 iocsh (const char *pathname)
 {
     return iocshLoad(pathname, NULL);
 }
 
-int epicsShareAPI
+int LIBCOMSTD_API
 iocshCmd (const char *cmd)
 {
     return iocshRun(cmd, NULL);
 }
 
-int epicsShareAPI
+int LIBCOMSTD_API
 iocshLoad(const char *pathname, const char *macros)
 {
     if (pathname)
@@ -1015,7 +1014,7 @@ iocshLoad(const char *pathname, const char *macros)
     return iocshBody(pathname, NULL, macros);
 }
 
-int epicsShareAPI
+int LIBCOMSTD_API
 iocshRun(const char *cmd, const char *macros)
 {
     if (cmd == NULL)
@@ -1038,7 +1037,7 @@ iocshRun(const char *cmd, const char *macros)
  * and update the shared MAC_HANDLE that the iocsh uses. Which is
  * what this function is provided for.
  */
-void epicsShareAPI
+void LIBCOMSTD_API
 iocshEnvClear(const char *name)
 {
     iocshContext *context;

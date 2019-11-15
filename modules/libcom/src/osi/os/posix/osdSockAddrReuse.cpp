@@ -13,11 +13,10 @@
  * Author: Jeff Hill
  */
 
-#define epicsExportSharedSymbols
 #include "osiSock.h"
 #include "errlog.h"
 
-epicsShareFunc void epicsShareAPI 
+LIBCOM_API void LIBCOMSTD_API 
     epicsSocketEnableAddressReuseDuringTimeWaitState ( SOCKET s )
 {
     int yes = true;
@@ -34,7 +33,7 @@ epicsShareFunc void epicsShareAPI
 /*
  * SO_REUSEPORT is not in POSIX
  */
-epicsShareFunc void epicsShareAPI 
+LIBCOM_API void LIBCOMSTD_API 
     epicsSocketEnableAddressUseForDatagramFanout ( SOCKET s )
 {
     int yes = true;
