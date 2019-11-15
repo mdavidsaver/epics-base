@@ -14,10 +14,13 @@ include $(TOP)/configure/CONFIG
 # Uncomment this to remove the (benign) valgrind helper stubs
 #USR_CFLAGS += -DNVALGRIND
 
+USR_CPPFLAGS += -DLIBCOM_API_BUILDING
+
 INC += valgrind/valgrind.h
 
 INC += libComVersion.h
 INC += libComVersionNum.h
+INC += libComAPI.h
 
 include $(LIBCOM)/as/Makefile
 include $(LIBCOM)/bucketLib/Makefile
