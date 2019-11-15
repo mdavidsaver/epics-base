@@ -28,19 +28,11 @@
 
 #include <memory>
 
-#ifdef epicsExportSharedSymbols
-#   define oldAccessh_restore_epicsExportSharedSymbols
-#   undef epicsExportSharedSymbols
-#endif
-
 #include "tsFreeList.h"
 #include "compilerDependencies.h"
 #include "osiSock.h"
 
-#ifdef oldAccessh_restore_epicsExportSharedSymbols
-#   define epicsExportSharedSymbols
-#   include "shareLib.h"
-#endif
+#include "shareLib.h"
 
 #include "caProto.h"
 #include "cacIO.h"

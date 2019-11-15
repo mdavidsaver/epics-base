@@ -22,20 +22,12 @@
 #ifndef bheh
 #define bheh
 
-#ifdef epicsExportSharedSymbols
-#   define bhehEpicsExportSharedSymbols
-#   undef epicsExportSharedSymbols
-#endif
-
 #include "tsDLList.h"
 #include "tsFreeList.h"
 #include "epicsTime.h"
 #include "compilerDependencies.h"
 
-#ifdef bhehEpicsExportSharedSymbols
-#   define epicsExportSharedSymbols
-#   include "shareLib.h"
-#endif
+#include "shareLib.h"
 
 #include "inetAddrID.h"
 #include "caProto.h"

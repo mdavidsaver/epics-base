@@ -25,21 +25,13 @@
 #ifndef nciuh
 #define nciuh
 
-#ifdef epicsExportSharedSymbols
-#   define nciuh_restore_epicsExportSharedSymbols
-#   undef epicsExportSharedSymbols
-#endif
-
 #include "resourceLib.h"
 #include "tsDLList.h"
 #include "tsFreeList.h"
 #include "epicsMutex.h"
 #include "compilerDependencies.h"
 
-#ifdef nciuh_restore_epicsExportSharedSymbols
-#   define epicsExportSharedSymbols
-#   include "shareLib.h"
-#endif
+#include "shareLib.h"
 
 #define CA_MINOR_PROTOCOL_REVISION 13
 #include "caProto.h"

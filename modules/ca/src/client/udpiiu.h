@@ -27,20 +27,12 @@
 
 #include <memory>
 
-#ifdef epicsExportSharedSymbols
-#   define udpiiuh_accessh_epicsExportSharedSymbols
-#   undef epicsExportSharedSymbols
-#endif
-
 #include "osiSock.h"
 #include "epicsThread.h"
 #include "epicsTime.h"
 #include "tsDLList.h"
 
-#ifdef udpiiuh_accessh_epicsExportSharedSymbols
-#   define epicsExportSharedSymbols
-#   include "shareLib.h"
-#endif
+#include "shareLib.h"
 
 #include "netiiu.h"
 #include "searchTimer.h"

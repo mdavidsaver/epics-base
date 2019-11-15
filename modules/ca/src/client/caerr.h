@@ -23,17 +23,9 @@
 #ifndef INCLcaerrh
 #define INCLcaerrh
 
-#ifdef epicsExportSharedSymbols
-#   define INCLcaerrh_accessh_epicsExportSharedSymbols
-#   undef epicsExportSharedSymbols
-#endif
+#include "epicsTypes.h"
 
-#   include "epicsTypes.h"
-
-#ifdef INCLcaerrh_accessh_epicsExportSharedSymbols
-#   define epicsExportSharedSymbols
-#   include "shareLib.h"
-#endif
+#include "shareLib.h"
 
 /*  CA Status Code Definitions   */
 

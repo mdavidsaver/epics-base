@@ -32,17 +32,9 @@
 #   include <stdarg.h>
 #endif
 
-#ifdef epicsExportSharedSymbols
-#   define INCLcadefh_accessh_epicsExportSharedSymbols
-#   undef epicsExportSharedSymbols
-#endif
-
 #include "epicsThread.h"
 
-#ifdef INCLcadefh_accessh_epicsExportSharedSymbols
-#   define epicsExportSharedSymbols
-#   include "shareLib.h"
-#endif
+#include "shareLib.h"
 
 
 #include "caerr.h"

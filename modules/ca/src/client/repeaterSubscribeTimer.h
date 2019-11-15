@@ -28,17 +28,7 @@
 
 #include "epicsTimer.h"
 
-#ifdef epicsExportSharedSymbols
-#   define repeaterSubscribeTimerh_epicsExportSharedSymbols
-#   undef epicsExportSharedSymbols
-#endif
-
-#include "epicsTimer.h"
-
-#ifdef repeaterSubscribeTimerh_epicsExportSharedSymbols
-#   define epicsExportSharedSymbols
-#   include "shareLib.h"
-#endif
+#include "shareLib.h"
 
 class epicsMutex;
 class cacContextNotify;

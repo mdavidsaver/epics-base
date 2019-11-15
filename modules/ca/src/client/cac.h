@@ -22,11 +22,6 @@
 #ifndef cach
 #define cach
 
-#ifdef epicsExportSharedSymbols
-#   define cach_restore_epicsExportSharedSymbols
-#   undef epicsExportSharedSymbols
-#endif
-
 #include "compilerDependencies.h"
 #include "ipAddrToAsciiAsynchronous.h"
 #include "msgForMultiplyDefinedPV.h"
@@ -35,10 +30,7 @@
 #include "freeList.h"
 #include "localHostName.h"
 
-#ifdef cach_restore_epicsExportSharedSymbols
-#   define epicsExportSharedSymbols
-#   include "shareLib.h"
-#endif
+#include "shareLib.h"
 
 #include "nciu.h"
 #include "comBuf.h"

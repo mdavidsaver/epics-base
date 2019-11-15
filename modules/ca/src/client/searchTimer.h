@@ -26,19 +26,11 @@
 #ifndef searchTimerh  
 #define searchTimerh
 
-#ifdef epicsExportSharedSymbols
-#   define searchTimerh_epicsExportSharedSymbols
-#   undef epicsExportSharedSymbols
-#endif
-
 #include "epicsMutex.h"
 #include "epicsGuard.h"
 #include "epicsTimer.h"
 
-#ifdef searchTimerh_epicsExportSharedSymbols
-#   define epicsExportSharedSymbols
-#   include "shareLib.h"
-#endif
+#include "shareLib.h"
 
 #include "caProto.h"
 #include "netiiu.h"

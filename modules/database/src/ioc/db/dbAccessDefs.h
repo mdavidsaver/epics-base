@@ -11,18 +11,10 @@
 #ifndef INCdbAccessDefsh
 #define INCdbAccessDefsh
 
-#ifdef epicsExportSharedSymbols
-#   define INCLdb_accessh_epicsExportSharedSymbols
-#   undef epicsExportSharedSymbols
-#endif
-
 #include "epicsTypes.h"
 #include "epicsTime.h"
 
-#ifdef INCLdb_accessh_epicsExportSharedSymbols
-#   define epicsExportSharedSymbols
-#   include "shareLib.h"
-#endif
+#include "shareLib.h"
 
 #include "dbBase.h"
 #include "dbAddr.h"
