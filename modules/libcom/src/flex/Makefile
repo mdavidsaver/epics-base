@@ -29,7 +29,7 @@ e_flex_SRCS += nfa.c
 e_flex_SRCS += sym.c
 e_flex_SRCS += tblcmp.c
 e_flex_SRCS += parse.c
-e_flex_OBJS += epicsTempFile$(OBJ)
+e_flex_OBJS += epicsTempFilex$(OBJ)
 
 PROD_HOST += e_flex
 
