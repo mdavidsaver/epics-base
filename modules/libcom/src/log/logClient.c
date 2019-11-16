@@ -33,6 +33,7 @@
 #include "epicsExit.h"
 #include "epicsSignal.h"
 #include "epicsExport.h"
+#include "envDefs.h"
 
 #include "logClient.h"
 
@@ -60,10 +61,10 @@ typedef struct {
 static const double      LOG_RESTART_DELAY = 5.0; /* sec */
 static const double      LOG_SERVER_SHUTDOWN_TIMEOUT = 30.0; /* sec */
 
-/*
- * If set using iocLogPrefix() this string is prepended to all log messages:
+/* If set using iocLogPrefix() this string is prepended to all log messages.
+ * Also referenced from syslogSink.c
  */
-static char* logClientPrefix = NULL;
+char* logClientPrefix = NULL;
 
 /*
  * logClientClose ()
@@ -552,16 +553,21 @@ void LIBCOMSTD_API iocLogPrefix(const char * prefix)
      */
 
     if (logClientPrefix) {
-        printf ("iocLogPrefix: The prefix was already set to \"%s\" "
-            "and can't be changed.\n", logClientPrefix);
+        if(prefix)
+            printf ("iocLogPrefix: The prefix was already set to \"%s\" "
+                "and can't be changed.\n", logClientPrefix);
         return;
+    }
+    if(!prefix) {
+        prefix = envGetConfigParamPtr(&EPICS_IOC_LOG_PREFIX);
     }
 
     if (prefix) {
         unsigned prefixLen = strlen(prefix);
         if (prefixLen > 0) {
             char * localCopy = malloc(prefixLen+1);
-            strcpy(localCopy, prefix);
+            if(localCopy)
+                strcpy(localCopy, prefix);
             logClientPrefix = localCopy;
         }
     }

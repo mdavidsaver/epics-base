@@ -10,7 +10,11 @@
 #include <syslog.h>
 
 #include <errlog.h>
+#include <logClient.h>
 #include <envDefs.h>
+
+/* logClient.c */
+extern char* logClientPrefix;
 
 static
 void err2sys(void *unused, const char *message)
@@ -21,7 +25,9 @@ void err2sys(void *unused, const char *message)
 
 void errlogToSyslog(void)
 {
-    const char *ident = envGetConfigParamPtr(&EPICS_IOC_LOG_PREFIX);
+    const char *ident;
+    iocLogPrefix(NULL);
+    ident = logClientPrefix;
 
     if(!ident || !ident[0])
         return;
