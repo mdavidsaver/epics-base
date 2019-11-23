@@ -16,6 +16,9 @@
  *      Date:       080791 
  */
 
+#undef LIBCOM_API_BUILDING
+#undef EPICS_BUILD_DLL
+
 #include	<stdlib.h>
 #include	<string.h>
 #include	<errno.h>
