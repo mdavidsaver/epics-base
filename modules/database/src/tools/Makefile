@@ -41,9 +41,10 @@ HTMLS += dbdToHtml.html
 # Build Package Config Files
 
 FINAL_LOCATION ?= $(shell $(PERL) $(TOOLS)/fullPathName.pl $(INSTALL_LOCATION))
-C_CFLAGS += $(filter-out -g,$(filter-out -O%,$(filter-out -W%,$(CPPFLAGS))))
-C_CFLAGS += $(filter-out -g,$(filter-out -O%,$(filter-out -W%,$(CFLAGS))))
-PKGVARS += FINAL_LOCATION OS_CLASS CMPLR_CLASS C_CFLAGS LDFLAGS LDLIBS
+C_CPPFLAGS = $(filter-out -g,$(filter-out -O%,$(filter-out -W%,$(CPPFLAGS))))
+C_CFLAGS   = $(filter-out -g,$(filter-out -O%,$(filter-out -W%,$(CFLAGS))))
+C_CXXFLAGS = $(filter-out -g,$(filter-out -O%,$(filter-out -W%,$(CXXFLAGS))))
+PKGVARS += FINAL_LOCATION OS_CLASS CMPLR_CLASS C_CPPFLAGS C_CFLAGS C_CXXFLAGS LDFLAGS LDLIBS
 PKGVARS += EPICS_VERSION EPICS_REVISION EPICS_MODIFICATION EPICS_PATCH_LEVEL
 PKGVARS += CC CCC CPP AR LD
 PKGVARS += EPICS_BASE_HOST_LIBS EPICS_BASE_IOC_LIBS
@@ -57,8 +58,27 @@ endif
 EXPAND += $(PKGCONFIG:%=%@)
 CLEANS += epics-base-$(T_A).pc@
 
+EXPAND += EPICSBaseConfigVersion.cmake@
+EXPAND += EPICSBaseConfigVars.cmake@
+
 include $(TOP)/configure/RULES
 
 epics-base-$(T_A).pc@: ../epics-base-arch.pc@
 	@$(RM) $@
 	@$(CP) $< $@
+
+ifdef T_A
+install: $(INSTALL_LOCATION_LIB)/cmake/EPICSBase/EPICSBaseConfig.cmake \
+         $(INSTALL_LOCATION_LIB)/cmake/EPICSBase/EPICSBaseConfigVersion.cmake \
+         $(INSTALL_LOCATION_LIB)/cmake/EPICSBase/FindEPICSTargetArch.cmake \
+         $(INSTALL_LIB)/cmake/EPICSBase/EPICSBaseConfigVars.cmake
+
+$(INSTALL_LOCATION_LIB)/cmake/EPICSBase/%.cmake : ../%.cmake
+	$(INSTALL) -d -m $(INSTALL_PERMISSIONS) $< $(@D)
+
+$(INSTALL_LOCATION_LIB)/cmake/EPICSBase/%.cmake : %.cmake
+	$(INSTALL) -d -m $(INSTALL_PERMISSIONS) $< $(@D)
+
+$(INSTALL_LIB)/cmake/EPICSBase/%.cmake : %.cmake
+	$(INSTALL) -d -m $(INSTALL_PERMISSIONS) $< $(@D)
+endif
