@@ -625,6 +625,7 @@ all_done:
 
 long dbEntryToAddr(const DBENTRY *pdbentry, DBADDR *paddr)
 {
+    long ret = 0;
     dbFldDes *pflddes = pdbentry->pflddes;
     short dbfType = pflddes->field_type;
 
@@ -644,10 +645,11 @@ long dbEntryToAddr(const DBENTRY *pdbentry, DBADDR *paddr)
 
         /* Let record type modify paddr */
         if (prset && prset->cvt_dbaddr) {
-            return prset->cvt_dbaddr(paddr);
+            ret = prset->cvt_dbaddr(paddr);
         }
     }
-    return 0;
+    paddr->compare = paddr->pfield;
+    return ret;
 }
 
 /*
@@ -910,7 +912,6 @@ long dbGet(DBADDR *paddr, short dbrType,
     void *pbuffer, long *options, long *nRequest, void *pflin)
 {
     char *pbuf = pbuffer;
-    void *pfieldsave = paddr->pfield;
     db_field_log *pfl = (db_field_log *)pflin;
     short field_type;
     long capacity, no_elements, offset;
@@ -1052,7 +1053,6 @@ long dbGet(DBADDR *paddr, short dbrType,
         }
     }
 done:
-    paddr->pfield = pfieldsave;
     return status;
 }
 
@@ -1330,7 +1330,6 @@ long dbPut(DBADDR *paddr, short dbrType,
     short field_type  = paddr->field_type;
     long no_elements  = paddr->no_elements;
     long special      = paddr->special;
-    void *pfieldsave  = paddr->pfield;
     rset *prset = dbGetRset(paddr);
     long status = 0;
     dbFldDes *pfldDes;
@@ -1408,7 +1407,7 @@ long dbPut(DBADDR *paddr, short dbrType,
     if (isValueField) precord->udf = FALSE;
     if (precord->mlis.count &&
         !(isValueField && pfldDes->process_passive))
-        db_post_events(precord, pfieldsave, DBE_VALUE | DBE_LOG);
+        db_post_events(precord, paddr->compare, DBE_VALUE | DBE_LOG);
     /* If this field is a property (metadata) field,
      * then post a property change event (even if the field
      * didn't change).
@@ -1416,6 +1415,5 @@ long dbPut(DBADDR *paddr, short dbrType,
     if (precord->mlis.count && pfldDes->prop)
         db_post_events(precord, NULL, DBE_PROPERTY);
 done:
-    paddr->pfield = pfieldsave;
     return status;
 }
