@@ -15,6 +15,9 @@
 #ifndef INCrecGblh
 #define INCrecGblh 1
 
+#include <stdarg.h>
+
+#include "compilerDependencies.h"
 #include "epicsTypes.h"
 #include "shareLib.h"
 
@@ -60,6 +63,12 @@ epicsShareFunc int  recGblInitConstantLink(struct link *plink,
 epicsShareFunc unsigned short recGblResetAlarms(void *precord);
 epicsShareFunc int recGblSetSevr(void *precord, epicsEnum16 new_stat,
     epicsEnum16 new_sevr);
+epicsShareFunc int recGblSetSevrMsg(void *precord, epicsEnum16 new_stat,
+                                    epicsEnum16 new_sevr,
+                                    const char *msg, ...) EPICS_PRINTF_STYLE(4,5);
+epicsShareFunc int recGblSetSevrVMsg(void *precord, epicsEnum16 new_stat,
+                                     epicsEnum16 new_sevr,
+                                     const char *msg, va_list args);
 epicsShareFunc void recGblInheritSevr(int msMode, void *precord, epicsEnum16 stat,
     epicsEnum16 sevr);
 epicsShareFunc void recGblFwdLink(void *precord);
