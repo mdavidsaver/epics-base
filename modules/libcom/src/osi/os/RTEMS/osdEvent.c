@@ -132,8 +132,7 @@ epicsEventWaitWithTimeout(epicsEventId id, double timeOut)
         return epicsEventTryWait(id);
     SEMSTAT(1)
     delay = timeOut * rtemsTicksPerSecond_double;
-    if (delay == 0)
-        delay++;
+    delay += 2;
     sc = rtems_semaphore_obtain (sid, RTEMS_WAIT, delay);
     if (sc == RTEMS_SUCCESSFUL)
         return epicsEventOK;

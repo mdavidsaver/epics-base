@@ -45,8 +45,7 @@ epicsEventStatus epicsEventWaitWithTimeout(epicsEventId id, double timeOut)
         ticks = WAIT_FOREVER;
     } else {
         ticks = timeOut * rate;
-        if (ticks <= 0)
-            ticks = 1;
+        ticks += 2;
     }
     status = semTake((SEM_ID)id, ticks);
     if (status == OK)

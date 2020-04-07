@@ -101,10 +101,8 @@ epicsShareFunc epicsEventStatus epicsEventWaitWithTimeout (
         tmo = INFINITE - 1;
     }
     else {
-        tmo = ( DWORD ) ( ( timeOut * mSecPerSec ) + 0.5 );
-        if ( tmo == 0 ) {
-            tmo = 1;
-        }
+        tmo = ( DWORD ) ( timeOut * mSecPerSec );
+        tmo += 2;
     }
     status = WaitForSingleObject ( pSem->handle, tmo );
     if ( status == WAIT_OBJECT_0 ) {

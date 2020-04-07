@@ -163,22 +163,27 @@ static double eventWaitCheckDelayError( const epicsEventId &id, const double & d
     epicsTime end = epicsTime::getMonotonic();
     double meas = end - beg;
     double error = meas - delay;
-    testOk(error >= 0, "epicsEventWaitWithTimeout(%.6f)  delay error %.6f sec",
-        delay, error);
+    testOk(error >= 0.0, "epicsEventWaitWithTimeout(%.6f)  delay %.6f error %.6f sec",
+        delay, meas, error);
     return fabs(error);
 }
 
-#define WAITCOUNT 21
+#define WAITCOUNT 20
 static void eventWaitTest()
 {
     epicsEventId event = epicsEventMustCreate(epicsEventEmpty);
     double errorSum = eventWaitCheckDelayError(event, 0.0);
 
-    for (int i = 0; i < WAITCOUNT - 1; i++) {
-        double delay = ldexp ( 1.0 , -i );
-        errorSum += eventWaitCheckDelayError ( event, delay );
+    testDiag("sleep quantum %.6f", epicsThreadSleepQuantum());
+    testDiag("monotonic res %u", (unsigned)epicsMonotonicResolution());
+
+    for (int i = 0; i <= WAITCOUNT - 1; i++) {
+        double delay = ldexp ( 1.0 , -i ); // 2**-i
+        for(int j = 0; j < 4; j++) {
+            errorSum += eventWaitCheckDelayError ( event, delay );
+        }
     }
-    double meanError = errorSum / WAITCOUNT;
+    double meanError = errorSum / WAITCOUNT / 4;
     testOk(meanError < 0.05, "Mean delay error was %.6f sec", meanError);
 
     epicsEventDestroy(event);
@@ -193,7 +198,7 @@ MAIN(epicsEventTest)
     epicsEventId event;
     int status;
 
-    testPlan(13 + SLEEPERCOUNT + WAITCOUNT);
+    testPlan(12 + SLEEPERCOUNT + 2 + WAITCOUNT*4);
 
     event = epicsEventMustCreate(epicsEventEmpty);
 
