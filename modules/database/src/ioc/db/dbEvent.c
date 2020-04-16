@@ -687,7 +687,10 @@ db_field_log* db_create_event_log (struct evSubscrip *pevent)
             pLog->type = dbfl_type_val;
             pLog->stat = prec->stat;
             pLog->sevr = prec->sevr;
+            strncpy(pLog->amsg, prec->amsg, sizeof(pLog->amsg)-1);
+            pLog->amsg[sizeof(pLog->amsg)-1] = '\0';
             pLog->time = prec->time;
+            pLog->utag = prec->utag;
             pLog->field_type  = dbChannelFieldType(chan);
             pLog->no_elements = dbChannelElements(chan);
             /*
