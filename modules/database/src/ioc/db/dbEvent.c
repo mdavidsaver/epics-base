@@ -682,6 +682,7 @@ db_field_log* db_create_event_log (struct evSubscrip *pevent)
         struct dbChannel *chan = pevent->chan;
         struct dbCommon  *prec = dbChannelRecord(chan);
         pLog->ctx = dbfl_context_event;
+        pLog->mask = pevent->select;
         if (pevent->useValque) {
             pLog->type = dbfl_type_val;
             pLog->stat = prec->stat;
