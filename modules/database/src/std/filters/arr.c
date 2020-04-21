@@ -12,6 +12,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 
 #include <freeList.h>
 #include <dbAccess.h>
@@ -124,7 +125,10 @@ static db_field_log* filter(void* pvt, dbChannel *chan, db_field_log *pfl)
             pfl->type = dbfl_type_ref;
             pfl->stat = prec->stat;
             pfl->sevr = prec->sevr;
+            strncpy(pfl->amsg, prec->amsg, sizeof(pfl->amsg)-1);
+            pfl->amsg[sizeof(pfl->amsg)-1] = '\0';
             pfl->time = prec->time;
+            pfl->utag = prec->utag;
             pfl->field_type = dbChannelFieldType(chan);
             pfl->field_size = dbChannelFieldSize(chan);
             pfl->no_elements = nTarget;
