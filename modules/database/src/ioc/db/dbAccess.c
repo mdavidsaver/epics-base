@@ -640,6 +640,8 @@ long dbEntryToAddr(const DBENTRY *pdbentry, DBADDR *paddr)
     paddr->field_size  = pflddes->size;
     paddr->special     = pflddes->special;
     paddr->dbr_field_type = mapDBFToDBR[dbfType];
+    paddr->ro = 0;
+    paddr->vfields = NULL;
 
     if (paddr->special == SPC_DBADDR) {
         const rset *prset = dbGetRset(paddr);
@@ -921,6 +923,15 @@ long dbGet(DBADDR *paddr, short dbrType,
 
     if (options && *options)
         getOptions(paddr, &pbuf, options, pflin);
+
+    if (dbrType==DBR_VFIELD) {
+        VField* vfield = (VField*)pbuffer;
+        if(!paddr->vfields || !(prset=dbGetRset(paddr))->get_vfield)
+            return S_db_badDbrtype;
+
+        return prset->get_vfield(paddr, vfield);
+    }
+
     if (nRequest && *nRequest == 0)
         return 0;
 
@@ -1330,7 +1341,15 @@ long dbPut(DBADDR *paddr, short dbrType,
     int isValueField;
     int propertyUpdate = paddr->pfldDes->prop && precord->mlis.count;
 
-    if (special == SPC_ATTRIBUTE)
+    if (dbrType == DBR_VFIELD) {
+        const VField* vfield = (const VField*)pbuffer;
+        if(!paddr->vfields || !prset->put_vfield)
+            return S_db_badDbrtype;
+
+        return prset->put_vfield(paddr, vfield);
+    }
+
+    if (special == SPC_ATTRIBUTE || paddr->ro)
         return S_db_noMod;
 
     if (dbrType == DBR_PUT_ACKT && field_type <= DBF_DEVICE) {
