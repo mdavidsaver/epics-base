@@ -28,6 +28,8 @@ addons:
     - g++-mingw-w64-x86-64
     # for RTEMS cross builds
     - qemu-system-x86
+    # for ci-core-dumper
+    gdb
   homebrew:
     packages:
     # for all EPICS builds
@@ -35,10 +37,16 @@ addons:
     update: true
 
 install:
+  - sudo pip install git+https://github.com/mdavidsaver/ci-core-dumper#egg=ci-core-dumper
   - ./.ci/travis/prepare.sh
 
 script:
+  - sudo ci-core-dumper install
+  - ulimit -c unlimited
   - ./.ci/travis/build.sh
+
+after_failure:
+  - ci-core-dumper report
 
 # Define build jobs
 
