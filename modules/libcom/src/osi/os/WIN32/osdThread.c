@@ -98,69 +98,18 @@ static const int osdRealtimePriorityList [osdRealtimePriorityStateCount] =
 BOOL WINAPI DllMain (
     HINSTANCE hModule, DWORD dwReason, LPVOID lpReserved )
 {
-    static DWORD dllHandleIndex;
-    HMODULE dllHandle = 0;
-    BOOL success = TRUE;
-
-    switch ( dwReason ) 
-	{
-	case DLL_PROCESS_ATTACH:
-        dllHandleIndex = TlsAlloc ();
-        if ( dllHandleIndex == TLS_OUT_OF_INDEXES ) {
-            success = FALSE;
+    if(dwReason==DLL_PROCESS_ATTACH) {
+        HMODULE dllHandle;
+        if(!GetModuleHandleEx(
+                    GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS|GET_MODULE_HANDLE_EX_FLAG_PIN,
+                    ( LPCTSTR ) DllMain,
+                    &dllHandle
+                    ))
+        {
+            fprintf(stderr, "Warning: Unable to PIN Com.dll\n");
         }
-		break;
-
-	case DLL_PROCESS_DETACH:
-        success = TlsFree ( dllHandleIndex );
-		break;
-
-	case DLL_THREAD_ATTACH:
-        /*
-         * Dont allow user's explicitly calling FreeLibrary for Com.dll to yank 
-         * the carpet out from under EPICS threads that are still using Com.dll
-         */
-#if _WIN32_WINNT >= 0x0501 
-        /* 
-         * Only in WXP 
-         * Thats a shame because this is probably much faster
-         */
-        success = GetModuleHandleEx (
-            GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
-            ( LPCTSTR ) DllMain, & dllHandle );
-#else
-        {   
-            char name[256];
-            DWORD nChar = GetModuleFileName ( 
-                hModule, name, sizeof ( name ) );
-            if ( nChar && nChar < sizeof ( name ) ) {
-                dllHandle = LoadLibrary ( name );
-                if ( ! dllHandle ) {
-                    success = FALSE;
-                }
-            }
-            else {
-                success = FALSE;
-            }
-        }
-#endif
-        if ( success ) {
-            success = TlsSetValue ( dllHandleIndex, dllHandle );
-        }
-		break;
-	case DLL_THREAD_DETACH:
-        /*
-         * Thread is exiting, release Com.dll. I am assuming that windows is
-         * smart enough to postpone the unload until this function returns.
-         */
-        dllHandle = TlsGetValue ( dllHandleIndex );
-        if ( dllHandle ) {
-            success = FreeLibrary ( dllHandle );
-        }
-		break;
-	}
-
-	return success;
+    }
+    return TRUE;
 }
 #endif
 

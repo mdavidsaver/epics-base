@@ -13,6 +13,10 @@
  *      Date:            06-01-91
  */
 
+#ifdef _WIN32
+#  define WIN32_LEAN_AND_MEAN
+#  include <windows.h>
+#endif
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -754,3 +758,22 @@ static void exitDatabase(void *dummy)
 {
     iocShutdown();
 }
+
+#if defined(_WIN32) && defined(EPICS_BUILD_DLL)
+BOOL WINAPI DllMain (
+    HINSTANCE hModule, DWORD dwReason, LPVOID lpReserved )
+{
+    if(dwReason==DLL_PROCESS_ATTACH) {
+        HMODULE dllHandle;
+        if(!GetModuleHandleEx(
+                    GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS|GET_MODULE_HANDLE_EX_FLAG_PIN,
+                    ( LPCTSTR ) DllMain,
+                    &dllHandle
+                    ))
+        {
+            fprintf(stderr, "Warning: Unable to PIN ca.dll\n");
+        }
+    }
+    return TRUE;
+}
+#endif

@@ -20,6 +20,11 @@
  *
  */
 
+#ifdef _WIN32
+#  define WIN32_LEAN_AND_MEAN
+#  include <windows.h>
+#endif
+
 #include <new>
 #include <float.h>
 
@@ -784,6 +789,27 @@ void epicsShareAPI ca_self_test ()
     }
     pcac->selfTest ();
 }
+
+#if defined(_WIN32) && defined(EPICS_BUILD_DLL)
+extern "C" {
+BOOL WINAPI DllMain (
+    HINSTANCE hModule, DWORD dwReason, LPVOID lpReserved )
+{
+    if(dwReason==DLL_PROCESS_ATTACH) {
+        HMODULE dllHandle;
+        if(!GetModuleHandleEx(
+                    GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS|GET_MODULE_HANDLE_EX_FLAG_PIN,
+                    ( LPCTSTR ) DllMain,
+                    &dllHandle
+                    ))
+        {
+            fprintf(stderr, "Warning: Unable to PIN ca.dll\n");
+        }
+    }
+    return TRUE;
+}
+}
+#endif
 
 // extern "C"
 epicsShareDef const int epicsTypeToDBR_XXXX [lastEpicsType+1] = {
