@@ -11,6 +11,15 @@
  *      Author  Marty Kraimer
  */
 
+#include <stdlib.h>
+#include <stdio.h>
+
+#ifdef _WIN32
+#  define WIN32_LEAN_AND_MEAN
+#  include <windows.h>
+#  include <errhandlingapi.h>
+#endif
+
 #include "epicsUnitTest.h"
 #include "epicsMath.h"
 #include "testMain.h"
@@ -23,6 +32,20 @@ MAIN(epicsMathTest)
 
     testPlan(35);
 
+#ifdef _WIN32
+    if(getenv("TEST_SET_ERROR_MODE")) {
+        // One of the SEM_* options, either SEM_FAILCRITICALERRORS or SEM_NOGPFAULTERRORBOX,
+        // depending on who you ask, acts to disable Windows Error Reporting entirely.
+        // This also prevents the AeDebug facility from triggering.
+        UINT prev = SetErrorMode(0);
+        if(prev)
+            testDiag("SetErrorMode() disables 0x%x\n", (unsigned)prev);
+    }
+#endif
+
+    testDiag("Boom");
+    fflush(stdout);
+    *(volatile char*)0;
     testOk1(!isnan(0.0));
     testOk1(!isinf(0.0));
 
