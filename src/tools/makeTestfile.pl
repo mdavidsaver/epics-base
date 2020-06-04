@@ -48,7 +48,7 @@ if( $TA =~ /^win32-x86/ && $HA !~ /^win/ ) {
   $exec = "./$exe";
 }
 
-# When running on Windows we turn off the OS's "user-friendly" error handling
+# clear SEM_NOGPFAULTERRORBOX set by perl
 my $sem = $^O ne 'MSWin32' ? '' : <<ENDBEGIN;
 BEGIN {
   my \$sem = 'SetErrorMode';
@@ -60,7 +60,7 @@ BEGIN {
     require Win32API::File;
     Win32API::File->import(\$sem);
   } if \$@;
-  SetErrorMode(0) unless \$@;
+  SetErrorMode(1) unless \$@;
 }
 ENDBEGIN
 
