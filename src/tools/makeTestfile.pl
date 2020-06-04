@@ -48,6 +48,22 @@ if( $TA =~ /^win32-x86/ && $HA !~ /^win/ ) {
   $exec = "./$exe";
 }
 
+# When running on Windows we turn off the OS's "user-friendly" error handling
+my $sem = $^O ne 'MSWin32' ? '' : <<ENDBEGIN;
+BEGIN {
+  my \$sem = 'SetErrorMode';
+  eval {
+    require Win32::ErrorMode;
+    Win32::ErrorMode->import(\$sem);
+  };
+  eval {
+    require Win32API::File;
+    Win32API::File->import(\$sem);
+  } if \$@;
+  SetErrorMode(0) unless \$@;
+}
+ENDBEGIN
+
 open(my $OUT, '>', $target) or die "Can't create $target: $!\n";
 
 print $OUT <<EOF;
@@ -55,6 +71,7 @@ print $OUT <<EOF;
 
 use strict;
 use Cwd 'abs_path';
+$sem
 
 \$ENV{HARNESS_ACTIVE} = 1 if scalar \@ARGV && shift eq '-tap';
 \$ENV{TOP} = abs_path(\$ENV{TOP}) if exists \$ENV{TOP};
