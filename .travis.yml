@@ -78,7 +78,7 @@ jobs:
 # Cross-compilation to RTEMS
 
   - dist: bionic
-    env: RTEMS=5 TEST=NO
+    env: RTEMS=5
 
   - env: RTEMS=4.10
 
