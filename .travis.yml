@@ -78,11 +78,11 @@ jobs:
 # Cross-compilation to RTEMS
 
   - dist: bionic
-    env: RTEMS=5
+    env: RTEMS=5 RTEMS_TARGET=RTEMS-pc686-qemu
 
-  - env: RTEMS=4.10
+  - env: RTEMS=4.10 RTEMS_TARGET=RTEMS-pc386-qemu
 
-  - env: RTEMS=4.9
+  - env: RTEMS=4.9 RTEMS_TARGET=RTEMS-pc386-qemu
 
 # MacOS build
 
