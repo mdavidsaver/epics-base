@@ -48,11 +48,6 @@ static int mutexLock(pthread_mutex_t *id)
     return status;
 }
 
-/* Until these can be demonstrated to work leave them undefined*/
-/* On solaris 8 _POSIX_THREAD_PRIO_INHERIT fails*/
-#undef _POSIX_THREAD_PROCESS_SHARED
-#undef _POSIX_THREAD_PRIO_INHERIT
-
 /* Two completely different implementations are provided below
  * If support is available for PTHREAD_MUTEX_RECURSIVE then
  *      only pthread_mutex is used.
@@ -82,7 +77,7 @@ epicsMutexOSD * epicsMutexOsdCreate(void) {
 #if defined(_POSIX_THREAD_PRIO_INHERIT) && _POSIX_THREAD_PRIO_INHERIT > 0
     status = pthread_mutexattr_setprotocol(&pmutex->mutexAttr,
         PTHREAD_PRIO_INHERIT);
-    if (errVerbose) checkStatus(status, "pthread_mutexattr_setprotocal");
+    checkStatus(status, "pthread_mutexattr_setprotocal");
 #endif /*_POSIX_THREAD_PRIO_INHERIT*/
 
     status = pthread_mutexattr_settype(&pmutex->mutexAttr,
@@ -92,6 +87,15 @@ epicsMutexOSD * epicsMutexOsdCreate(void) {
         goto fail;
 
     status = pthread_mutex_init(&pmutex->lock, &pmutex->mutexAttr);
+#if defined(_POSIX_THREAD_PRIO_INHERIT) && _POSIX_THREAD_PRIO_INHERIT > 0
+    if (status == EOPNOTSUPP) {
+        status = pthread_mutexattr_setprotocol(&pmutex->mutexAttr,
+            PTHREAD_PRIO_NONE);
+
+        if(!status)
+            status = pthread_mutex_init(&pmutex->lock, &pmutex->mutexAttr);
+    }
+#endif /*_POSIX_THREAD_PRIO_INHERIT*/
     if (status)
         goto dattr;
     return pmutex;
@@ -187,7 +191,7 @@ epicsMutexOSD * epicsMutexOsdCreate(void) {
 #if defined(_POSIX_THREAD_PRIO_INHERIT) && _POSIX_THREAD_PRIO_INHERIT > 0
     status = pthread_mutexattr_setprotocol(
         &pmutex->mutexAttr,PTHREAD_PRIO_INHERIT);
-    if (errVerbose) checkStatus(status, "pthread_mutexattr_setprotocal");
+    checkStatus(status, "pthread_mutexattr_setprotocal");
 #endif /*_POSIX_THREAD_PRIO_INHERIT*/
 
     status = pthread_mutex_init(&pmutex->lock, &pmutex->mutexAttr);
