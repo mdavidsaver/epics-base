@@ -50,7 +50,6 @@ typedef float           epicsFloat32;
 typedef double          epicsFloat64;
 typedef epicsInt32      epicsStatus;
 
-
 typedef struct {
     unsigned    length;
     char        *pString;

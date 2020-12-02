@@ -385,7 +385,7 @@ typedef struct lset {
      *
      * @since Added after 7.0.4.1
      */
-    long (*getTimeStampTag)(const struct link *plink, epicsTimeStamp *pstamp, epicsInt32 *ptag);
+    long (*getTimeStampTag)(const struct link *plink, epicsTimeStamp *pstamp, epicsUTag *ptag);
 } lset;
 
 #define dbGetSevr(link, sevr) \
@@ -439,7 +439,7 @@ epicsShareFunc long dbGetTimeStamp(const struct link *plink,
         epicsTimeStamp *pstamp);
 /** @since Added after 7.0.4.1 */
 epicsShareFunc long dbGetTimeStampTag(const struct link *plink,
-        epicsTimeStamp *pstamp, epicsInt32 *ptag);
+        epicsTimeStamp *pstamp, epicsUTag *ptag);
 #define dbGetTimeStampTag(LINK, STAMP, TAG) dbGetTimeStampTag(LINK, STAMP, TAG)
 epicsShareFunc long dbPutLink(struct link *plink, short dbrType,
         const void *pbuffer, long nRequest);
