@@ -3664,3 +3664,24 @@ void  dbReportDeviceConfig(dbBase *pdbbase, FILE *report)
     finishOutstream(stream);
     return;
 }
+
+#if defined(__GNUC__) && defined(__ELF__) && defined(__linux__)
+/* Loading of GDB python helper script.
+ *
+ * Need to include the following line in ~/.gdbinit
+ *
+ *   add-auto-load-safe-path /path/to/base
+ *
+ * after libCom.so is loaded (eg. break on main() ) run in the GDB shell:
+ *
+ *   info auto-load python-scripts
+ */
+__asm__(
+    ".pushsection \".debug_gdb_scripts\", \"MS\",@progbits,1\n"
+    ".byte 4 /* Python text */\n"
+    ".ascii \"epics-gdb-helper.py\\n\"\n"
+    ".incbin \"epics-gdb-helper.py\"\n"
+    ".byte 0\n"
+    ".popsection \n"
+    );
+#endif
