@@ -62,6 +62,7 @@
 #include "initHooks.h"
 #include "iocInit.h"
 #include "link.h"
+#include "dbLinkPvt.h"
 #include "menuConvert.h"
 #include "menuPini.h"
 #include "recGbl.h"
@@ -182,6 +183,8 @@ static int iocBuild_2(void)
 
     initialProcess();
     initHookAnnounce(initHookAfterInitialProcess);
+
+    dbLinkCheckStart();
     return 0;
 }
 
