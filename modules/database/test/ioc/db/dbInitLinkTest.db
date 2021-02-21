@@ -1,0 +1,10 @@
+
+set("link:scope", "INT")
+
+record(x, "il$(N)tgt") {}
+record(x, "il$(N)src1") {
+    field(INP, "il$(N)tgt EXT")
+}
+record(x, "il$(N)src2") {
+    field(INP, "il$(N)tgt")
+}

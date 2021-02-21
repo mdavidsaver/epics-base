@@ -43,6 +43,7 @@
 #include "dbScan.h"
 #include "dbStaticLib.h"
 #include "devSup.h"
+#include "epicsString.h"
 #include "link.h"
 #include "recGbl.h"
 #include "recSup.h"
@@ -86,31 +87,70 @@ static void TSEL_modified(struct link *plink)
     }
 }
 
+static
+void dbInitLinkSUggest(const char *recName)
+{
+    DBENTRY ent;
+    const char *bestName = NULL;
+    double bestScore = -1.0;
+    long status;
+
+    dbInitEntry(pdbbase, &ent);
+
+    for(status = dbFirstRecordType(&ent); !status; status = dbNextRecordType(&ent)) {
+        for(status = dbFirstRecord(&ent); !status; status = dbNextRecord(&ent)) {
+            double score = epicsStrSimilarity(recName, ent.precnode->recordname);
+            if(score > bestScore) {
+                bestScore = score;
+                bestName = ent.precnode->recordname;
+            }
+        }
+    }
+
+    if(bestName) {
+        errlogPrintf("    Did you mean \"" ANSI_BOLD("%s") "\"?\n", bestName);
+    }
+
+    dbFinishEntry(&ent);
+}
 
 /***************************** Generic Link API *****************************/
 
-void dbInitLink(struct link *plink, short dbfType)
+long dbInitLink(struct link *plink, short dbfType)
 {
     struct dbCommon *precord = plink->precord;
+    int requireLoc;
 
     /* Only initialize link once */
     if (plink->flags & DBLINK_FLAG_INITIALIZED)
-        return;
+        return 0;
     else
         plink->flags |= DBLINK_FLAG_INITIALIZED;
 
     if (plink->type == CONSTANT) {
         dbConstInitLink(plink);
-        return;
+        return 0;
     }
 
     if (plink->type == JSON_LINK) {
         dbJLinkInit(plink);
-        return;
+        return 0;
     }
 
     if (plink->type != PV_LINK)
-        return;
+        return 0;
+
+    requireLoc = !(plink->value.pv_link.pvlMask & pvlOptExternal)
+            && (plink->flags & DBLINK_FLAG_DEFAULT_INT);
+
+    if(requireLoc && dbChannelTest(plink->value.pv_link.pvname))
+    {
+        errlogPrintf("%s.%s " ERL_ERROR ": Unable to create local link to \"" ANSI_BOLD("%s") "\".\n",
+                     precord->name, dbLinkFieldName(plink),
+                     plink->value.pv_link.pvname);
+        dbInitLinkSUggest(plink->value.pv_link.pvname);
+        return S_dbLib_badLink;
+    }
 
     if (plink == &precord->tsel)
         TSEL_modified(plink);
@@ -118,7 +158,7 @@ void dbInitLink(struct link *plink, short dbfType)
     if (!(plink->value.pv_link.pvlMask & (pvlOptCA | pvlOptCP | pvlOptCPP))) {
         /* Make it a DB link if possible */
         if (!dbDbInitLink(plink, dbfType))
-            return;
+            return 0;
     }
 
     /* Make it a CA link */
@@ -140,6 +180,7 @@ void dbInitLink(struct link *plink, short dbfType)
                 plink->value.pv_link.pvname);
         }
     }
+    return 0;
 }
 
 void dbAddLink(struct dbLocker *locker, struct link *plink, short dbfType,

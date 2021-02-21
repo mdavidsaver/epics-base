@@ -68,10 +68,12 @@ DBCORE_API extern maplinkType pamaplinkType[];
 #define pvlOptInpString  0x100  /*Input as string*/
 #define pvlOptOutNative  0x200  /*Output native*/
 #define pvlOptOutString  0x400  /*Output as string*/
+#define pvlOptExternal   0x800  /*Explicitly allow non-local target PV*/
 
 /* DBLINK Flag bits */
 #define DBLINK_FLAG_INITIALIZED    1 /* dbInitLink() called */
 #define DBLINK_FLAG_TSELisTIME     2 /* Use TSEL to get timeStamp */
+#define DBLINK_FLAG_DEFAULT_INT    4 /* .db file default link scope is internal/local */
 
 struct macro_link {
     char *macroStr;
