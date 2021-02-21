@@ -125,7 +125,7 @@ static int iocBuild_1(void)
         epicsThreadSetOkToBlock(1);
     }
 
-    errlogPrintf("Starting iocInit\n");
+    errlogPrintf("Starting \033[34;1miocInit\033[0m\n");
     if (checkDatabase(pdbbase)) {
         errlogPrintf("iocBuild: Aborting, bad database definition (DBD)!\n");
         return -1;
