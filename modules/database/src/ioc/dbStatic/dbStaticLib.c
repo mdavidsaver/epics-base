@@ -1928,11 +1928,12 @@ char * dbGetString(DBENTRY *pdbentry)
             else if(pvlMask&pvlOptCP) ppind=3;
             else if(pvlMask&pvlOptCPP) ppind=4;
             else ppind=0;
-            dbMsgPrint(pdbentry, "%s%s%s%s",
+            dbMsgPrint(pdbentry, "%s%s%s%s%s",
                    plink->value.pv_link.pvname ? plink->value.pv_link.pvname : "",
                    (plink->flags & DBLINK_FLAG_TSELisTIME) ? ".TIME" : "",
                    ppstring[ppind],
-                   msstring[plink->value.pv_link.pvlMask&pvlOptMsMode]);
+                   msstring[plink->value.pv_link.pvlMask&pvlOptMsMode],
+                   pvlMask & pvlOptExternal ? " EXT" : "");
             break;
         }
         case VME_IO:
@@ -2024,9 +2025,10 @@ char * dbGetString(DBENTRY *pdbentry)
                 pvlMask = plink->value.pv_link.pvlMask;
                 if (pvlMask&pvlOptCA) ppind=2;
                 else ppind=0;
-                dbMsgPrint(pdbentry, "%s%s",
+                dbMsgPrint(pdbentry, "%s%s%s",
                     plink->value.pv_link.pvname ? plink->value.pv_link.pvname : "",
-                    ppind ? ppstring[ppind] : "");
+                    ppind ? ppstring[ppind] : "",
+                    pvlMask & pvlOptExternal ? " EXT" : "");
                 break;
             }
             default :
@@ -2361,6 +2363,8 @@ long dbParseLink(const char *str, short ftype, dbLinkInfo *pinfo)
         else if (strstr(pstr, "MSS")) pinfo->modifiers |= pvlOptMSS;
         else if (strstr(pstr, "MS")) pinfo->modifiers |= pvlOptMS;
 
+        if (strstr(pstr, "EXT")) pinfo->modifiers |= pvlOptExternal;
+
         /* filter modifiers based on link type */
         switch(ftype) {
         case DBF_INLINK: /* accept all */ break;
@@ -2610,6 +2614,8 @@ long dbPutString(DBENTRY *pdbentry,const char *pstring)
                 free(plink->text);
                 plink->text = epicsStrDup(pstring);
                 dbFreeLinkInfo(&link_info);
+                if(dbLinkScopeDefault()==1)
+                    plink->flags |= DBLINK_FLAG_DEFAULT_INT;
             } else {
                 /* assignment after init (eg. autosave restore) */
                 struct dbCommon *prec = pdbentry->precnode->precord;
