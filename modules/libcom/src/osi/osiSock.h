@@ -156,6 +156,7 @@ LIBCOM_API void epicsSocketConvertErrnoToString (
 
 typedef union osiSockAddr {
     struct sockaddr_in  ia;
+    struct sockaddr_in6 ia6;
     struct sockaddr     sa;
 } osiSockAddr;
 
