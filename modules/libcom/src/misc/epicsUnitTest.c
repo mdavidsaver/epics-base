@@ -36,7 +36,11 @@
 #endif
 
 #include "epicsThread.h"
+#include "epicsEvent.h"
+#include "epicsStdlib.h"
 #include "epicsMutex.h"
+#include "epicsMath.h"
+#include "osiUnistd.h" /* for _exit() */
 #include "epicsUnitTest.h"
 #include "epicsExit.h"
 #include "epicsTime.h"
@@ -53,6 +57,9 @@ typedef struct {
     int skips;
 } testFailure;
 
+
+static epicsUInt64 testStartTime;
+static epicsUInt64 testPlanTime;
 static epicsMutexId testLock = 0;
 static int perlHarness;
 static int planned;
@@ -63,7 +70,6 @@ static int skipped;
 static int bonus;
 static const char *todo;
 
-epicsTimeStamp started;
 static int Harness;
 static int Programs;
 static int Tests;
@@ -72,6 +78,10 @@ ELLLIST faults;
 const char *testing = NULL;
 
 static epicsThreadOnceId onceFlag = EPICS_THREAD_ONCE_INIT;
+
+static epicsEventId timeoutEvent;
+static epicsThreadId timeoutThread;
+static double timeoutPeriod;
 
 #ifdef _WIN32
 /*
@@ -99,7 +109,25 @@ static int testReportHook(int reportType, char *message, int *returnValue)
 }
 #endif
 
+static void testTimeout(void *dummy)
+{
+    if(epicsEventWaitWithTimeout(timeoutEvent, timeoutPeriod)==epicsEventWaitTimeout) {
+        testFail("epicsUnitTest timeout after %.3f sec.", timeoutPeriod);
+        fprintf(stderr, "Test timeout after %.3f sec.\n", timeoutPeriod);
+        fflush(stderr);
+        /* goodbye cruel world */
+        abort();
+        /* windows: in case test messed with abort() handling */
+        _exit(42);
+        /* probably paranoia */
+        *((char*)0) = 42;
+    }
+}
+
 static void testOnce(void *dummy) {
+    epicsThreadOpts opts = EPICS_THREAD_OPTS_INIT;
+    const char *stimeout = getenv("EPICS_TEST_TIMEOUT");
+    double timeout = 0.0;
     testLock = epicsMutexMustCreate();
     perlHarness = (getenv("HARNESS_ACTIVE") != NULL);
 #ifdef __rtems__
@@ -132,11 +160,28 @@ static void testOnce(void *dummy) {
     _CrtSetReportFile( _CRT_WARN, _CRTDBG_FILE_STDERR );
     _CrtSetReportHook2( _CRT_RPTHOOK_INSTALL, testReportHook );
 #endif
+
+    if(stimeout && stimeout[0]!='\0' && epicsParseDouble(stimeout, &timeout, NULL)) {
+        fprintf(stderr, "Unable to set test timeout: %s\n", stimeout);
+    } else {
+        timeoutPeriod = timeout;
+    }
+    if(finite(timeoutPeriod) && timeoutPeriod>0.0) {
+        opts.joinable = 1;
+        opts.priority = epicsThreadPriorityMax;
+        opts.stackSize = epicsThreadStackSmall;
+        timeoutEvent = epicsEventCreate(epicsEventEmpty);
+        if(timeoutEvent)
+            timeoutThread = epicsThreadCreateOpt("testtimeout", &testTimeout, NULL, &opts);
+        if(!timeoutThread)
+            fprintf(stderr, "Unable to setup test timeout\n");
+    }
 }
 
 void testPlan(int plan) {
     epicsThreadOnce(&onceFlag, testOnce, NULL);
     epicsMutexMustLock(testLock);
+    testPlanTime = epicsMonotonicGet();
     planned = plan;
     tested = passed = failed = skipped = bonus = 0;
     todo = NULL;
@@ -243,6 +288,17 @@ static void testResult(const char *result, int count) {
 
 int testDone(void) {
     int status = 0;
+    double elapsed = (epicsMonotonicGet()-testPlanTime)*1e-9;
+
+    if(timeoutThread) {
+        epicsEventMustTrigger(timeoutEvent);
+        epicsThreadMustJoin(timeoutThread);
+        epicsEventDestroy(timeoutEvent);
+        timeoutEvent = NULL;
+        timeoutThread = NULL;
+        /* allows individual timeouts in test harness */
+        timeoutPeriod = 0.0;
+    }
 
     epicsMutexMustLock(testLock);
     if (perlHarness) {
@@ -260,7 +316,11 @@ int testDone(void) {
             printf("\nPlanned %d tests but only ran %d\n", planned, tested);
             status = 2;
         }
-        printf("\n    Results\n    =======\n       Tests: %-3d\n", tested);
+        printf("\n    Results\n    ======="
+               "\n     Elapsed: %.3f sec."
+               "\n       Tests: %-3d\n",
+               elapsed,
+               tested);
         if (tested) {
             testResult("Passed", passed);
             if (bonus) testResult("Todo Passes", bonus);
@@ -305,6 +365,7 @@ int testImpreciseTiming(void)
 void testHarnessExit(void *dummy) {
     epicsTimeStamp ended;
     int Faulty;
+    double elapsed = (epicsMonotonicGet()-testPlanTime)*1e-9;
 
     if (!Harness) return;
 
@@ -333,8 +394,8 @@ void testHarnessExit(void *dummy) {
                Faulty, Programs, Failures, Tests);
     }
 
-    printf("Programs=%d, Tests=%d, %.0f wallclock secs\n\n",
-           Programs, Tests, epicsTimeDiffInSeconds(&ended, &started));
+    printf("Programs=%d, Tests=%d, %.3f wallclock secs\n\n",
+           Programs, Tests, elapsed);
 }
 
 void testHarness(void) {
@@ -344,7 +405,7 @@ void testHarness(void) {
     Programs = 0;
     Tests = 0;
     ellInit(&faults);
-    epicsTimeGetCurrent(&started);
+    testStartTime = epicsMonotonicGet();
 }
 
 void runTestFunc(const char *name, TESTFUNC func) {
