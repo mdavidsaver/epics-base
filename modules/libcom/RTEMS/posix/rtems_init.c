@@ -978,7 +978,7 @@ POSIX_Init ( void *argument __attribute__((unused)))
     default_network_set_self_prio(RTEMS_MAXIMUM_PRIORITY - 1U);
 
     /* supress all output from bsd network initialization */ 
-    rtems_bsd_set_vprintf_handler(rtems_bsd_vprintf_handler_mute);
+    //rtems_bsd_set_vprintf_handler(rtems_bsd_vprintf_handler_mute);
 
     sc = rtems_bsd_initialize();
     assert(sc == RTEMS_SUCCESSFUL);
