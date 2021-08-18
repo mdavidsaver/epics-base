@@ -38,6 +38,7 @@
 #include "caeventmask.h"
 #include "callback.h"
 #include "dbAccessDefs.h"
+#include "dbAccessNoThrow.h"
 #include "dbAddr.h"
 #include "dbBase.h"
 #include "dbBkpt.h"
@@ -928,7 +929,7 @@ long dbGet(DBADDR *paddr, short dbrType,
         if(!paddr->vfields || !(prset=dbGetRset(paddr))->get_vfield)
             return S_db_badDbrtype;
 
-        return prset->get_vfield(paddr, vfield);
+        return dbRecSupGetVFieldNoThrow(prset, paddr, vfield);
     }
 
     if (nRequest && *nRequest == 0)
@@ -1345,7 +1346,7 @@ long dbPut(DBADDR *paddr, short dbrType,
         if(!paddr->vfields || !prset->put_vfield)
             return S_db_badDbrtype;
 
-        return prset->put_vfield(paddr, vfield);
+        return dbRecSupPutVFieldNoThrow(prset, paddr, vfield);
     }
 
     if (special == SPC_ATTRIBUTE || paddr->ro)
