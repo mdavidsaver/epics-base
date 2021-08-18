@@ -68,6 +68,7 @@ HTMLS += dbCommonOutput.html
 
 dbCore_SRCS += dbLock.c
 dbCore_SRCS += dbAccess.c
+dbCore_SRCS += dbAccessNoThrow.c
 dbCore_SRCS += dbBkpt.c
 dbCore_SRCS += dbChannel.c
 dbCore_SRCS += dbConstLink.c
