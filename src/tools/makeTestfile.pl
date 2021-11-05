@@ -140,6 +140,7 @@ else {
     ######################################## Code for Unix run-hosts
     print $OUT <<__UNIX__;
 
+my \$startTime = time();
 my \$pid = fork();
 die "\$tool: Can't fork for '$error': \$!\\n"
     unless defined \$pid;
@@ -156,6 +157,8 @@ if (\$pid) {
     alarm \$timeout;
     waitpid \$pid, 0;
     alarm 0;
+    my \$elapsed = time() - \$startTime;
+    printf("\\n#### Elapsed time %.2f\\n", \$elapsed);
     exit \$? >> 8;
 }
 else {
