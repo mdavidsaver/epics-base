@@ -78,6 +78,7 @@ static int yyreset(void)
 "registrar"     return(tokenREGISTRAR);
 "function"      return(tokenFUNCTION);
 "variable"      return(tokenVARIABLE);
+"set"           return(tokenSET);
 
 {bareword}+ { /* unquoted string or number */
     yylval.Str = dbmfStrdup((char *) yytext);

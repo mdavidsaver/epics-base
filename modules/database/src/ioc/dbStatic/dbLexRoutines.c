@@ -103,6 +103,7 @@ typedef struct inputFile{
     char        *filename;
     FILE        *fp;
     int         line_num;
+    unsigned char linkDefLoc;
 }inputFile;
 static ELLLIST inputFileList = ELLLIST_INIT;
 
@@ -1263,6 +1264,60 @@ static void dbAlias(char *name, char *alias)
         yyerror(NULL);
     }
     dbFinishEntry(pdbEntry);
+}
+
+static void warnSetUnknown(const char *name)
+{
+    static ELLLIST warned;
+    ELLNODE *cur;
+    tempListNode *node;
+    size_t namelen = strlen(name);
+
+    for(cur = ellFirst(&warned); cur; cur = ellNext(cur)) {
+        node = CONTAINER(cur, tempListNode, node);
+        if(strcmp((char*)node->item, name)==0)
+            return; /* omit duplicate warning */
+    }
+
+    epicsPrintf(ERL_WARNING " Unknown name in set(\"%s\", ...)\n", name);
+
+    if(!!(node = malloc(sizeof(*node) + namelen + 1))) {
+        node->item = &node[1];
+        strcpy((char*)node->item, name);
+        ellAdd(&warned, &node->node);
+    }
+}
+
+static void dbSet(const char *name)
+{
+    if(strcmp(name, "link:scope")==0) {
+        char* val = popFirstTemp();
+
+        if(!val || strcmp(val, "AUTO")==0) {
+            pinputFileNow->linkDefLoc = 0;
+
+        } else if(strcmp(val, "INT")==0) {
+            pinputFileNow->linkDefLoc = 1;
+
+        } else {
+            epicsPrintf(ERL_WARNING " Invalid value in set(\"%s\", \"%s\")\n", name, val);
+        }
+        dbmfFree(val);
+    } else {
+        warnSetUnknown(name);
+    }
+
+    /* clean up unused arguments */
+    while(ellCount(&tempList))
+        dbmfFree(popFirstTemp());
+}
+
+int dbLinkScopeDefault(void)
+{
+    int ret = -1;
+    if(pinputFileNow)
+        ret = pinputFileNow->linkDefLoc;
+    return ret;
 }
 
 static void dbRecordBody(void)

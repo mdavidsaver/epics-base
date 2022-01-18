@@ -109,6 +109,8 @@ PVDENTRY *dbPvdAdd(DBBASE *pdbbase,dbRecordType *precordType,dbRecordNode *precn
 void dbPvdDelete(DBBASE *pdbbase,dbRecordNode *precnode);
 void dbPvdFreeMem(DBBASE *pdbbase);
 
+int dbLinkScopeDefault(void);
+
 #ifdef __cplusplus
 }
 #endif
