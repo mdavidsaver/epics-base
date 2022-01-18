@@ -115,6 +115,11 @@ long dbInitLink(struct link *plink, short dbfType)
 
     srcMask = plink->value.pv_link.pvlMask & pvlOptSrcMask;
 
+    if(srcMask == pvlOptSrcAuto) {
+        /* apply default from set("link:scope", ...) */
+        srcMask = plink->flags & pvlOptSrcMask;
+    }
+
     if((srcMask == pvlOptSrcInt) && dbChannelTest(plink->value.pv_link.pvname)) {
         DBENTRY closest;
         const char *fldname = dbLinkFieldName(plink);
