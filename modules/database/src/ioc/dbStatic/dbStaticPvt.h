@@ -120,6 +120,8 @@ void dbPvdFreeMem(DBBASE *pdbbase);
 DBCORE_API
 char** dbCompleteRecord(const char *word);
 
+int dbLinkScopeDefault(void);
+
 #ifdef __cplusplus
 }
 #endif
