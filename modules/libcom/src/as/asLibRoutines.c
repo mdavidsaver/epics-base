@@ -174,7 +174,7 @@ long epicsStdCall asInitFile(const char *filename,const char *substitutions)
     FILE *fp;
     long status;
 
-    fp = fopen(filename,"r");
+    fp = epicsFOpen(filename,"r");
     if(!fp) {
         fprintf(stderr, ERL_ERROR " asInitFile: Can't open file '%s'\n", filename);
         return(S_asLib_badConfig);
