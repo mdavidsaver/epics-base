@@ -275,9 +275,10 @@ endif
 
 TESTPROD_HOST += iocshTest
 iocshTest_SRCS += iocshTest.cpp
+iocshTest_SRCS += iocshTest_emem.c
+iocshTest_FILES = $(wildcard ../iocshTest*.cmd)
+iocshTest_FILES += ../iocshTestHelpFunction1 ../iocshTestHelpFunctions
 TESTS += iocshTest
-TESTFILES += $(wildcard ../iocshTest*.cmd)
-TESTFILES += ../iocshTestHelpFunction1 ../iocshTestHelpFunctions
 
 TESTPROD_HOST += epicsLoadTest
 epicsLoadTest_SRCS += epicsLoadTest.cpp
@@ -349,8 +350,8 @@ endif
 
 include $(TOP)/configure/RULES
 
-rtemsTestData.c : $(TESTFILES) $(TOOLS)/epicsMakeMemFs.pl
-	$(PERL) $(TOOLS)/epicsMakeMemFs.pl $@ epicsRtemsFSImage $(TESTFILES)
+iocshTest_emem.c: $(iocshTest_FILES) $(TOOLS)/epicsMakeMemFs.pl
+	$(PERL) $(TOOLS)/epicsMakeMemFs.pl -f imf $(EMEM_FLAGS) $@ iocshTest $(iocshTest_FILES)
 
 epicsLoadTest$(DEP): epicsInstallDir.h
 
