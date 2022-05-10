@@ -88,7 +88,7 @@ static void TSEL_modified(struct link *plink)
 }
 
 static
-void dbInitLinkSUggest(const char *recName)
+void dbInitLinkSuggest(const char *recName)
 {
     DBENTRY ent;
     const char *bestName = NULL;
@@ -143,12 +143,11 @@ long dbInitLink(struct link *plink, short dbfType)
     requireLoc = !(plink->value.pv_link.pvlMask & pvlOptExternal)
             && (plink->flags & DBLINK_FLAG_DEFAULT_INT);
 
-    if(requireLoc && dbChannelTest(plink->value.pv_link.pvname))
-    {
+    if(requireLoc && dbChannelTest(plink->value.pv_link.pvname)) {
         errlogPrintf("%s.%s " ERL_ERROR ": Unable to create local link to \"" ANSI_BOLD("%s") "\".\n",
                      precord->name, dbLinkFieldName(plink),
                      plink->value.pv_link.pvname);
-        dbInitLinkSUggest(plink->value.pv_link.pvname);
+        dbInitLinkSuggest(plink->value.pv_link.pvname);
         return S_dbLib_badLink;
     }
 

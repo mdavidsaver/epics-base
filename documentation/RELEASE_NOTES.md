@@ -296,50 +296,50 @@ for WIN32 status.
 
 ### EXT Link Modifier
 
-The default behavior of DB/CA links make it easy to target links between IOCs.
-It also makes it easy for typos to result in dangling CA links.
-This can be detected w/ caget/dbgf/dbcar, but all of these depend on explicit
-extra action being taken on the part of whoever sets up, or changes an IOC.
+The default behavior of DB/CA links makes it easy to target links between IOCs.
+It also makes it easy for typos to result in dangling CA links. This can be
+detected with caget/dbgf/dbcar, but all of these depend on explicit extra action
+being taken on the part of whoever sets up, or changes an IOC.
 
 To preserve compatibility, the default behavior of link does not change.
 
-This behavior/mode, now retroactively called `AUTO` may now be express explicitly with:
+This behavior/mode, now retroactively called `AUTO`, may now be expressed
+explicitly with:
 
 ```
 set("link:scope","AUTO")
 ```
 
-A new `INT` behavior/mode is added where links will be default be required to target
-record within the same IOC.  Links which may target an external PV must be marked
-with a new `EXT` link modifier.
+A new `INT` behavior/mode is added where links will by default be required to
+target records within the same IOC. Links which may target an external PV must
+be marked with a new `EXT` link modifier.
 
 This new mode is an attempt to reduce the possibility of typos in links going
-unnoticed by allowing the a **per-file** change to opt-in to a default.
+unnoticed by allowing a **per-file** change to opt-in to the new behavior.
 
 This allows the author of a .db file to explicitly mark those (usually few)
-links which are intended to become external `CA` links.
-Links not marked as `EXT` will trigger an error during `iocInit()` if the target
-is not a local record.
+links which are intended to become external `CA` links. Links not marked as
+`EXT` will trigger an error during `iocInit()` if the target is not a local
+record.
 
 `EXT` and `CA` can be combined to require a local CA link.
 
-`EXT` is applied only during IOC initialization, and not to runtime re-targeting.
+`INT` behavior is applied only during IOC initialization. Runtime re-targeting
+of links always behaves as if `AUTO` was specified.
 
 ```
-set("link:scope","INT") # effects current .db file only
+set("link:scope","INT") # affects current .db file only
 
 record(longin, "my:dev:sigA") {
     #field(INP, "my:dev:sigB CPP") # intended
     field(INP, "my:def:sigB CPP")  # note typo "def"
-    field(TPRO, "1")
 }
 record(longin, "my:dev:sigB") {
     field(INP, "some:other EXT") # allowed
-    field(TPRO, "1")
 }
 ```
 
-In this example the first record has a like with a typo (`def` vs. `dev`).
+In this example the first record has a link with a typo (`def` vs. `dev`).
 With the `link:scope` set to `INT`, and no `EXT` modifier, loading this
 .db will now result in an error.
 
