@@ -16,8 +16,11 @@
 #include <stdio.h>
 #include <string.h>
 
+#define EPICS_PRIVATE_API
+
 #include "dbDefs.h"
 #include "epicsStdlib.h"
+#include "errlog.h"
 
 #include "dbAccessDefs.h"
 #include "dbAddr.h"
@@ -220,8 +223,15 @@ static long dbConstGetNelements(const struct link *plink, long *nelements)
 static long dbConstGetValue(struct link *plink, short dbrType, void *pbuffer,
         long *pnRequest)
 {
-    if (pnRequest)
+    if (pnRequest) {
+        if(!(plink->flags & DBLINK_FLAG_BAD_GET_CONST)) {
+            plink->flags |= DBLINK_FLAG_BAD_GET_CONST;
+            errlogPrintf(ERL_WARNING " %s.%s (%s) logic: check for !constant before array dbGetLink()\n",
+                         plink->precord->name, dbLinkFieldName(plink),
+                         plink->precord->rdes->name);
+        }
         *pnRequest = 0;
+    }
     return 0;
 }
 
