@@ -77,6 +77,9 @@ DBCORE_API extern const maplinkType pamaplinkType[LINK_NTYPES];
 #define DBLINK_FLAG_INITIALIZED    1 /* dbInitLink() called */
 #define DBLINK_FLAG_TSELisTIME     2 /* Use TSEL to get timeStamp */
 /* pvlOptSrc* bits also used to indicate default from file parsing. */
+#ifdef EPICS_PRIVATE_API
+#  define DBLINK_FLAG_BAD_GET_CONST 0x10
+#endif
 
 struct macro_link {
     char *macroStr;
