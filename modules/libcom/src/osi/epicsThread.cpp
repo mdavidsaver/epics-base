@@ -108,8 +108,15 @@ extern "C" void epicsThreadCallEntryPoint ( void * pPvt )
     }
     catch ( ... ) {
         if ( ! threadDestroyed ) {
+            const char *etype = "catch ( ... )";
+#if defined(__GNUC__) && __cplusplus>=201103L
+            auto cur(std::current_exception());
+            if(cur)
+                etype = cur.__cxa_exception_type()->name();
+#endif
+
             pThread->printLastChanceExceptionMessage (
-                "catch ( ... )", "Non-standard C++ exception" );
+                etype, "Non-standard C++ exception" );
         }
     }
     if ( ! threadDestroyed ) {
