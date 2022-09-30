@@ -65,7 +65,7 @@ void timer::start ( epicsTimerNotify & notify, const epicsTime & expire )
 void timer::privateStart ( epicsTimerNotify & notify, const epicsTime & expire )
 {
     this->pNotify = & notify;
-    this->exp = expire - ( this->queue.notify.quantum () / 2.0 );
+    this->exp = expire;
 
     bool reschedualNeeded = false;
     if ( this->curState == stateActive ) {
