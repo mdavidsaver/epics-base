@@ -65,7 +65,16 @@ void timer::start ( epicsTimerNotify & notify, const epicsTime & expire )
 void timer::privateStart ( epicsTimerNotify & notify, const epicsTime & expire )
 {
     this->pNotify = & notify;
-    this->exp = expire - ( this->queue.notify.quantum () / 2.0 );
+    this->exp = expire
+#ifdef vxWorks
+            /* For historical reasons, round down here allows vxWorks timers
+             * which expire on every tick.  Otherwise, the fastest timer period
+             * is 2x the tick iterval.
+             * For other targets, this results in timers expiring early.
+             */
+            - ( this->queue.notify.quantum () / 2.0 )
+#endif
+            ;
 
     bool reschedualNeeded = false;
     if ( this->curState == stateActive ) {
