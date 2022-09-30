@@ -35,6 +35,15 @@
 #   define debugPrintf(ARGSINPAREN)
 #endif
 
+/* For historical reasons, round down expiration time on vxWorks and RTEMS.
+ * This allows timers which expire on every tick.
+ * Otherwise, the fastest timer period is 2x the tick interval.
+ * This results in timers expiring early.
+ */
+#if defined(vxWorks) || defined(__rtems__)
+#  define TIMER_QUANTUM_BIAS 1
+#endif
+
 template < class T > class epicsGuard;
 
 class timer : public epicsTimer, public tsDLNode < timer > {
