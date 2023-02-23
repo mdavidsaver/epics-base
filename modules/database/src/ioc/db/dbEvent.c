@@ -871,7 +871,7 @@ unsigned int    caEventMask
     struct dbCommon   * const prec = (struct dbCommon *) pRecord;
     struct evSubscrip *pevent;
 
-    if (prec->mlis.count == 0) return DB_EVENT_OK;       /* no monitors set */
+//    if (prec->mlis.count == 0) return DB_EVENT_OK;       /* no monitors set */
 
     LOCKREC (prec);
 

@@ -1405,8 +1405,7 @@ long dbPut(DBADDR *paddr, short dbrType,
     pfldDes = paddr->pfldDes;
     isValueField = dbIsValueField(pfldDes);
     if (isValueField) precord->udf = FALSE;
-    if (precord->mlis.count &&
-        !(isValueField && pfldDes->process_passive))
+    if (!(isValueField && pfldDes->process_passive))
         db_post_events(precord, paddr->compare, DBE_VALUE | DBE_LOG);
     /* If this field is a property (metadata) field,
      * then post a property change event (even if the field
