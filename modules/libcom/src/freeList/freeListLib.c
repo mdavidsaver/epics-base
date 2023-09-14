@@ -158,6 +158,8 @@ LIBCOM_API void epicsStdCall freeListFree(void *pvt,void*pmem)
     FREELISTPVT *pfl = pvt;
     void        **ppnext;
 
+    memset(pmem, 0xfe, pfl->size);
+
     if(!pfl->nmalloc) {
         free(pmem);
         return;
