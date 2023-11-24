@@ -41,8 +41,9 @@
 #include "dbLink.h"
 #include "dbLock.h"
 #include "dbScan.h"
-#include "dbStaticLib.h"
+#include "dbStaticPvt.h"
 #include "devSup.h"
+#include "epicsString.h"
 #include "link.h"
 #include "recGbl.h"
 #include "recSup.h"
@@ -86,12 +87,12 @@ static void TSEL_modified(struct link *plink)
     }
 }
 
-
 /***************************** Generic Link API *****************************/
 
 long dbInitLink(struct link *plink, short dbfType)
 {
     struct dbCommon *precord = plink->precord;
+    unsigned srcMask;
 
     /* Only initialize link once */
     if (plink->flags & DBLINK_FLAG_INITIALIZED)
@@ -111,6 +112,26 @@ long dbInitLink(struct link *plink, short dbfType)
 
     if (plink->type != PV_LINK)
         return 0;
+
+    srcMask = plink->value.pv_link.pvlMask & pvlOptSrcMask;
+
+    if((srcMask == pvlOptSrcInt) && dbChannelTest(plink->value.pv_link.pvname)) {
+        DBENTRY closest;
+        const char *fldname = dbLinkFieldName(plink);
+        epicsPrintf("%s.%s " ERL_ERROR ": Unable to create INT link to \"" ANSI_BOLD("%s") "\".\n",
+                    precord->name, fldname, plink->value.pv_link.pvname);
+
+        dbInitEntry(pdbbase, &closest);
+        if(!dbFindRecordSimilar(&closest, plink->value.pv_link.pvname, NULL)) {
+            unsigned indent = strlen(precord->name) + strlen(fldname) + 23;
+            epicsPrintf("%*s  Did you mean \"" ANSI_BOLD("%s.%s") "\" ?\n",
+                        indent, "",
+                        closest.precnode->recordname,
+                        closest.pflddes->name);
+        }
+        dbFinishEntry(&closest);
+        return S_dbLib_badLink;
+    }
 
     if (plink == &precord->tsel)
         TSEL_modified(plink);
