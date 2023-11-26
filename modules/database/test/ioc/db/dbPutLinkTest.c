@@ -279,11 +279,11 @@ void testInitLocal()
     testIocInitOk();
     eltc(1);
 
-    testdbGetFieldEqual("il1src0.INP", DBF_STRING, "no:such:pv NPP NMS");
-    testdbGetFieldEqual("il1src1.INP", DBF_STRING, "il1tgt NPP NMS");
-    testdbGetFieldEqual("il1src2.INP", DBF_STRING, "il1tgt NPP NMS");
-    testdbGetFieldEqual("il1src3.INP", DBF_STRING, "no:such:pv NPP NMS");
-    testdbGetFieldEqual("il1src4.INP", DBF_STRING, "no:such:pv NPP NMS");
+    testdbGetFieldEqual("il1src0.INP", DBF_STRING, "no:such:pv NPP NMS EXT");
+    testdbGetFieldEqual("il1src1.INP", DBF_STRING, "il1tgt NPP NMS EXT");
+    testdbGetFieldEqual("il1src2.INP", DBF_STRING, "il1tgt NPP NMS INT");
+    testdbGetFieldEqual("il1src3.INP", DBF_STRING, "no:such:pv NPP NMS EXT");
+    testdbGetFieldEqual("il1src4.INP", DBF_STRING, "no:such:pv NPP NMS EXT");
 
     testInitLocalLink("il1src0", pvlOptSrcExt, pvlOptSrcAuto);
     testInitLocalLink("il1src1", pvlOptSrcInt, pvlOptSrcExt );
@@ -645,7 +645,7 @@ void testJLink(void)
     testdbGetFieldEqual("j1.VAL", DBF_LONG, 1);
     testdbGetFieldEqual("j2.INP", DBF_STRING, "{\"z\":{'good':2}}");
     testdbGetFieldEqual("j2.VAL", DBF_LONG, 2);
-    testdbGetFieldEqual("j2.TSEL", DBF_STRING, "j1.TIME NPP NMS");
+    testdbGetFieldEqual("j2.TSEL", DBF_STRING, "j1.TIME NPP NMS EXT");
     testdbGetFieldEqual("j3.VAL", DBF_LONG, 3);
 
     testNumZ(6);
