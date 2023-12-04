@@ -35,7 +35,7 @@ void epicsMutexOsdSetup(void)
 
 long epicsMutexOsdPrepare(struct epicsMutexParm *mutex)
 {
-    mutex->osd = semMCreate(SEM_DELETE_SAFE|SEM_INVERSION_SAFE|SEM_Q_PRIORITY));
+    mutex->osd = semMCreate(SEM_DELETE_SAFE|SEM_INVERSION_SAFE|SEM_Q_PRIORITY);
     return mutex->osd ? 0 : ENOMEM;
 }
 
