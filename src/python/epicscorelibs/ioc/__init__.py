@@ -111,8 +111,3 @@ def main():
         'exit':sys.exit,
         'ioc':ioc,
     })
-
-
-# Run with python -m epicscorelibs.ioc -d /path/to/db -m macro=value,macro2=value2
-if __name__ == "__main__":
-    main()
