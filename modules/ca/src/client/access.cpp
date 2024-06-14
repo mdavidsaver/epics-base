@@ -285,10 +285,16 @@ int epicsStdCall ca_search_and_connect (
         puser, CA_PRIORITY_DEFAULT, chanptr );
 }
 
-// extern "C"
 int epicsStdCall ca_create_channel (
      const char * name_str, caCh * conn_func, void * puser,
      capri priority, chid * chanptr )
+{
+    return ca_create_channel6(name_str, conn_func, puser, priority, chanptr, 0);
+}
+
+int epicsStdCall ca_create_channel6 (
+     const char * name_str, caCh * conn_func, void * puser,
+     capri priority, chid * chanptr, unsigned flags )
 {
     ca_client_context * pcac;
     int caStatus = fetchClientContext ( & pcac );
@@ -318,7 +324,7 @@ int epicsStdCall ca_create_channel (
         oldChannelNotify * pChanNotify =
             new ( pcac->oldChannelNotifyFreeList )
                 oldChannelNotify ( guard, *pcac, name_str,
-                    conn_func, puser, priority );
+                    conn_func, puser, priority, flags );
         // make sure that their chan pointer is set prior to
         // calling connection call backs
         *chanptr = pChanNotify;

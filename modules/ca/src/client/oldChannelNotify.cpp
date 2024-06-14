@@ -45,9 +45,9 @@ extern "C" void cacNoopAccesRightsHandler ( struct access_rights_handler_args )
 oldChannelNotify::oldChannelNotify (
         epicsGuard < epicsMutex > & guard, ca_client_context & cacIn,
         const char *pName, caCh * pConnCallBackIn,
-        void * pPrivateIn, capri priority ) :
+        void * pPrivateIn, capri priority, unsigned flags ) :
     cacCtx ( cacIn ),
-    io ( cacIn.createChannel ( guard, pName, *this, priority ) ),
+    io ( cacIn.createChannel ( guard, pName, *this, priority, flags ) ),
     pConnCallBack ( pConnCallBackIn ),
     pPrivate ( pPrivateIn ), pAccessRightsFunc ( cacNoopAccesRightsHandler ),
     ioSeqNo ( 0 ), currentlyConnected ( false ), prevConnected ( false )

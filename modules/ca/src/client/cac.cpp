@@ -510,9 +510,8 @@ void cac::beaconNotify ( const inetAddrID & addr, const epicsTime & currentTime,
 #   endif
 }
 
-cacChannel & cac::createChannel (
-    epicsGuard < epicsMutex > & guard, const char * pName,
-    cacChannelNotify & chan, cacChannel::priLev pri )
+cacChannel & cac::createChannel (epicsGuard < epicsMutex > & guard, const char * pName,
+    cacChannelNotify & chan, cacChannel::priLev pri , unsigned int flags)
 {
     guard.assertIdenticalMutex ( this->mutex );
 
@@ -522,6 +521,11 @@ cacChannel & cac::createChannel (
 
     if ( pName == 0 || pName[0] == '\0' ) {
         throw cacChannel::badString ();
+    }
+
+    if ( flags & CA_CREATE_LOCAL ) {
+        // TODO: move dbChannelNOOP from dbCore to ca?
+        throw cacChannel::unsupportedByService ();
     }
 
     if ( ! this->pudpiiu ) {

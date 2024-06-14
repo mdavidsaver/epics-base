@@ -419,6 +419,19 @@ typedef unsigned capri;
 #define CA_PRIORITY_ARCHIVE 20
 #define CA_PRIORITY_OPI 0
 
+/* Short-hand for ca_create_channel6(name, cb, ptr, prio, &pchan, 0)
+ */
+LIBCA_API int epicsStdCall ca_create_channel
+(
+     const char     *pChanName,
+     caCh           *pConnStateCallback,
+     void           *pUserPrivate,
+     capri          priority,
+     chid           *pChanID
+);
+
+#define CA_CREATE_LOCAL (0x1)
+
 /** \brief Create a Channel Access channel.
  *
  * This function creates a CA channel. The CA client library will attempt
@@ -516,13 +529,15 @@ typedef unsigned capri;
  * \returns ::ECA_STRTOBIG - Unusually large string
  * \returns ::ECA_ALLOCMEM - Unable to allocate memory
  */
-LIBCA_API int epicsStdCall ca_create_channel
+LIBCA_API
+int epicsStdCall ca_create_channel6
 (
      const char     *pChanName,
      caCh           *pConnStateCallback,
      void           *pUserPrivate,
      capri          priority,
-     chid           *pChanID
+     chid           *pChanID,
+     unsigned       flags
 );
 
 /*

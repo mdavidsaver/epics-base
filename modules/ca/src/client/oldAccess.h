@@ -54,7 +54,7 @@ public:
     oldChannelNotify (
         epicsGuard < epicsMutex > &, struct ca_client_context &,
         const char * pName, caCh * pConnCallBackIn,
-        void * pPrivateIn, capri priority );
+        void * pPrivateIn, capri priority, unsigned flags );
     void destructor (
         CallbackGuard & cbGuard,
         epicsGuard < epicsMutex > & mutexGuard );
@@ -306,7 +306,7 @@ public:
     void replaceErrLogHandler ( caPrintfFunc * ca_printf_func );
     cacChannel & createChannel (
         epicsGuard < epicsMutex > &, const char * pChannelName,
-        cacChannelNotify &, cacChannel::priLev pri );
+        cacChannelNotify &, cacChannel::priLev pri, unsigned flags );
     void flush ( epicsGuard < epicsMutex > & );
     void eliminateExcessiveSendBacklog (
         epicsGuard < epicsMutex > &, cacChannel & );
@@ -355,9 +355,9 @@ public:
     void whenThereIsAnExceptionDestroySyncGroupIO ( epicsGuard < epicsMutex > &, T & );
 
     // legacy C API
-    friend int epicsStdCall ca_create_channel (
+    friend int epicsStdCall ca_create_channel6 (
         const char * name_str, caCh * conn_func, void * puser,
-        capri priority, chid * chanptr );
+        capri priority, chid * chanptr, unsigned flags );
     friend int epicsStdCall ca_clear_channel ( chid pChan );
     friend int epicsStdCall ca_array_get ( chtype type,
         arrayElementCount count, chid pChan, void * pValue );

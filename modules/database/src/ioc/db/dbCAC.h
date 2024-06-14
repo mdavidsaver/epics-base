@@ -204,7 +204,7 @@ private:
     cacChannel & createChannel (
         epicsGuard < epicsMutex > &,
         const char * pChannelName, cacChannelNotify &,
-        cacChannel::priLev );
+        cacChannel::priLev, unsigned );
     void flush (
         epicsGuard < epicsMutex > & );
     void sync ();

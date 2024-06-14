@@ -276,7 +276,8 @@ public:
     virtual cacChannel & createChannel (
         epicsGuard < epicsMutex > &,
         const char * pChannelName, cacChannelNotify &,
-        cacChannel::priLev = cacChannel::priorityDefault ) = 0;
+        cacChannel::priLev = cacChannel::priorityDefault,
+        unsigned flags = 0 ) = 0;
     virtual void flush (
         epicsGuard < epicsMutex > & ) = 0;
     virtual void sync () = 0;

@@ -20,6 +20,9 @@
 #ifndef dbChannelIOh
 #define dbChannelIOh
 
+#include <cacIO.h>
+#include "dbCAC.h"
+
 #include "compilerDependencies.h"
 
 class dbChannelIO : public cacChannel, public dbContextPrivateListOfIO {

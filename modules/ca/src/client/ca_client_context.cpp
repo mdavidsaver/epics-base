@@ -665,11 +665,11 @@ void ca_client_context::callbackProcessingCompleteNotify ()
 
 cacChannel & ca_client_context::createChannel (
     epicsGuard < epicsMutex > & guard, const char * pChannelName,
-    cacChannelNotify & chan, cacChannel::priLev pri )
+    cacChannelNotify & chan, cacChannel::priLev pri, unsigned flags )
 {
     guard.assertIdenticalMutex ( this->mutex );
     return this->pServiceContext->createChannel (
-        guard, pChannelName, chan, pri );
+        guard, pChannelName, chan, pri, flags );
 }
 
 void ca_client_context::flush ( epicsGuard < epicsMutex > & guard )

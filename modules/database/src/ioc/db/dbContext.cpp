@@ -87,13 +87,14 @@ dbContext::~dbContext ()
 
 cacChannel & dbContext::createChannel (
     epicsGuard < epicsMutex > & guard, const char * pName,
-    cacChannelNotify & notifyIn, cacChannel::priLev priority )
+    cacChannelNotify & notifyIn, cacChannel::priLev priority,
+    unsigned flags)
 {
     guard.assertIdenticalMutex ( this->mutex );
 
     dbChannel *dbch = dbChannel_create ( pName );
     if ( ! dbch ) {
-        if ( isolated ) {
+        if ( isolated || (flags & CA_CREATE_LOCAL) ) {
             return *new dbChannelNOOP(pName, notifyIn);
 
         } else if ( ! this->pNetContext.get() ) {

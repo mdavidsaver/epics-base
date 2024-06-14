@@ -127,7 +127,7 @@ public:
         const epicsTime & currentTime );
     cacChannel & createChannel (
         epicsGuard < epicsMutex > & guard, const char * pChannelName,
-        cacChannelNotify &, cacChannel::priLev );
+        cacChannelNotify &, cacChannel::priLev, unsigned flags );
     void destroyChannel (
         epicsGuard < epicsMutex > &, nciu & );
     void initiateConnect (
