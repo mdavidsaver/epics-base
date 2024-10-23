@@ -65,6 +65,16 @@ DBCORE_API double scanPeriod(int scan);
 /** Shorthand for scanOnceCallback(prec, NULL, NULL)
  */
 DBCORE_API int scanOnce(struct dbCommon *prec);
+/** Ensure the target record must eventually re-process.
+ *
+ * Use when scanOnceCallback4() is called as a result of an event external
+ * to the local process database.
+ *
+ * For a busy (PACT=1) asynchronous record, sets RPRO to ensure
+ * the record will be reprocessed on completion.
+ * Otherwise sets PUTF field.
+ */
+#define SCAN_ONCE_PUTF (1)
 /** @brief scanOnce Request immediate record processing from another thread.
  *
  * Queue a request for record processing from the dedicated "Once" thread.
@@ -74,8 +84,11 @@ DBCORE_API int scanOnce(struct dbCommon *prec);
  * @param cb Function called after target record dbProcess()
  *           Does not wait for async record completion.
  * @param usr Argumentfor cb
+ * @param flags zero or a bitwise combination of the SCAN_ONCE_* flags.
  * @return Zero on success.  Non-zero if the request could not be queued.
  */
+DBCORE_API int scanOnceCallback4(struct dbCommon *prec, once_complete cb, void *usr, unsigned flags);
+/** Shorthand for scanOnceCallback4(prec, cb, usr, 0) */
 DBCORE_API int scanOnceCallback(struct dbCommon *prec, once_complete cb, void *usr);
 /** @brief Set Once queue size
  *

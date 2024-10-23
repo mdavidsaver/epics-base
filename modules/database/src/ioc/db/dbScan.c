@@ -665,9 +665,16 @@ typedef struct {
     struct dbCommon *prec;
     once_complete cb;
     void *usr;
+    unsigned flags;
 } onceEntry;
 
+
 int scanOnceCallback(struct dbCommon *precord, once_complete cb, void *usr)
+{
+    return scanOnceCallback4(precord, cb, usr, 0);
+}
+
+int scanOnceCallback4(struct dbCommon *precord, once_complete cb, void *usr, unsigned flags)
 {
     static int newOverflow = TRUE;
     onceEntry ent;
@@ -676,6 +683,7 @@ int scanOnceCallback(struct dbCommon *precord, once_complete cb, void *usr)
     ent.prec = precord;
     ent.cb = cb;
     ent.usr = usr;
+    ent.flags = flags;
 
     pushOK = epicsRingBytesPut(onceQ, (void*)&ent, sizeof(ent));
 
@@ -711,7 +719,20 @@ static void onceTask(void *arg)
             } else if (ent.prec == (void*)&exitOnce) goto shutdown;
 
             dbScanLock(ent.prec);
-            dbProcess(ent.prec);
+            if(ent.flags & SCAN_ONCE_PUTF) {
+                if (ent.prec->pact) {
+                    if (dbAccessDebugPUTF && ent.prec->tpro)
+                        printf("%s: dbPutField to Active '%s', setting RPRO=1\n",
+                            epicsThreadGetNameSelf(), ent.prec->name);
+                    ent.prec->rpro = TRUE;
+                } else {
+                    /* indicate that dbPutField called dbProcess */
+                    ent.prec->putf = TRUE;
+                    (void)dbProcess(ent.prec);
+                }
+            } else {
+                (void)dbProcess(ent.prec);
+            }
             dbScanUnlock(ent.prec);
             if(ent.cb)
                 ent.cb(ent.usr, ent.prec);
