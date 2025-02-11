@@ -26,6 +26,7 @@
 #include <biRecord.h>
 #include <boRecord.h>
 #include <bucketLib.h>
+#include <caeventmask.h>
 #include <calcoutRecord.h>
 #include <calcRecord.h>
 #include <callback.h>
@@ -178,6 +179,7 @@
 #include <menuSimm.h>
 #include <menuYesNo.h>
 #include <miscIocRegister.h>
+#include <osiFileName.h>
 #include <osiPoolStatus.h>
 #include <osiProcess.h>
 #include <osiSock.h>
