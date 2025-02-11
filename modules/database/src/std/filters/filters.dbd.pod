@@ -557,3 +557,26 @@ To read a channel only when the UTAG value is even (bit 0 is 0):
  ...
 
 =cut
+
+registrar(castInitialize)
+
+=head3 Value Cast Filter C<"cast">
+
+This filter will apply value type casting.
+
+=head4 Parameters
+
+=over
+
+=item DBR Type C<"dbr">
+
+Target type or type transform.
+
+May name a concrete type: CHAR, UCHAR, SHORT, USHORT, LONG, ULONG, INT64, UINT64, FLOAT, DOUBLE, or STRING.
+
+Or a type tranform SINT or UINT, which perform signed to/from unsigned casts between integer types
+of the same size.
+
+=back
+
+=cut

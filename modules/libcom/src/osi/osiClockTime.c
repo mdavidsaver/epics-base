@@ -17,6 +17,7 @@
 #include "epicsThread.h"
 #include "errlog.h"
 #include "epicsGeneralTime.h"
+#include "epicsTime.h"
 #include "generalTimeSup.h"
 #include "iocsh.h"
 #include "osiClockTime.h"
