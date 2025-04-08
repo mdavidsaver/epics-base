@@ -229,11 +229,6 @@ int osdTimeGetCurrent(epicsTimeStamp *pDest)
 {
     struct timespec clockNow;
 
-    /* If a Hi-Res clock is available and works, use it */
-    #ifdef CLOCK_REALTIME_HR
-        clock_gettime(CLOCK_REALTIME_HR, &clockNow) &&
-        /* Note: Uses the lo-res clock below if the above call fails */
-    #endif
     clock_gettime(CLOCK_REALTIME, &clockNow);
 
     if (!ClockTimePvt.synchronized &&
