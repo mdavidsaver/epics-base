@@ -3,9 +3,20 @@
 
 #include <compilerDependencies.h>
 #include <dbDefs.h>
+#include <ellLib.h>
+#include "dbBase.h"
 #include "dbCommon.h"
 
 struct epicsThreadOSD;
+
+/* Location where a field was initialized from a DB file
+ */
+typedef struct {
+    ELLNODE node;
+    const dbFldDes *flddes;
+    const char *filename;
+    unsigned int line_num;
+} dbFldLocation;
 
 /** Base internal additional information for every record
  */
@@ -14,6 +25,8 @@ typedef struct dbCommonPvt {
 
     /* Thread which is currently processing this record */
     struct epicsThreadOSD* procThread;
+
+    ELLLIST fldLocations; /* dbFldLocation::node */
 
     /* actually followed by:
      * struct dbCommon common;
