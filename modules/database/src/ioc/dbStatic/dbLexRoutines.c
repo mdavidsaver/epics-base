@@ -33,6 +33,7 @@
 #include "dbFldTypes.h"
 #include "dbStaticLib.h"
 #include "dbStaticPvt.h"
+#include "dbCommonPvt.h"
 #include "epicsExport.h"
 #include "link.h"
 #include "special.h"
@@ -205,7 +206,7 @@ static void freeInputFileList(void)
             fprintf(stderr, ERL_WARNING
                 ": Error closing file '%s': %s\n",
                 pinputFileNow->filename, strerror(errno));
-        free((void *)pinputFileNow->filename);
+        /* drop ->filename, which may be referenced by some dbFldLocation */
         ellDelete(&inputFileList,(ELLNODE *)pinputFileNow);
         free((void *)pinputFileNow);
     }
@@ -389,7 +390,7 @@ static int db_yyinput(char *buf, int max_size)
                 fprintf(stderr, ERL_WARNING
                     ": Error closing file '%s': %s\n",
                     pinputFileNow->filename, strerror(errno));
-            free((void *)pinputFileNow->filename);
+            /* drop ->filename, which may be referenced by some dbFldLocation */
             ellDelete(&inputFileList,(ELLNODE *)pinputFileNow);
             free((void *)pinputFileNow);
             pinputFileNow = (inputFile *)ellLast(&inputFileList);
@@ -1256,6 +1257,15 @@ static void dbRecordField(char *name,char *value)
         dbPutStringSuggest(pdbentry, value);
         yyerror(NULL);
         return;
+    }
+
+    dbFldLocation *loc = malloc(sizeof(*loc));
+    if(loc) {
+        dbCommonPvt *pvt = dbRec2Pvt(pdbentry->precnode->precord);
+        loc->flddes = pdbentry->pflddes;
+        loc->filename = pinputFileNow->filename; /* borrow reference */
+        loc->line_num = pinputFileNow->line_num;
+        ellAdd(&pvt->fldLocations, &loc->node);
     }
 }
 

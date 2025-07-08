@@ -27,7 +27,7 @@
 #include "dbAccessDefs.h"
 #include "dbAddr.h"
 #include "dbBase.h"
-#include "dbCommon.h"
+#include "dbCommonPvt.h"
 #include "dbEvent.h"
 #include "db_field_log.h"
 #include "dbFldTypes.h"
@@ -456,6 +456,20 @@ long dbpr(const char *pname,int interest_level)
 
     pmsg[0] = '\0';
     dbpr_msgOut(pMsgBuff, tab_size);
+
+    if(interest_level>=5) {
+        ELLLIST *fldLocs = &dbRec2Pvt(addr.precord)->fldLocations;
+        if(ellCount(fldLocs)) {
+            printf(" Field initialized from:\n");
+            for(ELLNODE *cur = ellFirst(&dbRec2Pvt(addr.precord)->fldLocations);
+                cur; cur = ellNext(cur))
+            {
+                const dbFldLocation *loc = CONTAINER(cur, dbFldLocation, node);
+                printf("  %-4s %s:%u\n", loc->flddes->name, loc->filename, loc->line_num);
+            }
+        }
+    }
+
     return 0;
 }
 
