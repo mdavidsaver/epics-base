@@ -46,47 +46,41 @@ static void testFunc(void *arg)
     pthread_t           tid;
     void               *rval;
     pthread_attr_t      attr;
+    unsigned char       expect_success;
 
     status = pthread_getschedparam(pthread_self(), &policy,&param);
     if ( status ) {
-        testSkip(1, "pthread_getschedparam failed");
-        goto done;
+        testAbort("pthread_getschedparam failed");
     }
 
-    if ( SCHED_FIFO != policy ) {
-        testSkip(1, "nonEpicsThreadPriorityTest must be executed with privileges to use SCHED_FIFO");
-        goto done;
-    }
+    expect_success = SCHED_FIFO == policy;
 
     if ( pthread_attr_init( &attr ) ) {
-        testSkip(1, "pthread_attr_init failed");
-        goto done;
+        testAbort("pthread_attr_init failed");
     }
     if ( pthread_attr_setinheritsched( &attr, PTHREAD_EXPLICIT_SCHED ) ) {
-        testSkip(1, "pthread_attr_setinheritsched failed");
-        goto done;
+        testAbort("pthread_attr_setinheritsched failed");
     }
     if ( pthread_attr_setschedpolicy ( &attr, SCHED_OTHER            ) ) {
-        testSkip(1, "pthread_attr_setschedpolicy failed");
-        goto done;
+        testAbort("pthread_attr_setschedpolicy failed");
     }
     param.sched_priority = 0;
     if ( pthread_attr_setschedparam  ( &attr, &param                 ) ) {
-        testSkip(1, "pthread_attr_setschedparam failed");
-        goto done;
+        testAbort("pthread_attr_setschedparam failed");
     }
 
+    if(!expect_success)
+        testTodoBegin("nonEpicsThreadPriorityTest must be executed with privileges to use SCHED_FIFO");
+
     if ( pthread_create( &tid, &attr, nonEpicsTestFunc, 0 ) ) {
-        testSkip(1, "pthread_create failed");
-        goto done;
+        testAbort("pthread_create failed");
     }
 
     if ( pthread_join( tid, &rval ) ) {
-        testSkip(1, "pthread_join failed");
-        goto done;
+        testAbort("pthread_join failed");
     }
 
-done:
+    testTodoEnd();
 
     epicsEventSignal( ev );
 }
