@@ -12,6 +12,7 @@
 
 #include <string>
 #include <list>
+#include <set>
 
 #include <stdlib.h>
 #include <stddef.h>
@@ -32,7 +33,6 @@
 #endif
 
 #define MAX_BUFFER_SIZE 4096
-#define MAX_DEPS 1024
 
 #if 0
 /* Debug Tracing */
@@ -95,8 +95,21 @@ static int opt_V = 0;
 static bool opt_D = false;
 
 static char *outFile = 0;
-static int numDeps = 0, depHashes[MAX_DEPS];
 
+static
+void emitFileDep(const char *fname)
+{
+    static std::set<std::string> sofar; // do not emit duplicates
+
+    if(sofar.count(fname))
+        return;
+    bool first = sofar.empty();
+    sofar.insert(fname);
+
+    const char *wrap = !first ? " \\\n" : "";
+
+    printf("%s %s", wrap, fname);
+}
 
 int main(int argc,char **argv)
 {
@@ -555,28 +568,7 @@ static void inputOpenFile(inputData *pinputData, const char * const filename, bo
     }
 
     if (opt_D) {
-        int hash = epicsStrHash(inFile.filename.c_str(), 12345);
-        int i = 0;
-        int match = 0;
-
-        while (i < numDeps) {
-            if (hash == depHashes[i++]) {
-                match = 1;
-                break;
-            }
-        }
-        if (!match) {
-            const char *wrap = numDeps ? " \\\n" : "";
-
-            printf("%s %s", wrap, inFile.filename.c_str());
-            if (numDeps < MAX_DEPS) {
-                depHashes[numDeps++] = hash;
-            }
-            else {
-                fprintf(stderr, "msi: More than %d dependencies!\n", MAX_DEPS);
-                depHashes[0] = hash;
-            }
-        }
+        emitFileDep(inFile.filename.c_str());
     }
 
     inFile.fp = fp;
