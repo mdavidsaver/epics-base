@@ -728,6 +728,12 @@ epicsMutex & ca_client_context::mutexRef () const
     return this->mutex;
 }
 
+void ca_client_context::sync()
+{
+    // bounce through vtable
+    this->pServiceContext->sync();
+}
+
 cacContext & ca_client_context::createNetworkContext (
     epicsMutex & mutexIn, epicsMutex & cbMutexIn )
 {
