@@ -398,6 +398,8 @@ void cac::flush ( epicsGuard < epicsMutex > & guard )
     }
 }
 
+void cac::sync() {}
+
 unsigned cac::circuitCount (
     epicsGuard < epicsMutex > & guard ) const
 {

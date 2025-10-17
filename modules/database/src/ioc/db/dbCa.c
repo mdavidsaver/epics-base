@@ -209,9 +209,9 @@ void testdbCaWaitForEventCB(void *raw)
 {
     struct waitPvt *pvt = raw;
 
-    epicsMutexMustLock(pvt->pca->lock);
+    epicsMutexMustLock(workListLock);
     epicsEventMustTrigger(pvt->evt);
-    epicsMutexUnlock(pvt->pca->lock);
+    epicsMutexUnlock(workListLock);
 }
 
 static
@@ -239,8 +239,6 @@ void testdbCaWaitForEvent(DBLINK *plink, unsigned long cnt, enum testEvent event
         dbScanUnlock(plink->precord);
 
         epicsEventMustWait(evt);
-        /* ensure worker has finished executing */
-        dbCaSync();
 
         dbScanLock(plink->precord);
         epicsMutexMustLock(pca->lock);
@@ -250,8 +248,15 @@ void testdbCaWaitForEvent(DBLINK *plink, unsigned long cnt, enum testEvent event
         pca->userPvt = NULL;
     }
 
-    epicsEventDestroy(evt);
     epicsMutexUnlock(pca->lock);
+
+    /* ensure worker has finished executing */
+    dbCaSync();
+
+    epicsMutexMustLock(workListLock); /* lock to ensure that epicsEventMustTrigger() has returned */
+    epicsEventDestroy(evt);
+    epicsMutexUnlock(workListLock);
+
     caLinkDec(pca);
     dbScanUnlock(plink->precord);
 }
@@ -266,6 +271,10 @@ void testdbCaWaitForUpdateCount(DBLINK *plink, unsigned long cnt)
     testdbCaWaitForEvent(plink, cnt, testEventCount);
 }
 
+// private access to access.cpp
+LIBCA_API
+void dbCaSyncLocal(void);
+
 /* Block until worker thread has processed all previously queued actions.
  * Does not prevent additional actions from being queued.
  */
@@ -273,6 +282,8 @@ void dbCaSync(void)
 {
     epicsEventId wake;
     caLink templink;
+
+    dbCaSyncLocal();
 
     /* we only partially initialize templink.
      * It has no link field and no subscription

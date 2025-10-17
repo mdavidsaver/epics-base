@@ -279,6 +279,7 @@ public:
         cacChannel::priLev = cacChannel::priorityDefault ) = 0;
     virtual void flush (
         epicsGuard < epicsMutex > & ) = 0;
+    virtual void sync () = 0;
     virtual unsigned circuitCount (
         epicsGuard < epicsMutex > & ) const = 0;
     virtual void selfTest (

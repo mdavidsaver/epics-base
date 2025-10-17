@@ -717,6 +717,18 @@ int epicsStdCall ca_context_status ( ca_client_context * pcac, unsigned level )
     return ECA_NORMAL;
 }
 
+extern "C"
+LIBCA_API
+void dbCaSyncLocal(void);
+
+void dbCaSyncLocal(void)
+{
+    if(struct ca_client_context * ctxt = ca_current_context()) {
+        // bounce for access to private data member
+        ctxt->sync();
+    }
+}
+
 /*
  * ca_current_context ()
  *
