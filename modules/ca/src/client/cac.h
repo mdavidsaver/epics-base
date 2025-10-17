@@ -115,6 +115,7 @@ public:
 
     // IO management
     void flush ( epicsGuard < epicsMutex > & guard );
+    void sync ();
     bool executeResponse ( callbackManager &, tcpiiu &,
         const epicsTime & currentTime, caHdrLargeArray &, char *pMsgBody );
 

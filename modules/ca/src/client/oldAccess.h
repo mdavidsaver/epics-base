@@ -349,6 +349,7 @@ public:
     void destroyPutCallback ( epicsGuard < epicsMutex > &, putCallback & );
     void destroySubscription ( epicsGuard < epicsMutex > &, oldSubscription & );
     epicsMutex & mutexRef () const;
+    void sync();
 
     template < class T >
     void whenThereIsAnExceptionDestroySyncGroupIO ( epicsGuard < epicsMutex > &, T & );
