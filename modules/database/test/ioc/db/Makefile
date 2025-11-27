@@ -193,6 +193,14 @@ TESTFILES += ../dbStaticTestAliasAgainError2.db
 TESTFILES += ../dbStaticTestRemove.db
 TESTS += dbStaticTest
 
+TESTPROD_HOST += asTrapWriteTest
+asTrapWriteTest_SRCS += asTrapWriteTest.c
+asTrapWriteTest_SRCS += dbTestIoc_registerRecordDeviceDriver.cpp
+#testHarness_SRCS += asTrapWriteTest.c
+TESTFILES += ../asTrapWriteTest.acf
+TESTFILES += ../asTrapWriteTest.db
+TESTS += asTrapWriteTest
+
 # This runs all the test programs in a known working order:
 testHarness_SRCS += epicsRunDbTests.c
 

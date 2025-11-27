@@ -1,0 +1,3 @@
+record(x, "target") {
+    field(VAL, "42")
+}
