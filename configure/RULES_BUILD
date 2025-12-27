@@ -338,12 +338,13 @@ $(INSTALL_LIB):
 # C++ munching for VxWorks
 
 %.nm: %$(EXE)
-	@$(RM) $@
-	$(NM) $<  > $@
+	$(NM) $< > $@.stdout
+	$(MV) $@.stdout $@
 
 %.nm: %$(OBJ)
 	@$(RM) $@
-	$(NM) $<  > $@
+	$(NM) $< > $@.stdout
+	$(MV) $@.stdout $@
 
 %_ctdt.c: %.nm $(TOOLS)/munch.pl
 	@$(RM) $@
