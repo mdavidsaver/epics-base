@@ -124,7 +124,10 @@ ACF_CPPFLAGS = $(ACF_CPPFLAGS_$(GNU))
 ACF_INCLUDES = -I. $(TARGET_INCLUDES) $(USR_INCLUDES)\
                 $(SRC_INCLUDES) -I$(INSTALL_DB)
 ACFDEPENDS_CMD = $(MKMF) -m $@ $(ACF_INCLUDES) $(COMMONDEP_TARGET) $<
-ACF_CMD = $(CPP) $(ACF_CPPFLAGS) $(ACF_INCLUDES) $< > $@
+define ACF_CMD
+$(CPP) $(ACF_CPPFLAGS) $(ACF_INCLUDES) $< > $@.stdout
+$(MV) $@.stdout $@
+endef
 
 #---------------------------------------------------------------
 # dependencies
@@ -219,68 +222,82 @@ realclean: clean
 
 %Record.h$(DEP): $(COMMON_DIR)/%Record.dbd $(DBDTORECTYPEH_dep)
 	@$(RM) $@
-	@$(DBTORECORDTYPEH) -D $(DBDFLAGS) -o $(COMMONDEP_TARGET) $< > $@
-	@echo "$(COMMONDEP_TARGET): ../Makefile" >> $@
+	@$(DBTORECORDTYPEH) -D $(DBDFLAGS) -o $(COMMONDEP_TARGET) $< > $@.stdout
+	@echo "$(COMMONDEP_TARGET): ../Makefile" >> $@.stdout
+	@$(MV) $@.stdout $@
 
 %Record.h$(DEP): %Record.dbd $(DBDTORECTYPEH_dep)
 	@$(RM) $@
-	@$(DBTORECORDTYPEH) -D $(DBDFLAGS) -o $(COMMONDEP_TARGET) $< > $@
-	@echo "$(COMMONDEP_TARGET): ../Makefile" >> $@
+	@$(DBTORECORDTYPEH) -D $(DBDFLAGS) -o $(COMMONDEP_TARGET) $< > $@.stdout
+	@echo "$(COMMONDEP_TARGET): ../Makefile" >> $@.stdout
+	@$(MV) $@.stdout $@
 
 %Record.h$(DEP): ../%Record.dbd $(DBDTORECTYPEH_dep)
 	@$(RM) $@
-	@$(DBTORECORDTYPEH) -D $(DBDFLAGS) -o $(COMMONDEP_TARGET) $< > $@
-	@echo "$(COMMONDEP_TARGET): ../Makefile" >> $@
+	@$(DBTORECORDTYPEH) -D $(DBDFLAGS) -o $(COMMONDEP_TARGET) $< > $@.stdout
+	@echo "$(COMMONDEP_TARGET): ../Makefile" >> $@.stdout
+	@$(MV) $@.stdout $@
 
 menu%.h$(DEP): $(COMMON_DIR)/menu%.dbd $(DBDTOMENUH_dep)
 	@$(RM) $@
-	@$(DBTOMENUH) -D $(DBDFLAGS) -o $(COMMONDEP_TARGET) $< > $@
-	@echo "$(COMMONDEP_TARGET): ../Makefile" >> $@
+	@$(DBTOMENUH) -D $(DBDFLAGS) -o $(COMMONDEP_TARGET) $< > $@.stdout
+	@echo "$(COMMONDEP_TARGET): ../Makefile" >> $@.stdout
+	@$(MV) $@.stdout $@
 
 menu%.h$(DEP): menu%.dbd $(DBDTOMENUH_dep)
 	@$(RM) $@
-	@$(DBTOMENUH) -D $(DBDFLAGS) -o $(COMMONDEP_TARGET) $< > $@
-	@echo "$(COMMONDEP_TARGET): ../Makefile" >> $@
+	@$(DBTOMENUH) -D $(DBDFLAGS) -o $(COMMONDEP_TARGET) $< > $@.stdout
+	@echo "$(COMMONDEP_TARGET): ../Makefile" >> $@.stdout
+	@$(MV) $@.stdout $@
 
 menu%.h$(DEP): ../menu%.dbd $(DBDTOMENUH_dep)
 	@$(RM) $@
-	@$(DBTOMENUH) -D $(DBDFLAGS) -o $(COMMONDEP_TARGET) $< > $@
-	@echo "$(COMMONDEP_TARGET): ../Makefile" >> $@
+	@$(DBTOMENUH) -D $(DBDFLAGS) -o $(COMMONDEP_TARGET) $< > $@.stdout
+	@echo "$(COMMONDEP_TARGET): ../Makefile" >> $@.stdout
+	@$(MV) $@.stdout $@
 
 %.dbd$(DEP): %.dbd.pod
 	@$(RM) $@
-	@echo "$(COMMONDEP_TARGET): ../Makefile" > $@
+	@echo "$(COMMONDEP_TARGET): ../Makefile" > $@.stdout
+	@$(MV) $@.stdout $@
 
 %.dbd$(DEP): %Include.dbd
 	@$(RM) $@
-	@$(DBEXPAND) -D $(DBDFLAGS) -o $(COMMONDEP_TARGET) $< > $@
-	@echo "$(COMMONDEP_TARGET): ../Makefile" >> $@
+	@$(DBEXPAND) -D $(DBDFLAGS) -o $(COMMONDEP_TARGET) $< > $@.stdout
+	@echo "$(COMMONDEP_TARGET): ../Makefile" >> $@.stdout
+	@$(MV) $@.stdout $@
 
 %.dbd$(DEP): ../%Include.dbd
 	@$(RM) $@
-	@$(DBEXPAND) -D $(DBDFLAGS) -o $(COMMONDEP_TARGET) $< > $@
-	@echo "$(COMMONDEP_TARGET): ../Makefile" >> $@
+	@$(DBEXPAND) -D $(DBDFLAGS) -o $(COMMONDEP_TARGET) $< > $@.stdout
+	@echo "$(COMMONDEP_TARGET): ../Makefile" >> $@.stdout
+	@$(MV) $@.stdout $@
 
 %.dbd$(DEP): $($*_DBD)
 	@$(RM) $@
-	@$(DBEXPAND) -D $(DBDFLAGS) -o $(COMMONDEP_TARGET) $($*_DBD) > $@
-	@echo "$(COMMONDEP_TARGET): ../Makefile" >> $@
+	@$(DBEXPAND) -D $(DBDFLAGS) -o $(COMMONDEP_TARGET) $($*_DBD) > $@.stdout
+	@echo "$(COMMONDEP_TARGET): ../Makefile" >> $@.stdout
+	@$(MV) $@.stdout $@
 
 %.db$(DEP): %$(SUBST_SUFFIX)
 	@$(RM) $@
-	$(MSI3_15) -D $(DBFLAGS) -o $(COMMONDEP_TARGET) -S$< $(TEMPLATE_FILENAME) > $@
+	$(MSI3_15) -D $(DBFLAGS) -o $(COMMONDEP_TARGET) -S$< $(TEMPLATE_FILENAME) > $@.stdout
+	@$(MV) $@.stdout $@
 
 %.db$(DEP): ../%$(SUBST_SUFFIX)
 	@$(RM) $@
-	$(MSI3_15) -D $(DBFLAGS) -o $(COMMONDEP_TARGET) -S$< $(TEMPLATE_FILENAME) > $@
+	$(MSI3_15) -D $(DBFLAGS) -o $(COMMONDEP_TARGET) -S$< $(TEMPLATE_FILENAME) > $@.stdout
+	@$(MV) $@.stdout $@
 
 %.db$(DEP): %$(TEMPL_SUFFIX)
 	@$(RM) $@
-	$(MSI3_15) -D $(DBFLAGS) -o $(COMMONDEP_TARGET) $< > $@
+	$(MSI3_15) -D $(DBFLAGS) -o $(COMMONDEP_TARGET) $< > $@.stdout
+	@$(MV) $@.stdout $@
 
 %.db$(DEP): ../%$(TEMPL_SUFFIX)
 	@$(RM) $@
-	$(MSI3_15) -D $(DBFLAGS) -o $(COMMONDEP_TARGET) $< > $@
+	$(MSI3_15) -D $(DBFLAGS) -o $(COMMONDEP_TARGET) $< > $@.stdout
+	@$(MV) $@.stdout $@
 
 %.acf$(DEP): %.acs
 	@$(RM) $@
@@ -483,8 +500,9 @@ $(COMMON_DIR)/%.html: ../%.pl $(PODTOHTML_dep)
 
 $(COMMON_DIR)/%.db: $(COMMON_DIR)/%.edf
 	$(E2DB) $(E2DB_SYSFLAGS) $(E2DB_FLAGS) -n $*.VAR $<
-	@$(REPLACEVAR) < $*.VAR > $@
+	@$(REPLACEVAR) < $*.VAR > $@.stdout
 	@$(RM) $*.VAR
+	@$(MV) $@.stdout $@
 
 $(COMMON_DIR)/%.db: %$(SUBST_SUFFIX)
 	$(ECHO) "Inflating database from $< $(TEMPLATE_FILENAME)"
