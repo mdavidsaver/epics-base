@@ -85,14 +85,12 @@ DBCORE_API int db_start_events (
  * @param ctx Context
  *
  * @pre Call after initHookAfterInitDatabase and before initHookBeforeFree.
- *
- * Joins event listener thread.
+ * @pre All dbEventSubscription must first be deallocated by db_cancel_event().
+ * @post Joins event listener thread.
  */
 DBCORE_API void db_close_events (dbEventCtx ctx);
 /** @brief Enable flow control, pause event delivery
  * @param ctx Context
- *
- * All dbEventSubscription must first be deallocated by db_cancel_event().
  */
 DBCORE_API void db_event_flow_ctrl_mode_on (dbEventCtx ctx);
 /** @brief Disable flow control, resume event delivery
@@ -112,7 +110,7 @@ DBCORE_API int db_add_extra_labor_event (
 /** @brief Wait for extra labor callback.
  *
  *  @pre Do not call from event listener thread.
- *  @post extra labor queued flag is clear
+ *  @post extra labor queued flag is unchanged
  *
  *  To ensure completion, call should arrange that db_post_extra_labor() will
  *  not be called again.
