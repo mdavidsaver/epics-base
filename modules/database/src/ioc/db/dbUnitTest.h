@@ -203,13 +203,13 @@ DBCORE_API void testGlobalUnlock(void);
  *
  * @section dbunittest Unit testing of record processing
  *
- * @see @ref epicsUnitTest.h
+ * @see @ref unittest
  *
  * @section dbtestskel Test skeleton
  *
  * For the impatient, the skeleton of a test:
  *
- * @code
+ * @code{.c}
  * #include <dbUnitTest.h>
  * #include <testMain.h>
  *
@@ -233,7 +233,7 @@ DBCORE_API void testGlobalUnlock(void);
  * }
  * @endcode
  *
- * @code
+ * @code{make}
  * TOP = ..
  * include $(TOP)/configure/CONFIG
  *
@@ -250,6 +250,27 @@ DBCORE_API void testGlobalUnlock(void);
  *
  * include $(TOP)/configure/RULES
  * @endcode
+ *
+ * Discussion:
+ *
+ * Some tests require the context of an IOC to be run. This conflicts with the
+ * idea of running multiple tests within a test harness, as iocInit() is only
+ * allowed to be called once, and some parts of the full IOC (e.g. the rsrv CA
+ * server) can not be shut down cleanly. The function iocBuildIsolated() allows
+ * to start an IOC without its Channel Access parts, so that it can be shutdown
+ * quite cleanly using iocShutdown(). This feature is only intended to be used
+ * from test programs, do not use it on production IOCs. After building the
+ * IOC using iocBuildIsolated() or iocBuild(), it has to be started by calling
+ * iocRun().
+ *
+ * The part from iocBuildIsolated() to iocShutdown() can be repeated to
+ * execute multiple tests within one executable or harness.
+ *
+ * To make it easier to create a single test program that can be built for
+ * both the embedded and workstation operating system harnesses, the header file
+ * testMain.h provides a convenience macro MAIN() that adjusts the name of the
+ * test program according to the platform it is running on: main() on
+ * workstations and a regular function name on embedded systems.
  *
  * @section dbtestactions Actions
  *
@@ -273,7 +294,7 @@ DBCORE_API void testGlobalUnlock(void);
  *
  * @see enum dbfType in dbFldTypes.h
  *
- * @code
+ * @code{.c}
  * testdbPutFieldOk("pvname", DBF_ULONG, (unsigned int)5);
  * testdbPutFieldOk("pvname", DBF_FLOAT, (double)4.1);
  * testdbPutFieldOk("pvname", DBF_STRING, "hello world");
@@ -321,7 +342,7 @@ DBCORE_API void testGlobalUnlock(void);
  * When possible, the best way to avoid this race would be to join the worker
  * before destroying the event.
  *
- * @code
+ * @code{.c}
  * epicsEventId evt;
  * void thread1() {
  *     epicsThreadOpts opts = EPICS_THREAD_OPTS_INIT;
@@ -343,7 +364,7 @@ DBCORE_API void testGlobalUnlock(void);
  * that epicsEventMustSignal() has returned before destroying the event.
  * testGlobalLock() and testGlobalUnlock() provide access to such a mutex.
  *
- * @code
+ * @code{.c}
  * epicsEventId evt;
  * void thread1() {
  *   evt = epicsEventMustCreate(...);
