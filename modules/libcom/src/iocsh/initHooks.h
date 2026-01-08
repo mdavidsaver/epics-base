@@ -8,7 +8,9 @@
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
 
-/** @page inithooks IOC lifecycle callback hooks.
+/** @file initHooks.h
+ *
+ * @section inithooks IOC lifecycle callback hooks.
  *
  * initHookRegister() allows external code to be called at certains points (initHookState)
  * during IOC startup and shutdown.

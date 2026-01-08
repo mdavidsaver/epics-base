@@ -6,13 +6,6 @@
 * in file LICENSE that is included with this distribution.
  \*************************************************************************/
 
-/** @file dbUnitTest.h
- * @brief Helpers for unittests of process database
- * @author Michael Davidsaver, Ralph Lange
- *
- * @see @ref dbunittest
- */
-
 #ifndef EPICSUNITTESTDB_H
 #define EPICSUNITTESTDB_H
 
@@ -204,7 +197,11 @@ DBCORE_API void testGlobalUnlock(void);
 }
 #endif
 
-/** @page dbunittest Unit testing of record processing
+/** @file dbUnitTest.h
+ * @brief Helpers for unittests of process database
+ * @author Michael Davidsaver, Ralph Lange
+ *
+ * @section dbunittest Unit testing of record processing
  *
  * @see @ref epicsUnitTest.h
  *
