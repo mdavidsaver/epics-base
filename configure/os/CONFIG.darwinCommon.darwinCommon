@@ -82,11 +82,6 @@ vpath %.m $(USR_VPATH) $(ALL_SRC_DIRS)
 %.o: %.m
 	$(COMPILE.c) -c $<
 
-#
-# Header dependency file generation
-#
-HDEPENDS_METHOD = MKMF
-
 #--------------------------------------------------
 # Allow site overrides
 -include $(CONFIG)/os/CONFIG_SITE.darwinCommon.darwinCommon
