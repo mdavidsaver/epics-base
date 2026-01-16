@@ -129,10 +129,4 @@ on_failure:
 #---------------------------------#
 
 notifications:
-
-  - provider: Email
-    to:
-      - core-talk@aps.anl.gov
-    on_build_success: false
-
   - provider: GitHubPullRequest
