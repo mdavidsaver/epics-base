@@ -156,6 +156,15 @@ LIBCOM_API int epicsStrnGlobMatch(const char *str, size_t len, const char *patte
  /** \brief Extract tokens from string
   *
   * Implements strtok_r from the C standard library
+  *
+  * @code
+  * char *input = ...; // string will be temporarily modified
+  * char *saved = nullptr;
+  * for(char* word = epicsStrtok_r(input, " ", &saved)
+  *     ; word
+  *     ; word = epicsStrtok_r(NULL, " ", &saved))
+  * { } // act on word
+  * @endcode
   */
 LIBCOM_API char * epicsStrtok_r(char *s, const char *delim, char **lasts);
 
