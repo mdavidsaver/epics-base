@@ -429,8 +429,20 @@ static lset dbDb_lset = {
 long dbScanPassive(dbCommon *pfrom, dbCommon *pto)
 {
     /* if not passive we're done */
-    if (pto->scan != 0)
+    if (pto->scan != 0) {
+        if (dbLockSetAddrTrace(pfrom)) {
+            char context[40] = "";
+            /* Identify this thread's client from server layer */
+            if (dbServerClient(context, sizeof(context))) {
+                /* No client, use thread name */
+                strncpy(context, epicsThreadGetNameSelf(), sizeof(context));
+                context[sizeof(context) - 1] = 0;
+            }
+            printf("%s: dbProcess not passive target '%s' -> '%s'\n",
+                   context, pfrom->name, pto->name);
+        }
         return 0;
+    }
 
     return processTarget(pfrom, pto);
 }
