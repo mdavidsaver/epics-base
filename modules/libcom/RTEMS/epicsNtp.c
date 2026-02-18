@@ -2,7 +2,7 @@
 * (C) 2014 David Lettier.
 * http://www.lettier.com/
 * SPDX-License-Identifier: BSD-3-Clause
-* 
+*
 * use of UDP funktions and implement timeout, HPJ 15.12.2025
 \*************************************************************************/
 
@@ -33,7 +33,7 @@ int epicsNtpGetTime(char *ntpIp, struct timespec *now)
 
   /* Create an UDP socket, use IP address of given nameserver, set the port number
      struct sockaddr_in serv_addr; // Server address data structure.
-     add timout of 2 seconds 
+     add timout of 2 seconds.
    */
   struct sockaddr_in serv_addr = {
     .sin_family = AF_INET,

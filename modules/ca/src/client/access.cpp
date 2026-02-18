@@ -956,7 +956,7 @@ const unsigned short dbr_value_size[LAST_BUFFER_TYPE+1] = {
 };
 
 //extern "C"
-const enum dbr_value_class dbr_value_class[LAST_BUFFER_TYPE+1] = {
+const enum dbr_value_class_e dbr_value_class[LAST_BUFFER_TYPE+1] = {
     dbr_class_string,       /* string max size              */
     dbr_class_int,          /* short                        */
     dbr_class_float,        /* IEEE Float                   */

@@ -554,13 +554,13 @@ LIBCA_API extern const unsigned short dbr_value_size[];
 
 #ifndef db_accessHFORdb_accessC
 /* class for each type's value */
-enum dbr_value_class {
+enum dbr_value_class_e {
                 dbr_class_int,
                 dbr_class_float,
                 dbr_class_string,
                 dbr_class_max};
 
-LIBCA_API extern const enum dbr_value_class dbr_value_class[LAST_BUFFER_TYPE+1];
+LIBCA_API extern const enum dbr_value_class_e dbr_value_class[LAST_BUFFER_TYPE+1];
 
 /*
  * ptr to value given a pointer to the structure and the DBR type
