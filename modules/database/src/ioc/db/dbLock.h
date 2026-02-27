@@ -28,12 +28,12 @@ struct dbBase;
  * @file dbLock.h
  * @brief Lock one or multiple records.
  *
- * Locking is required to prevent corruption of record fields due to concurrent 
+ * Locking is required to prevent corruption of record fields due to concurrent
  * access by different threads.
  */
- /** @brief A dbLocker allows a caller to lock a single record or simultaneously 
- * lock multiple records. 
- * The list of records is provided to dbLockerAlloc(). And the resulting 
+ /** @brief A dbLocker allows a caller to lock a single record or simultaneously
+ * lock multiple records.
+ * The list of records is provided to dbLockerAlloc(). And the resulting
  * dbLocker can be locked/unlocked repeatedly.
  *
  * Each thread can only lock one dbLocker at a time.
@@ -78,7 +78,7 @@ DBCORE_API void dbLockerFree(dbLocker *plocker);
 
 /** @brief Lock all records of dbLocker
  *
- * Locks multiple record. While locked, caller may access any associated record 
+ * Locks multiple record. While locked, caller may access any associated record
  * passed to dbLockerAlloc().
  * dbScanLockMany() may not be called again (multi-lock is not recursive).
  * dbScanLock()/dbScanUnlock() may be called on individual record.
@@ -86,9 +86,9 @@ DBCORE_API void dbLockerFree(dbLocker *plocker);
  * @since 3.16.0.1
  */
 DBCORE_API void dbScanLockMany(dbLocker*);
-/** @brief Unlock all records of dbLocker. 
+/** @brief Unlock all records of dbLocker.
  *
- * Unlocks the records of dbLocker. A thread must call dbScanUnlockMany with the 
+ * Unlocks the records of dbLocker. A thread must call dbScanUnlockMany with the
  * same dbLocker* before calling dbScanLockMany again.
  * @since 3.16.0.1
  */
@@ -98,10 +98,10 @@ DBCORE_API void dbScanUnlockMany(dbLocker*);
 DBCORE_API unsigned long dbLockGetLockId(
     struct dbCommon *precord);
 
-/** @brief During IOC startup the complete list of records is iterated by 
- * dbLockInitRecords 
+/** @brief During IOC startup the complete list of records is iterated by
+ * dbLockInitRecords
  *
- * The required locksets are created and populated based on the links defined 
+ * The required locksets are created and populated based on the links defined
  * at the time of IOC startup*/
 DBCORE_API void dbLockInitRecords(struct dbBase *pdbbase);
 
@@ -112,16 +112,16 @@ DBCORE_API void dbLockCleanupRecords(struct dbBase *pdbbase);
 
 /** @brief Lock Set Report
  *
- * Generates a report showing the lock set to which each record belongs. 
- * If recordname is 0, "", "*" all records are shown. Otherwise only records 
- * in the same lock set as recordname are shown. Level can have the following 
- * values: 
+ * Generates a report showing the lock set to which each record belongs.
+ * If recordname is 0, "", "*" all records are shown. Otherwise only records
+ * in the same lock set as recordname are shown. Level can have the following
+ * values:
  *
  * 0 - show lock set information only
  *
  * 1 - show each record in the lock set
  *
- * 2 - show each record and all database links in the lock set 
+ * 2 - show each record and all database links in the lock set
  */
 DBCORE_API long dblsr(char *recordname,int level);
 /* level = (0,1,2) (lock set state, + recordname, +DB links) */

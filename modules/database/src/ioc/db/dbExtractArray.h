@@ -22,7 +22,7 @@
 extern "C" {
 #endif
 
-/** 
+/**
  * @file dbExtractArray.h
  *
  * @brief Make a copy of parts of an array.
