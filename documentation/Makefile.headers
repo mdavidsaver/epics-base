@@ -83,6 +83,7 @@ database_HEADERS += dbUnitTest
 database_HEADERS += devSup
 database_HEADERS += drvSup
 database_HEADERS += initHooks
+database_HEADERS += iocInit
 
 record_HEADERS += aaiRecord
 record_HEADERS += aaoRecord
