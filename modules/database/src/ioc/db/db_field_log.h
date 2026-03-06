@@ -140,11 +140,15 @@ typedef struct db_field_log {
  * this case, making a copy is redundant, so we have no dtor. But conceptually
  * the db_field_log still owns the (empty) data.
  */
-#define dbfl_has_copy(p)\
- ((p) && ((p)->type==dbfl_type_val || (p)->dtor || (p)->no_elements==0))
+static inline
+int dbfl_has_copy(const db_field_log* p) {
+    return (p && (p->type==dbfl_type_val || p->dtor || p->no_elements==0));
+}
 
-#define dbfl_pfield(p)\
- ((p)->type==dbfl_type_val ? &p->u.v.field : p->u.r.field)
+static inline
+void* dbfl_pfield(db_field_log* p) {
+    return (p->type==dbfl_type_val ? &p->u.v.field : p->u.r.field);
+}
 
 #ifdef __cplusplus
 }
