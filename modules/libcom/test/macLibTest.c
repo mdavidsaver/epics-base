@@ -66,13 +66,19 @@ static void ovcheck(void)
 
 MAIN(macLibTest)
 {
-    testPlan(93);
+    testPlan(96);
 
     if (macCreateHandle(&h, NULL))
         testAbort("macCreateHandle() failed");
     eltc(0);
 
     check("FOO", " FOO");
+    check("FO}O", " FO}O");
+
+    check("x${FOO ${BAR", "!x$(FOO $(BAR,undefined),undefined)");
+    testTodoBegin("bug");
+    check("x${FOO)", "!x$(FOO,undefined)"); // actual error "x$(FOO),undefined)"
+    testTodoEnd();
 
     check("$(FOO)", "!$(FOO,undefined)");
     check("${FOO}", "!$(FOO,undefined)");
