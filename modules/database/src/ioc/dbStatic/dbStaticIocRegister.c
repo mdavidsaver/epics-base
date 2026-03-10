@@ -9,6 +9,7 @@
 \*************************************************************************/
 
 #include "iocsh.h"
+#include "iocInit.h"
 #include "errSymTbl.h"
 #include "errlog.h"
 
@@ -260,6 +261,54 @@ static void dbCreateAliasCallFunc(const iocshArgBuf *args)
     }
 }
 
+static const iocshArg dbCreateRecordArg0 = { "recordType", iocshArgString};
+static const iocshArg dbCreateRecordArg1 = { "recordName", iocshArgString};
+static const iocshArg * const dbCreateRecordArgs[] = {&argPdbbase, &dbCreateRecordArg0, &dbCreateRecordArg1};
+static const iocshFuncDef dbCreateRecordFuncDef = {
+    "dbCreateRecord",
+    3,
+    dbCreateRecordArgs,
+    "Add a new record to the database.\n"
+    "\n"
+    "Example: dbCreateRecord pdbbase ai record:name\n",
+};
+
+/**
+ * @brief Call function for dbCreateRecord iocsh command.
+ *        Creates a new record in the database with the specified record type and record name.
+ * @param args The arguments passed from iocsh, where args[0] is the pointer to the database,
+ *             args[1] is the record type name, and args[2] is the record name.
+ */
+static void dbCreateRecordCallFunc(const iocshArgBuf *args)
+{
+    DBENTRY ent;
+    long status;
+    enum iocStateEnum iocState;
+
+    iocState = getIocState();
+    if(iocState != iocVoid) {
+        status = S_dbLib_postInitRecRegister;
+    }
+    else {
+        dbInitEntry(*iocshPpdbbase, &ent);
+        if(!args[2].sval || (args[2].sval[0] == '\0')) {
+            status = S_dbLib_recordNameMissing;
+        } else if(!args[1].sval) {
+            status = S_dbLib_recordTypeNotFound;
+        } else {
+            status = dbFindRecordType(&ent, args[1].sval);
+            if(!status) {
+                status = dbCreateRecord(&ent, args[2].sval);
+            }
+        }
+        dbFinishEntry(&ent);
+    }
+    if(status) {
+        fprintf(stderr, ERL_ERROR ": %ld %s\n", status, errSymMsg(status));
+        iocshSetError(1);
+    }
+}
+
 void dbStaticIocRegister(void)
 {
     iocshRegister(&dbDumpPathFuncDef, dbDumpPathCallFunc);
@@ -278,4 +327,5 @@ void dbStaticIocRegister(void)
     iocshRegister(&dbPvdTableSizeFuncDef,dbPvdTableSizeCallFunc);
     iocshRegister(&dbReportDeviceConfigFuncDef, dbReportDeviceConfigCallFunc);
     iocshRegister(&dbCreateAliasFuncDef, dbCreateAliasCallFunc);
+    iocshRegister(&dbCreateRecordFuncDef, dbCreateRecordCallFunc);
 }
