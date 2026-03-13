@@ -112,7 +112,6 @@ union anybuf {
     epicsAny val;
     char valStr[MAX_STRING_SIZE];
     char bytes[sizeof(epicsAny)];
-    void *ptr;
 };
 
 long testdbVPutField(const char* pv, short dbrType, va_list ap)
@@ -155,9 +154,6 @@ long testdbVPutField(const char* pv, short dbrType, va_list ap)
     OP(DBR_DOUBLE, double, float64);
     OP(DBR_ENUM, int, enum16);
 #undef OP
-    case DBR_VFIELD:
-        ret = dbChannelPutField(chan, dbrType, va_arg(ap, void*), 1);
-        break;
     default:
         testFail("invalid DBR: dbPutField(\"%s\", DBR%s, ...)",
                   dbChannelName(chan), DBR_NAME(dbrType));
