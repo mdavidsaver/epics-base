@@ -1,5 +1,0 @@
-record(stdstringin, "recsrc") {
-}
-record(stdstringin, "recdst") {
-    field(INP , "recsrc")
-}
