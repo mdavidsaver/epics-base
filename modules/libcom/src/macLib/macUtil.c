@@ -62,8 +62,11 @@ epicsStdCall macParseDefns(
         printf( "macParseDefns( %s )\n", defns );
 
     /* allocate temporary pointer arrays; in worst case they need to have
-       as many entries as the length of the defns string */
-    numMax = strlen( defns );
+       as many entries as the length of the defns string + 2
+       for defns="1,3,5" give 3 pairs so num will be 6 (strlen(defns)+1)
+       but as num is used as an index e.g. del[num] we need
+       numMax to be strlen(defns) + 2 */
+    numMax = strlen( defns ) + 2;
     if ( numMax < altNumMax )
         numMax = altNumMax;
     ptr = (const char **) calloc( numMax, sizeof( char * ) );
