@@ -37,7 +37,7 @@ extern "C" {
  * \p inbuf and \p outbuf to point to the same buffer and \p outsize and \p inlen
  * be equal, thus performing the character translation in-place.
  *
- * \param outbuf  buffer to copy string to. The resulting string will be zero-terminated as long as
+ * \param outbuf  buffer to copy string to. The resulting string will be null terminated as long as
  *                \p outsize is non-zero.
  * \param outsize length of output buffer not including the null-terminator.
  * \param inbuf   buffer to copy from. Null byte terminates the string.
@@ -59,7 +59,7 @@ LIBCOM_API int epicsStrnRawFromEscaped(char *outbuf,      size_t outsize,
  * All other non-printable characters appear in form `\xHH` where HH are two hex digits.
  * Non-printable characters are determined by the C runtime library’s isprint() function.
  *
- * \param outbuf  buffer to copy string to. The resulting string will be zero-terminated as long as
+ * \param outbuf  buffer to copy string to. The resulting string will be null terminated as long as
  *                @p outsize is non-zero.
  * \param outsize length of output buffer not including the null-terminator.
  * \param inbuf   buffer to copy from. Null byte will not terminates the string.
@@ -159,12 +159,12 @@ LIBCOM_API int epicsStrnGlobMatch(const char *str, size_t len, const char *patte
   */
 LIBCOM_API char * epicsStrtok_r(char *s, const char *delim, char **lasts);
 
-/** \brief Calculates a hash of a null-terminated string
+/** \brief Calculates a hash of a null terminated string
  *
- * Calculates a hash of a null-terminated string.  Initial seed may be provided which
+ * Calculates a hash of a null terminated string.  Initial seed may be provided which
  * permits multiple strings to be combined into a single hash result.
  *
- *\param str  null-terminated string
+ *\param str  null terminated string
  *\param seed Optionally provide seed to combine multiple strings in a single hash.  Otherwise
  *            set to 0.
  *
