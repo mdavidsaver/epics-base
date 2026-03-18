@@ -20,6 +20,24 @@
 extern "C" {
 #endif
 
+struct dbAddr;
+struct db_field_log;
+
+typedef struct VFieldID {
+    const char *name;
+} VFieldID;
+
+typedef struct VField {
+    const struct VFieldID* vtype;
+    void *vfl;
+} VField;
+
+typedef struct VFieldType {
+    struct db_field_log* (*valloc)(const struct dbAddr*);
+    long (*vget)(const struct dbAddr* src, const struct db_field_log* pfl, const VField* dst);
+    long (*vput)(const VField* src, const struct dbAddr* dst);
+} VFieldType;
+
 /* field types */
 typedef enum {
     DBF_STRING,
@@ -87,6 +105,7 @@ mapdbfType pamapdbfType[DBF_NTYPES] = {
 #define DBR_ENUM        DBF_ENUM
 #define DBR_PUT_ACKT    DBR_ENUM+1
 #define DBR_PUT_ACKS    DBR_PUT_ACKT+1
+#define DBR_VFIELD      DBR_PUT_ACKS+1
 #define DBR_NOACCESS    DBF_NOACCESS
 #define VALID_DB_REQ(x) ((x >= 0) && (x <= DBR_ENUM))
 #define INVALID_DB_REQ(x)       ((x < 0) || (x > DBR_ENUM))

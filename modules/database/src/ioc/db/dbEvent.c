@@ -699,7 +699,16 @@ int db_post_extra_labor (dbEventCtx ctx)
 
 static db_field_log* db_create_field_log (struct dbChannel *chan, int use_val)
 {
-    db_field_log *pLog = (db_field_log *) freeListCalloc(dbevFieldLogFreeList);
+    db_field_log *pLog = NULL;
+
+    if (chan->addr.v_field_type && chan->addr.v_field_type->valloc) {
+        pLog = chan->addr.v_field_type->valloc(&chan->addr);
+        assert(!pLog || pLog->ext);
+        if(pLog)
+            return pLog;
+    }
+
+    pLog = (db_field_log *) freeListCalloc(dbevFieldLogFreeList);
 
     if (pLog) {
         struct dbCommon  *prec = dbChannelRecord(chan);
@@ -1196,7 +1205,8 @@ void db_delete_field_log (db_field_log *pfl)
         /* Free field if reference type field log and dtor is set */
         if (pfl->type == dbfl_type_ref && pfl->dtor) pfl->dtor(pfl);
         /* Free the field log chunk */
-        freeListFree(dbevFieldLogFreeList, pfl);
+        if(!pfl->ext)
+            freeListFree(dbevFieldLogFreeList, pfl);
     }
 }
 

@@ -13,6 +13,7 @@
 
 struct dbCommon;
 struct dbFldDes;
+struct VFieldType;
 
 typedef struct dbAddr {
         struct dbCommon *precord;   /* address of record                     */
@@ -25,6 +26,7 @@ typedef struct dbAddr {
         short   special;            /* special processing                    */
         short   dbr_field_type;     /* field type as seen by database request*/
                                     /* DBR_STRING,...,DBR_ENUM,DBR_NOACCESS  */
+        const struct VFieldType* v_field_type;
 } dbAddr;
 
 typedef dbAddr DBADDR;
