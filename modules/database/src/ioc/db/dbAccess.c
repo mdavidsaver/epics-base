@@ -925,6 +925,15 @@ long dbGet(DBADDR *paddr, short dbrType,
     if (nRequest && *nRequest == 0)
         return 0;
 
+    if (dbrType==DBR_VFIELD) {
+        if (paddr->v_field_type && paddr->v_field_type->vget) {
+            status = paddr->v_field_type->vget(paddr, pflin, pbuffer);
+        } else {
+            status = S_db_badDbrtype;
+        }
+        return status;
+    }
+
     if (!pfl) {
         field_type = paddr->field_type;
         no_elements = capacity = paddr->no_elements;
@@ -1331,6 +1340,15 @@ long dbPut(DBADDR *paddr, short dbrType,
 
     if (special == SPC_ATTRIBUTE)
         return S_db_noMod;
+
+    if (dbrType == DBR_VFIELD) {
+        if (paddr->v_field_type && paddr->v_field_type->vput) {
+            status = paddr->v_field_type->vput(pbuffer, paddr);
+        } else {
+            status = S_db_badDbrtype;
+        }
+        return status;
+    }
 
     if (dbrType == DBR_PUT_ACKT && field_type <= DBF_DEVICE) {
         return putAckt(paddr, pbuffer, 1, 1, 0);
