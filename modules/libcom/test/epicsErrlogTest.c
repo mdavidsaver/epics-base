@@ -61,7 +61,8 @@ const char longmsg[]="A0123456789abcdef"
 STATIC_ASSERT(NELEMENTS(longmsg)==324);
 
 static
-const char truncmsg[]="A0123456789abcdef"
+const char truncmsg256[]=
+                      "A0123456789abcdef"
                       "B0123456789abcdef"
                       "C0123456789abcdef"
                       "D0123456789abcdef"
@@ -77,7 +78,7 @@ const char truncmsg[]="A0123456789abcdef"
                       "N0123456789abcdef"
                       "O01<<TRUNCATED>>\n"
                       ;
-STATIC_ASSERT(NELEMENTS(truncmsg)==256);
+STATIC_ASSERT(NELEMENTS(truncmsg256)==256);
 
 typedef struct {
     unsigned int count;
@@ -198,6 +199,220 @@ void testANSIStrip(void)
 #undef testEscape
 }
 
+static void testLogSizeTrunc(int bufsize, int maxMsgSize, const char *truncmsg)
+{
+    size_t mlen, i, N;
+    char msg[256];
+    clientPvt pvt, pvt2;
+    strcpy(msg, truncmsg);
+
+    errlogInit2(bufsize, maxMsgSize);
+
+    pvt.count = 0;
+    pvt2.count = 0;
+
+    pvt.expect = NULL;
+    pvt2.expect = NULL;
+
+    pvt.checkLen = 0;
+    pvt2.checkLen = 0;
+
+    pvt.jam = 0;
+    pvt2.jam = 0;
+
+    pvt.jammer = epicsEventMustCreate(epicsEventEmpty);
+    pvt.done = epicsEventMustCreate(epicsEventEmpty);
+    pvt2.jammer = epicsEventMustCreate(epicsEventEmpty);
+    pvt2.done = epicsEventMustCreate(epicsEventEmpty);
+
+    testDiag("Check listener registration");
+
+    errlogAddListener(&logClient, &pvt);
+
+    pvt.expect = "Testing";
+    pvt.checkLen = strlen(pvt.expect);
+
+    errlogPrintfNoConsole("%s", pvt.expect);
+    errlogFlush();
+
+    epicsEventMustWait(pvt.done);
+    testEqInt(pvt.count, 1);
+
+    errlogAddListener(&logClient, &pvt2);
+
+    /* logClient will not see ANSI escape sequences */
+    pvt2.expect = pvt.expect = "Testing2";
+    pvt2.checkLen = pvt.checkLen = strlen(pvt.expect);
+
+    errlogPrintfNoConsole("%s", ANSI_RED("Testing2"));
+    errlogFlush();
+
+    epicsEventMustWait(pvt.done);
+    testEqInt(pvt.count, 2);
+
+    epicsEventMustWait(pvt2.done);
+    testEqInt(pvt2.count, 1);
+
+    /* Removes the first listener */
+    testOk(1 == errlogRemoveListeners(&logClient, &pvt),
+           "Removed 1 listener");
+
+    pvt2.expect = "Testing3";
+    pvt2.checkLen = strlen(pvt2.expect);
+
+    errlogPrintfNoConsole("%s", pvt2.expect);
+    errlogFlush();
+
+    testOk(epicsEventWaitWithTimeout(pvt.done, 0.5) == epicsEventWaitTimeout,
+           "%d: Listener 1 didn't run", __LINE__);
+    testOk(epicsEventTryWait(pvt2.done) == epicsEventOK,
+           "%d: Listener 2 ran", __LINE__);
+    testEqInt(pvt.count, 2);
+    testEqInt(pvt2.count, 2);
+
+    /* Add the second listener again, then remove both instances */
+    errlogAddListener(&logClient, &pvt2);
+    testOk(2 == errlogRemoveListeners(&logClient, &pvt2),
+           "Removed 2 listeners");
+
+    errlogPrintfNoConsole("Something different");
+    errlogFlush();
+
+    testOk(epicsEventWaitWithTimeout(pvt.done, 0.5) == epicsEventWaitTimeout,
+           "%d: Listener 1 didn't run", __LINE__);
+    testOk(epicsEventTryWait(pvt2.done) == epicsEventWaitTimeout,
+           "%d: Listener 2 didn't run", __LINE__);
+    testEqInt(pvt.count, 2);
+    testEqInt(pvt2.count, 2);
+
+    /* Re-add one listener */
+    errlogAddListener(&logClient, &pvt);
+
+    testDiag("Check truncation");
+
+    pvt.expect = truncmsg;
+    pvt.checkLen = 255;
+
+    errlogPrintfNoConsole("%s", longmsg);
+    errlogFlush();
+
+    epicsEventMustWait(pvt.done);
+    testEqInt(pvt.count, 3);
+
+    pvt.expect = NULL;
+
+    testDiag("Check priority");
+    /* For the following tests it is important that
+     * the buffer should not flush until we request it
+     */
+    pvt.jam = 1;
+
+    errlogPrintfNoConsole("%s", longmsg);
+
+    testOk(epicsEventWaitWithTimeout(pvt.done, 0.5) == epicsEventWaitTimeout,
+           "%d: Listener 1 didn't run", __LINE__);
+    testEqInt(pvt.count, 3);
+
+    epicsEventSignal(pvt.jammer);
+    errlogFlush();
+
+    epicsEventMustWait(pvt.done);
+    testEqInt(pvt.count, 4);
+
+    testDiag("Find buffer capacity (%u theoretical)",LOGBUFSIZE);
+
+    pvt.checkLen = 0;
+
+    for (mlen = 8; mlen <= 255; mlen *= 2) {
+        double eff;
+        char save = msg[mlen - 1];
+
+        N = LOGBUFSIZE / mlen; /* # of of messages to send */
+        msg[mlen - 1] = '\0';
+        pvt.count = 0;
+        /* pvt.checkLen = mlen - 1; */
+
+        pvt.jam = 1;
+
+        for (i = 0; i < N; i++) {
+            errlogPrintfNoConsole("%s", msg);
+        }
+
+        epicsEventSignal(pvt.jammer);
+        errlogFlush();
+
+        eff = (double) (pvt.count * mlen) / LOGBUFSIZE * 100.0;
+        testDiag(" For %d messages of length %d got %u (%.1f%% efficient)",
+                 (int) N, (int) mlen, pvt.count, eff);
+
+        msg[mlen - 1] = save;
+        N = pvt.count;  /* Save final count for the test below */
+
+        /* Clear "errlog: <n> messages were discarded" status */
+        pvt.checkLen = 0;
+        errlogPrintfNoConsole(".");
+        errlogFlush();
+    }
+
+    testOk(epicsEventTryWait(pvt.done) == epicsEventOK,
+           "%d: Listener 1 ran", __LINE__);
+
+    testDiag("Checking buffer use after partial flush");
+
+    /* Use the numbers from the largest block size above */
+    mlen /= 2;
+    msg[mlen - 1] = '\0';
+
+    pvt.jam = 1;
+    pvt.count = 0;
+
+    testDiag("Filling with %d messages of size %d", (int) N, (int) mlen);
+
+    for (i = 0; i < N; i++) {
+        errlogPrintfNoConsole("%s", msg);
+    }
+
+    testOk(epicsEventWaitWithTimeout(pvt.done, 0.5) == epicsEventWaitTimeout,
+           "%d: Listener 1 didn't run", __LINE__);
+    testEqInt(pvt.count, 0);
+
+    /* Extract the first 2 messages, 2*(sizeof(msgNode) + 128) bytes */
+    pvt.jam = -2;
+    epicsEventSignal(pvt.jammer);
+    epicsThreadSleep(0.5);
+
+    testDiag("Drained %u messages", pvt.count);
+    epicsEventMustWait(pvt.done);
+    testEqInt(pvt.count, 2);
+
+    /* The buffer has space for 1 more message: sizeof(msgNode) + 256 bytes */
+    errlogPrintfNoConsole("%s", msg); /* Use up that space */
+
+    testDiag("Overflow the buffer");
+    errlogPrintfNoConsole("%s", msg);
+
+    testOk(epicsEventWaitWithTimeout(pvt.done, 0.5) == epicsEventWaitTimeout,
+           "%d: Listener 1 didn't run", __LINE__);
+    testEqInt(pvt.count, 2);
+
+    epicsEventSignal(pvt.jammer); /* Empty */
+    errlogFlush();
+
+    testDiag("Logged %u messages", pvt.count);
+    epicsEventMustWait(pvt.done);
+    /* Expect N+1 messages +- 1 depending on impl */
+    testOk(pvt.count >= N && pvt.count<=N+2, "Logged %u messages, expected %zu", pvt.count, N+1);
+
+    /* Clean up */
+    testOk(1 == errlogRemoveListeners(&logClient, &pvt),
+           "Removed 1 listener");
+
+    epicsEventDestroy(pvt.jammer);
+    epicsEventDestroy(pvt.done);
+    epicsEventDestroy(pvt2.jammer);
+    epicsEventDestroy(pvt2.done);
+}
+
 static void testErrorMessageMatches(long status, const char *expected)
 {
     const char *msg = errSymMsg(status);
@@ -248,216 +463,12 @@ static void testAddingExistingErrorSymbolWithSameMessage()
 
 MAIN(epicsErrlogTest)
 {
-    size_t mlen, i, N;
-    char msg[256];
-    clientPvt pvt, pvt2;
-
-    testPlan(54);
+    testPlan(90);
 
     testANSIStrip();
 
-    strcpy(msg, truncmsg);
-
-    errlogInit2(LOGBUFSIZE, 256);
-
-    pvt.count = 0;
-    pvt2.count = 0;
-
-    pvt.expect = NULL;
-    pvt2.expect = NULL;
-
-    pvt.checkLen = 0;
-    pvt2.checkLen = 0;
-
-    pvt.jam = 0;
-    pvt2.jam = 0;
-
-    pvt.jammer = epicsEventMustCreate(epicsEventEmpty);
-    pvt.done = epicsEventMustCreate(epicsEventEmpty);
-    pvt2.jammer = epicsEventMustCreate(epicsEventEmpty);
-    pvt2.done = epicsEventMustCreate(epicsEventEmpty);
-
-    testDiag("Check listener registration");
-
-    errlogAddListener(&logClient, &pvt);
-
-    pvt.expect = "Testing";
-    pvt.checkLen = strlen(pvt.expect);
-
-    errlogPrintfNoConsole("%s", pvt.expect);
-    errlogFlush();
-
-    epicsEventMustWait(pvt.done);
-    testEqInt(pvt.count, 1);
-
-    errlogAddListener(&logClient, &pvt2);
-
-    /* logClient will not see ANSI escape sequences */
-    pvt2.expect = pvt.expect = "Testing2";
-    pvt2.checkLen = pvt.checkLen = strlen(pvt.expect);
-
-    errlogPrintfNoConsole("%s", ANSI_RED("Testing2"));
-    errlogFlush();
-
-    epicsEventMustWait(pvt.done);
-    testEqInt(pvt.count, 2);
-
-    epicsEventMustWait(pvt2.done);
-    testEqInt(pvt2.count, 1);
-
-    /* Removes the first listener */
-    testOk(1 == errlogRemoveListeners(&logClient, &pvt),
-        "Removed 1 listener");
-
-    pvt2.expect = "Testing3";
-    pvt2.checkLen = strlen(pvt2.expect);
-
-    errlogPrintfNoConsole("%s", pvt2.expect);
-    errlogFlush();
-
-    testOk(epicsEventWaitWithTimeout(pvt.done, 0.5) == epicsEventWaitTimeout,
-        "%d: Listener 1 didn't run", __LINE__);
-    testOk(epicsEventTryWait(pvt2.done) == epicsEventOK,
-        "%d: Listener 2 ran", __LINE__);
-    testEqInt(pvt.count, 2);
-    testEqInt(pvt2.count, 2);
-
-    /* Add the second listener again, then remove both instances */
-    errlogAddListener(&logClient, &pvt2);
-    testOk(2 == errlogRemoveListeners(&logClient, &pvt2),
-        "Removed 2 listeners");
-
-    errlogPrintfNoConsole("Something different");
-    errlogFlush();
-
-    testOk(epicsEventWaitWithTimeout(pvt.done, 0.5) == epicsEventWaitTimeout,
-        "%d: Listener 1 didn't run", __LINE__);
-    testOk(epicsEventTryWait(pvt2.done) == epicsEventWaitTimeout,
-        "%d: Listener 2 didn't run", __LINE__);
-    testEqInt(pvt.count, 2);
-    testEqInt(pvt2.count, 2);
-
-    /* Re-add one listener */
-    errlogAddListener(&logClient, &pvt);
-
-    testDiag("Check truncation");
-
-    pvt.expect = truncmsg;
-    pvt.checkLen = 255;
-
-    errlogPrintfNoConsole("%s", longmsg);
-    errlogFlush();
-
-    epicsEventMustWait(pvt.done);
-    testEqInt(pvt.count, 3);
-
-    pvt.expect = NULL;
-
-    testDiag("Check priority");
-    /* For the following tests it is important that
-     * the buffer should not flush until we request it
-     */
-    pvt.jam = 1;
-
-    errlogPrintfNoConsole("%s", longmsg);
-
-    testOk(epicsEventWaitWithTimeout(pvt.done, 0.5) == epicsEventWaitTimeout,
-        "%d: Listener 1 didn't run", __LINE__);
-    testEqInt(pvt.count, 3);
-
-    epicsEventSignal(pvt.jammer);
-    errlogFlush();
-
-    epicsEventMustWait(pvt.done);
-    testEqInt(pvt.count, 4);
-
-    testDiag("Find buffer capacity (%u theoretical)",LOGBUFSIZE);
-
-    pvt.checkLen = 0;
-
-    for (mlen = 8; mlen <= 255; mlen *= 2) {
-        double eff;
-        char save = msg[mlen - 1];
-
-        N = LOGBUFSIZE / mlen; /* # of of messages to send */
-        msg[mlen - 1] = '\0';
-        pvt.count = 0;
-        /* pvt.checkLen = mlen - 1; */
-
-        pvt.jam = 1;
-
-        for (i = 0; i < N; i++) {
-            errlogPrintfNoConsole("%s", msg);
-        }
-
-        epicsEventSignal(pvt.jammer);
-        errlogFlush();
-
-        eff = (double) (pvt.count * mlen) / LOGBUFSIZE * 100.0;
-        testDiag(" For %d messages of length %d got %u (%.1f%% efficient)",
-                 (int) N, (int) mlen, pvt.count, eff);
-
-        msg[mlen - 1] = save;
-        N = pvt.count;  /* Save final count for the test below */
-
-        /* Clear "errlog: <n> messages were discarded" status */
-        pvt.checkLen = 0;
-        errlogPrintfNoConsole(".");
-        errlogFlush();
-    }
-
-    testOk(epicsEventTryWait(pvt.done) == epicsEventOK,
-        "%d: Listener 1 ran", __LINE__);
-
-    testDiag("Checking buffer use after partial flush");
-
-    /* Use the numbers from the largest block size above */
-    mlen /= 2;
-    msg[mlen - 1] = '\0';
-
-    pvt.jam = 1;
-    pvt.count = 0;
-
-    testDiag("Filling with %d messages of size %d", (int) N, (int) mlen);
-
-    for (i = 0; i < N; i++) {
-        errlogPrintfNoConsole("%s", msg);
-    }
-
-    testOk(epicsEventWaitWithTimeout(pvt.done, 0.5) == epicsEventWaitTimeout,
-        "%d: Listener 1 didn't run", __LINE__);
-    testEqInt(pvt.count, 0);
-
-    /* Extract the first 2 messages, 2*(sizeof(msgNode) + 128) bytes */
-    pvt.jam = -2;
-    epicsEventSignal(pvt.jammer);
-    epicsThreadSleep(0.5);
-
-    testDiag("Drained %u messages", pvt.count);
-    epicsEventMustWait(pvt.done);
-    testEqInt(pvt.count, 2);
-
-    /* The buffer has space for 1 more message: sizeof(msgNode) + 256 bytes */
-    errlogPrintfNoConsole("%s", msg); /* Use up that space */
-
-    testDiag("Overflow the buffer");
-    errlogPrintfNoConsole("%s", msg);
-
-    testOk(epicsEventWaitWithTimeout(pvt.done, 0.5) == epicsEventWaitTimeout,
-        "%d: Listener 1 didn't run", __LINE__);
-    testEqInt(pvt.count, 2);
-
-    epicsEventSignal(pvt.jammer); /* Empty */
-    errlogFlush();
-
-    testDiag("Logged %u messages", pvt.count);
-    epicsEventMustWait(pvt.done);
-    /* Expect N+1 messages +- 1 depending on impl */
-    testOk(pvt.count >= N && pvt.count<=N+2, "Logged %u messages, expected %zu", pvt.count, N+1);
-
-    /* Clean up */
-    testOk(1 == errlogRemoveListeners(&logClient, &pvt),
-        "Removed 1 listener");
+    testLogSizeTrunc(LOGBUFSIZE, 256, truncmsg256);
+    testLogSizeTrunc(LOGBUFSIZE, 256, truncmsg256);
 
     osiSockAttach();
     testLogPrefix();
