@@ -605,6 +605,7 @@ char** iocsh_attempt_completion(const char* word, int start, int end)
 
 struct ReadlineContext {
     void *context;
+    FILE *context_fp;
 #ifdef USE_READLINE
     // readline on BSD/OSX missing 'rl_completion_func_t' typedef, and 'const'
     char* prev_rl_readline_name;
@@ -618,12 +619,14 @@ struct ReadlineContext {
 
     ReadlineContext()
         :context(NULL)
+        ,context_fp(NULL)
     {}
 
     bool setup(FILE *fp) {
+        context_fp = fp;
         context = epicsReadlineBegin(fp);
 #ifdef USE_READLINE
-        if(context) {
+        if(context && !fp) {
             prev_rl_readline_name = (char*)rl_readline_name;
             prev_rl_basic_word_break_characters = (char*)rl_basic_word_break_characters;
             prev_rl_completer_word_break_characters = (char*)rl_completer_word_break_characters;
@@ -656,21 +659,23 @@ struct ReadlineContext {
     ~ReadlineContext() {
         if(context) {
 #ifdef USE_READLINE
-            if(!hist_file.empty()) {
-                if(int err = write_history(hist_file.c_str())) {
-                    fprintf(epicsGetStderr(),
-                        ERL_ERROR " %s (%d) writing '%s'\n",
-                        strerror(err), err, hist_file.c_str());
+            if(!context_fp) {
+                if(!hist_file.empty()) {
+                    if(int err = write_history(hist_file.c_str())) {
+                        fprintf(epicsGetStderr(),
+                            ERL_ERROR " %s (%d) writing '%s'\n",
+                            strerror(err), err, hist_file.c_str());
+                    }
                 }
+                rl_readline_name = prev_rl_readline_name;
+                rl_basic_word_break_characters = prev_rl_basic_word_break_characters;
+                rl_completer_word_break_characters = prev_rl_completer_word_break_characters;
+                rl_basic_quote_characters = prev_rl_basic_quote_characters;
+                rl_completer_quote_characters = prev_rl_completer_quote_characters;
+                rl_attempted_completion_function = prev_rl_attempted_completion_function;
+                // cf. osdReadlineBegin() in gnuReadline.c
+                rl_bind_key('\t', rl_insert);
             }
-            rl_readline_name = prev_rl_readline_name;
-            rl_basic_word_break_characters = prev_rl_basic_word_break_characters;
-            rl_completer_word_break_characters = prev_rl_completer_word_break_characters;
-            rl_basic_quote_characters = prev_rl_basic_quote_characters;
-            rl_completer_quote_characters = prev_rl_completer_quote_characters;
-            rl_attempted_completion_function = prev_rl_attempted_completion_function;
-            // cf. osdReadlineBegin() in gnuReadline.c
-            rl_bind_key('\t', rl_insert);
 #endif
             epicsReadlineEnd(context);
         }
