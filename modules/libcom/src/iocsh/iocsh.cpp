@@ -643,6 +643,7 @@ struct ReadlineContext {
             rl_bind_key('\t', rl_complete);
             compute_hist_file();
             if(!hist_file.empty()) {
+                clear_history(); // clear as read_history() will append
                 if(int err = read_history(hist_file.c_str())) {
                     if(err!=ENOENT)
                         fprintf(epicsGetStderr(),
