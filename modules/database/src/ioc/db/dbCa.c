@@ -1260,12 +1260,7 @@ static void dbCaTask(void *arg)
                 epicsMutexMustLock(pca->lock);
                 pca->elementSize = dbr_value_size[ca_field_type(pca->chid)];
                 pca->pgetNative = dbCalloc(pca->nelements, pca->elementSize);
-                evid oldev = pca->evidString;
-                pca->evidString = 0;
                 epicsMutexUnlock(pca->lock);
-                if (oldev) {
-                    ca_clear_event(oldev);
-                }
 
                 status = ca_add_array_event(
                     dbf_type_to_DBR_TIME(ca_field_type(pca->chid)),
@@ -1281,13 +1276,7 @@ static void dbCaTask(void *arg)
             if (link_action & CA_MONITOR_STRING) {
                 epicsMutexMustLock(pca->lock);
                 pca->pgetString = dbCalloc(1, MAX_STRING_SIZE);
-                evid oldev = pca->evidNative;
-                pca->evidNative = 0;
                 epicsMutexUnlock(pca->lock);
-                if (oldev) {
-                    ca_clear_event(oldev);
-                }
-
                 status = ca_add_array_event(DBR_TIME_STRING, 1,
                     pca->chid, eventCallback, pca, 0.0, 0.0, 0.0,
                     &pca->evidString);
