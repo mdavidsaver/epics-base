@@ -250,7 +250,7 @@ long dbInitLink(struct link *plink, short dbfType)
     if (dbfType == DBF_INLINK)
         plink->value.pv_link.pvlMask |= pvlOptInpNative;
 
-    dbCaAddLinkCallbackOpt(NULL, plink, NULL, NULL, NULL, isLocal ? DBCA_CALLBACK_INIT_WAIT : 0);
+    dbCaAddLinkCallbackOpt(NULL, plink, NULL, NULL, NULL, isLocal ? DBCA_CALLBACK_INIT_START : 0);
     if (dbfType == DBF_FWDLINK) {
         char *pperiod = strrchr(plink->value.pv_link.pvname, '.');
 
