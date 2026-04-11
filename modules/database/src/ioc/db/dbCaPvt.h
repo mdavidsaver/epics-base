@@ -112,7 +112,17 @@ typedef struct caLink
     unsigned long   nUpdate;
 }caLink;
 
-#define DBCA_CALLBACK_INIT_WAIT (1)
+/* Local link initial connection waiting
+ */
+// starting condition
+#define DBCA_CALLBACK_INIT_START       (0xf)
+// set while initOutstanding incremented
+#define DBCA_CALLBACK_INIT_WAITING     (0x1)
+// set for each condition necessary prior to completion (decrement initOutstanding)
+#define DBCA_CALLBACK_INIT_WAIT_NATIVE (0x2)
+#define DBCA_CALLBACK_INIT_WAIT_STRING (0x4)
+#define DBCA_CALLBACK_INIT_WAIT_ATTRIB (0x8)
+#define DBCA_CALLBACK_INIT_WAIT_MASK   (0xe)
 
 void dbCaAddLinkCallbackOpt(struct dbLocker *locker, struct link *plink,
                             dbCaCallback connect, dbCaCallback monitor,
