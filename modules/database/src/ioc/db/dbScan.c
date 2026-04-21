@@ -115,6 +115,9 @@ typedef struct event_list {
     struct event_list   *next;
     char                eventname[1]; /* actually arbitrary size */
 } event_list;
+/* All event_list are singly linked from pevent_list[0] via next.
+ * Numbered events are also stored in pevent_list[1..255].
+ */
 static event_list * volatile pevent_list[NUM_TIME_EVENTS];
 static epicsMutexId event_lock;
 
