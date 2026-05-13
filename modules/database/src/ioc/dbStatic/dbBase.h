@@ -170,7 +170,7 @@ typedef struct dbRecordType {
     char            **papsortFldName;/**< \brief ptr to array of ptr to fld names*/
     short           *sortFldInd;    /**< \brief * addr of array of ind in papFldDes*/
     dbFldDes        *pvalFldDes;    /**< \brief pointer dbFldDes for VAL field*/
-    short           indvalFlddes;   /**< \brief ind in papFldDes*/
+    short           indvalFlddes;   /**< \brief index of VAL field in papFldDes[] */
     dbFldDes        **papFldDes;    /**< \brief ptr to array of ptr to fldDes*/
     /*The following are only available on run time system*/
     rset            *prset;
@@ -181,15 +181,25 @@ struct dbPvd;           /* Contents private to dbPvdLib code */
 struct gphPvt;          /* Contents private to gpHashLib code */
 
 typedef struct dbBase {
+    // struct dbMenu
     ELLLIST         menuList;
+    // struct dbRecordType
     ELLLIST         recordTypeList;
+    // struct drvSup
     ELLLIST         drvList;
+    // struct linkSup
     ELLLIST         linkList;
+    // struct dbText
     ELLLIST         registrarList;
+    // struct dbText
     ELLLIST         functionList;
+    // struct dbVariableDef
     ELLLIST         variableList;
+    // struct brkTable
     ELLLIST         bptList;
+    // struct chFilterPlugin
     ELLLIST         filterList;
+    // struct dbGuiGroup (private)
     ELLLIST         guiGroupList;
     void            *pathPvt;
     struct dbPvd    *ppvd;
