@@ -220,6 +220,7 @@ void testEpicsStrPrintEscaped(void)
 
     // Passing cases
     testOk1(epicsStrPrintEscaped(testFile, "1234", 4) == 4);
+    testOk1(epicsStrPrintEscaped(testFile, "1234extra", 4) == 4);
     testOk1(epicsStrPrintEscaped(testFile, "\a\b\f\n\r\t\v\\\'\"", 10) == 20);
 
     // Failing cases
@@ -236,7 +237,6 @@ void testEpicsStrPrintEscaped(void)
         testSkip(1, "fprintf is broken on this system");
     }
     testOk1(epicsStrPrintEscaped(testFile, NULL, 4) == 0);
-    testOk1(epicsStrPrintEscaped(testFile, "", 4) == 0);
     testOk1(epicsStrPrintEscaped(testFile, "1234", 0) == 0);
 
     fclose(testFile);
