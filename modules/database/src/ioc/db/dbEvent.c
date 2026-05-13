@@ -803,6 +803,7 @@ static void db_queue_event_log (evSubscrip *pevent, db_field_log *pLog)
     if (pevent->npend > 0u
             && !dbfl_has_copy(*pevent->pLastLog)
             && !dbfl_has_copy(pLog)) {
+        // TODO: drop LastLog instead?
         db_delete_field_log(pLog);
         UNLOCKEVQUE (ev_que);
         return;
@@ -819,7 +820,9 @@ static void db_queue_event_log (evSubscrip *pevent, db_field_log *pLog)
      */
     rngSpace = ringSpace ( ev_que );
     if ( pevent->npend>0u &&
-        (ev_que->evUser->flowCtrlMode || rngSpace<=EVENTSPERQUE) ) {
+        (ev_que->evUser->flowCtrlMode || rngSpace<=EVENTSPERQUE) )
+    {
+        // TODO: rngSpace<=EVENTSPERQUE condition?
         /*
          * replace last event if no space is left
          */
@@ -851,12 +854,7 @@ static void db_queue_event_log (evSubscrip *pevent, db_field_log *pLog)
          * if the ring buffer was empty before
          * adding this event
          */
-        if (rngSpace==EVENTQUESIZE) {
-            firstEventFlag = 1;
-        }
-        else {
-            firstEventFlag = 0;
-        }
+        firstEventFlag = rngSpace==EVENTQUESIZE;
         ev_que->putix = RNGINC ( ev_que->putix );
     }
 
