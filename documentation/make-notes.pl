@@ -59,10 +59,10 @@ if ($opt_d) {
         die "$tool: Can't open '-d' directory: $!\n";
 
     # Get filenames, exclude dot-files, sort <alpha><num><alpha>
+    my $rx = qr/^ (\D+) (\d+) (.*) $/x;
     my @files = sort {
-        my $rx = qr/^ (\D+) (\d+) (.*) $/x;
-        my @a = ($a =~ m/$rx/);
-        my @b = ($b =~ m/$rx/);
+        my @a = ($a =~ m/$rx/, '', '');
+        my @b = ($b =~ m/$rx/, '', '');
         $a[0] cmp $b[0] || $a[1] <=> $b[1] || $a[2] cmp $b[2];
     } grep !m/^ \. \.? $/x, readdir $dh;
 
