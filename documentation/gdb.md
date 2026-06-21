@@ -95,6 +95,9 @@ Or each time run:
 (gdb) source /path/to/base/checkout/modules/database/src/ioc/epics-gdb-helper.py
 ```
 
+Note: Entries in the `safe-path` list may be files (`.so` or `.py`), or directories.
+      When a directory is included, sub-directories are also trusted.
+      eg. `add-auto-load-safe-path /opt/epics` would also trust a `/opt/epics/lib`.
 
 Afterwards verify at GDB shell by running:
 
