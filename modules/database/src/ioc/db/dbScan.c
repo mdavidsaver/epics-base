@@ -488,7 +488,7 @@ event_list *eventNameToHandle(const char *eventname)
     */
     if (epicsParseDouble(eventname, &eventnumber, NULL) == 0)
     {
-        if (eventnumber >= 0 && eventnumber < 256)
+        if (eventnumber >= 0 && eventnumber < NUM_TIME_EVENTS)
         {
             if (eventnumber < 1)
                 return NULL; /* 0 is no event */
