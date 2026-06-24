@@ -2417,6 +2417,14 @@ int camessage ( struct client *client )
             }
             msg.m_postsize  = ntohl ( pLW[0] );
             msg.m_count     = ntohl ( pLW[1] );
+            if (msg.m_postsize >= 0xffffffff - (sizeof(*mp) + 2 * sizeof ( *pLW ))) {
+                if(CASDEBUG>0) {
+                    errlogPrintf("Client ext msg size too large 0x%08x\n",
+                                 (unsigned)msg.m_postsize);
+                }
+                status = RSRV_ERROR;
+                break;
+            }
             msgsize = msg.m_postsize + sizeof(*mp) + 2 * sizeof ( *pLW );
             pBody = pLW + 2;
         }
