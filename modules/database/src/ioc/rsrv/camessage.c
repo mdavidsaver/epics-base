@@ -628,6 +628,9 @@ static int read_action ( caHdrLargeArray *mp, void *pPayloadIn, struct client *p
         SEND_UNLOCK ( pClient );
         return RSRV_ERROR;
     }
+    if (mp->m_count > dbChannelFinalElements(pciu->dbch)) {
+        mp->m_count = dbChannelFinalElements(pciu->dbch);
+    }
 
     payloadSize = dbr_size_n ( mp->m_dataType, mp->m_count );
     status = cas_copy_in_header ( pClient, mp->m_cmmd, payloadSize,
@@ -712,6 +715,10 @@ static int read_notify_action ( caHdrLargeArray *mp, void *pPayload, struct clie
         return RSRV_ERROR;
     }
 
+    if (mp->m_count > dbChannelFinalElements(pciu->dbch)) {
+        mp->m_count = dbChannelFinalElements(pciu->dbch);
+    }
+
     evext.msg = *mp;
     evext.pciu = pciu;
     evext.pdbev = NULL;
@@ -741,10 +748,24 @@ static int write_action ( caHdrLargeArray *mp,
     int                     status;
     long                    dbStatus;
     void                    *asWritePvt;
+    unsigned                size;
 
     pciu = MPTOPCIU(mp, client);
     if(!pciu){
         logBadId(client, mp, pPayload);
+        return RSRV_ERROR;
+    }
+
+    if (INVALID_DB_REQ(mp->m_dataType)) {
+        log_header ("bad put data type", client, mp, pPayload, 0);
+        return RSRV_ERROR;
+    }
+    if (mp->m_count > dbChannelFinalElements(pciu->dbch)) {
+        mp->m_count = dbChannelFinalElements(pciu->dbch);
+    }
+
+    size = dbr_size_n (mp->m_dataType, mp->m_count);
+    if (size > mp->m_postsize) {
         return RSRV_ERROR;
     }
 
@@ -1654,10 +1675,13 @@ static int write_notify_action ( caHdrLargeArray *mp, void *pPayload,
         return RSRV_ERROR;
     }
 
-    if (mp->m_dataType > LAST_BUFFER_TYPE) {
+    if (INVALID_DB_REQ(mp->m_dataType)) {
         log_header ("bad put notify data type", client, mp, pPayload, 0);
         putNotifyErrorReply (client, mp, ECA_BADTYPE);
         return RSRV_ERROR;
+    }
+    if (mp->m_count > dbChannelFinalElements(pciu->dbch)) {
+        mp->m_count = dbChannelFinalElements(pciu->dbch);
     }
 
     if(!rsrvCheckPut(pciu)){
@@ -1666,6 +1690,9 @@ static int write_notify_action ( caHdrLargeArray *mp, void *pPayload,
     }
 
     size = dbr_size_n (mp->m_dataType, mp->m_count);
+    if (size > mp->m_postsize) {
+        return RSRV_ERROR;
+    }
 
     if ( pciu->pPutNotify ) {
 
@@ -1776,7 +1803,7 @@ static int event_add_action (caHdrLargeArray *mp, void *pPayload, struct client 
     struct channel_in_use *pciu;
     struct event_ext *pevext;
 
-    if ( INVALID_DB_REQ(mp->m_dataType) ) {
+    if ( INVALID_DB_REQ(mp->m_dataType) || mp->m_postsize < sizeof(*pmi) ) {
         return RSRV_ERROR;
     }
 
@@ -1808,6 +1835,10 @@ static int event_add_action (caHdrLargeArray *mp, void *pPayload, struct client 
             RECORD_NAME(pciu->dbch));
         SEND_UNLOCK(client);
         return RSRV_ERROR;
+    }
+
+    if (mp->m_count > dbChannelFinalElements(pciu->dbch)) {
+        mp->m_count = dbChannelFinalElements(pciu->dbch);
     }
 
     pevext->msg = *mp;
@@ -2425,7 +2456,7 @@ int camessage ( struct client *client )
             }
             msg.m_postsize  = ntohl ( pLW[0] );
             msg.m_count     = ntohl ( pLW[1] );
-            if (msg.m_postsize >= 0xffffffff - (sizeof(*mp) + 2 * sizeof ( *pLW ))) {
+            if (msg.m_postsize >= ca_uint32_max - (sizeof(*mp) + 2 * sizeof ( *pLW ))) {
                 if(CASDEBUG>0) {
                     errlogPrintf("Client ext msg size too large 0x%08x\n",
                                  (unsigned)msg.m_postsize);
