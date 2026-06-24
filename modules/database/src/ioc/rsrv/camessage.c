@@ -119,13 +119,21 @@ static void *casCalloc(size_t count, size_t size)
  *
  * used to be a macro
  */
-static struct channel_in_use *MPTOPCIU (const caHdrLargeArray *mp)
+static struct channel_in_use *MPTOPCIU (const caHdrLargeArray *mp,
+                                       struct client *client)
 {
     struct channel_in_use   *pciu;
     const unsigned      id = mp->m_cid;
 
     LOCK_CLIENTQ;
     pciu = bucketLookupItemUnsignedId (pCaBucket, &id);
+
+    if (pciu && pciu->client != client) {
+        /* reject attempt to use server assigned ID from another client
+         */
+        pciu = NULL;
+    }
+
     UNLOCK_CLIENTQ;
 
     return pciu;
@@ -161,7 +169,7 @@ va_list                 args
     case CA_PROTO_READ_NOTIFY:
     case CA_PROTO_WRITE:
     case CA_PROTO_WRITE_NOTIFY:
-        pciu = MPTOPCIU(curp);
+        pciu = MPTOPCIU(curp, client);
         if(pciu){
             cid = pciu->cid;
         }
@@ -284,7 +292,7 @@ static void log_header (
 
     ipAddrToDottedIP (&client->addr, hostName, sizeof(hostName));
 
-    pciu = MPTOPCIU(mp);
+    pciu = MPTOPCIU(mp, client);
 
     if (pContext) {
         epicsPrintf ("CAS: request from %s => %s\n",
@@ -600,7 +608,7 @@ static void read_reply ( void *pArg, struct dbChannel *dbch,
  */
 static int read_action ( caHdrLargeArray *mp, void *pPayloadIn, struct client *pClient )
 {
-    struct channel_in_use *pciu = MPTOPCIU ( mp );
+    struct channel_in_use *pciu = MPTOPCIU ( mp, pClient );
     int readAccess;
     ca_uint32_t payloadSize;
     void *pPayload;
@@ -698,7 +706,7 @@ static int read_notify_action ( caHdrLargeArray *mp, void *pPayload, struct clie
         return RSRV_ERROR;
     }
 
-    pciu = MPTOPCIU ( mp );
+    pciu = MPTOPCIU ( mp, client );
     if ( !pciu ) {
         logBadId ( client, mp, pPayload );
         return RSRV_ERROR;
@@ -734,7 +742,7 @@ static int write_action ( caHdrLargeArray *mp,
     long                    dbStatus;
     void                    *asWritePvt;
 
-    pciu = MPTOPCIU(mp);
+    pciu = MPTOPCIU(mp, client);
     if(!pciu){
         logBadId(client, mp, pPayload);
         return RSRV_ERROR;
@@ -1640,7 +1648,7 @@ static int write_notify_action ( caHdrLargeArray *mp, void *pPayload,
     int status;
     struct channel_in_use *pciu;
 
-    pciu = MPTOPCIU(mp);
+    pciu = MPTOPCIU(mp, client);
     if(!pciu){
         logBadId ( client, mp, pPayload );
         return RSRV_ERROR;
@@ -1772,7 +1780,7 @@ static int event_add_action (caHdrLargeArray *mp, void *pPayload, struct client 
         return RSRV_ERROR;
     }
 
-    pciu = MPTOPCIU ( mp );
+    pciu = MPTOPCIU ( mp, client );
     if ( ! pciu ) {
         logBadId ( client, mp, pPayload );
         return RSRV_ERROR;
@@ -1882,8 +1890,8 @@ static int clear_channel_reply ( caHdrLargeArray *mp,
       * Verify the channel
       *
       */
-     pciu = MPTOPCIU(mp);
-     if(pciu?pciu->client!=client:TRUE){
+     pciu = MPTOPCIU(mp, client);
+     if(!pciu){
          logBadId ( client, mp, pPayload );
          return RSRV_ERROR;
      }
@@ -1991,8 +1999,8 @@ static int event_cancel_reply ( caHdrLargeArray *mp, void *pPayload, struct clie
       * Verify the channel
       *
       */
-     pciu = MPTOPCIU(mp);
-     if (pciu?pciu->client!=client:TRUE) {
+     pciu = MPTOPCIU(mp, client);
+     if (!pciu) {
          logBadId ( client, mp, pPayload );
          return RSRV_ERROR;
      }
