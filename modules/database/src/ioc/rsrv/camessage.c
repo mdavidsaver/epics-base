@@ -2437,9 +2437,15 @@ int camessage ( struct client *client )
                 SEND_UNLOCK(client);
                 log_header ( "CAS: Client version too old",
                     client, &msg, 0, nmsg );
-                client->recvBytesToDrain = msgsize - bytes_left;
-                client->recv.stk = client->recv.cnt;
-                status = RSRV_OK;
+                if (msgsize >= bytes_left) {
+                    client->recvBytesToDrain = msgsize - bytes_left;
+                    client->recv.stk = client->recv.cnt;
+                    status = RSRV_OK;
+                    break;
+                } else { // msgsize < bytes_left
+                    client->recv.stk += msgsize;
+                    continue;
+                }
             } else {
                 /* silently ignore UDP from old clients */
                 status = RSRV_ERROR;
