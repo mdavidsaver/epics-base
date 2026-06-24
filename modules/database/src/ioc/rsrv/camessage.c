@@ -1295,7 +1295,7 @@ static int claim_ciu_action ( caHdrLargeArray *mp,
   *
   * (called by the db call back thread)
   */
- LOCAL int write_notify_put_callback(processNotify *ppn,notifyPutType type)
+ static int write_notify_put_callback(processNotify *ppn,notifyPutType type)
  {
      struct channel_in_use * pciu = (struct channel_in_use *) ppn->usrPvt;
      struct rsrv_put_notify *pNotify;
@@ -1317,7 +1317,7 @@ static int claim_ciu_action ( caHdrLargeArray *mp,
   *
   * (called by the db call back thread)
   */
- LOCAL void write_notify_done_callback(processNotify *ppn)
+ static void write_notify_done_callback(processNotify *ppn)
 {
     struct channel_in_use * pciu = (struct channel_in_use *) ppn->usrPvt;
     struct client * pClient;
