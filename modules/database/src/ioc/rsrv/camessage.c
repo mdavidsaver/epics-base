@@ -972,7 +972,6 @@ struct dbChannel *dbch,
 unsigned    cid
 )
 {
-    static unsigned     bucketID;
     unsigned        *pCID;
     struct channel_in_use   *pchannel;
     int         status;
@@ -1005,6 +1004,7 @@ unsigned    cid
     LOCK_CLIENTQ;
 
     do {
+        static unsigned     bucketID;
         /*
          * bypass read only warning
          */
