@@ -304,11 +304,6 @@ static void log_header (
 
     epicsPrintf ( "CAS: Request from %s =>   available=0x%x \tN=%u paddr=%p\n",
         hostName, mp->m_available, mnum, (pciu ? pciu->dbch : NULL));
-
-    if (mp->m_cmmd==CA_PROTO_WRITE && mp->m_dataType==DBF_STRING && pPayLoad ) {
-        epicsPrintf ( "CAS: Request from %s =>   Wrote string \"%s\"\n",
-        hostName, (char *)pPayLoad );
-    }
 }
 
 /*
