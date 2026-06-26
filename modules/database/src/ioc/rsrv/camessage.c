@@ -17,6 +17,8 @@
  *          Ralph Lange <Ralph.Lange@bessy.de>
  */
 
+#define USE_TYPED_DBEVENT
+
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>

@@ -150,7 +150,7 @@ struct event_ext {
     ELLNODE                 node;
     caHdrLargeArray         msg;
     struct channel_in_use   *pciu;
-    struct event_block      *pdbev;     /* ptr to db event block */
+    struct evSubscrip       *pdbev;     /* ptr to db event block */
     unsigned                size;       /* for speed */
     unsigned                mask;
     char                    modified;   /* mod & ev flw ctrl enbl */
