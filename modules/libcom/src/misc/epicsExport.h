@@ -82,8 +82,8 @@ typedef void (*REGISTRAR)(void);
  */
 #ifdef __cplusplus
 #define epicsExportAddress(typ, obj) \
-    extern "C" { epicsShareExtern typ *EPICS_EXPORT_POBJ(typ,obj); } \
-    epicsShareDef typ *EPICS_EXPORT_POBJ(typ, obj) = (typ *) (char *) &obj
+    extern "C" { epicsShareExtern typ * const EPICS_EXPORT_POBJ(typ,obj); } \
+    epicsShareDef typ * const EPICS_EXPORT_POBJ(typ, obj) = (typ *) (char *) &obj
 #else
 #define epicsExportAddress(typ, obj) \
     epicsShareExtern typ *EPICS_EXPORT_POBJ(typ,obj); \
@@ -105,11 +105,11 @@ typedef void (*REGISTRAR)(void);
  */
 #ifdef __cplusplus
 #define epicsExportRegistrar(fun) \
-    extern "C" { extern epicsShareFunc REGISTRAR EPICS_EXPORT_PFUNC(fun); } \
-    REGISTRAR EPICS_EXPORT_PFUNC(fun) = reinterpret_cast<REGISTRAR>(&fun)
+    extern "C" { extern epicsShareFunc const REGISTRAR EPICS_EXPORT_PFUNC(fun); } \
+    const REGISTRAR EPICS_EXPORT_PFUNC(fun) = reinterpret_cast<const REGISTRAR>(&fun)
 #else
 #define epicsExportRegistrar(fun) \
-    epicsShareFunc REGISTRAR EPICS_EXPORT_PFUNC(fun) = (REGISTRAR) &fun
+    epicsShareFunc const REGISTRAR EPICS_EXPORT_PFUNC(fun) = (const REGISTRAR) &fun
 #endif
 
 /** \brief Declare and register a function for exporting.
