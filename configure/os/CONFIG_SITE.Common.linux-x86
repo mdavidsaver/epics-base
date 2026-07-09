@@ -36,7 +36,9 @@
 # They must be set in CONFIG_SITE.linux-x86.linux-x86 instead.
 
 # Permit access to 64-bit file-systems
-OP_SYS_CFLAGS += -D_FILE_OFFSET_BITS=64
+OP_SYS_CPPFLAGS += -D_FILE_OFFSET_BITS=64
+# 64-bit time_t and associated
+OP_SYS_CPPFLAGS += -D_TIME_BITS=64
 
 # Tune GNU compiler output for a specific 32-bit cpu-type
 # (e.g. generic, native, i386, i686, pentium2/3/4, prescott, k6, athlon etc.)

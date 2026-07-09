@@ -39,6 +39,11 @@
 # (e.g. generic, native, core2, nocona, k8, opteron, athlon64, barcelona etc.)
 GNU_TUNE_CFLAGS = -mtune=generic
 
+# Permit access to 64-bit file-systems
+OP_SYS_CPPFLAGS += -D_FILE_OFFSET_BITS=64
+# 64-bit time_t and associated
+OP_SYS_CPPFLAGS += -D_TIME_BITS=64
+
 # Developers using a suitable compiler may enable its address sanitizer:
 #ENABLE_ASAN = YES
 

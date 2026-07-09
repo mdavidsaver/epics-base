@@ -36,4 +36,6 @@
 # They must be set in CONFIG_SITE.linux-arm.linux-arm instead.
 
 # Permit access to 64-bit file-systems
-OP_SYS_CFLAGS += -D_FILE_OFFSET_BITS=64
+OP_SYS_CPPFLAGS += -D_FILE_OFFSET_BITS=64
+# 64-bit time_t and associated
+OP_SYS_CPPFLAGS += -D_TIME_BITS=64
