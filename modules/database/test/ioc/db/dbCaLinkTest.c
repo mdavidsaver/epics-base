@@ -561,6 +561,7 @@ static void testreTargetTypeChange(void)
 }
 
 void dbCaLinkTest_testCAC(void);
+void dbCaLinkTest_testMacros(void);
 
 static void testCAC(void)
 {
@@ -590,6 +591,7 @@ static void testCAC(void)
     buftarg2= ptarg2->bptr;
 
     dbCaLinkTest_testCAC();
+    dbCaLinkTest_testMacros();
 
     testIocShutdownOk();
 
@@ -605,7 +607,7 @@ static void testCAC(void)
 
 MAIN(dbCaLinkTest)
 {
-    testPlan(101);
+    testPlan(118);
     testNativeLink();
     testStringLink();
     testCP();
