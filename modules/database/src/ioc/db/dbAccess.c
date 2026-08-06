@@ -1087,11 +1087,16 @@ static long dbPutFieldLink(DBADDR *paddr,
     switch (dbrType) {
     case DBR_CHAR:
     case DBR_UCHAR:
-        if (pstring[nRequest - 1] != '\0')
+        if (nRequest == 0) {
+            pstring = pbuffer = ""; // treat zero bytes the same as one null byte
+        } else if (pstring[nRequest - 1] != '\0') {
             return S_db_badDbrtype;
+        }
         break;
 
     case DBR_STRING:
+        if (nRequest != 1)
+            return S_db_onlyOne;
         break;
 
     default:
@@ -1253,6 +1258,8 @@ long dbPutField(DBADDR *paddr, short dbrType,
 
     if (special == SPC_ATTRIBUTE)
         return S_db_noMod;
+    if (nRequest < 0)
+        return S_db_badChoice;
 
     /*check for putField disabled*/
     if (precord->disp && paddr->pfield != &precord->disp)
@@ -1332,6 +1339,8 @@ long dbPut(DBADDR *paddr, short dbrType,
 
     if (special == SPC_ATTRIBUTE)
         return S_db_noMod;
+    if (nRequest < 0)
+        return S_db_badChoice;
 
     if (dbrType == DBR_PUT_ACKT && field_type <= DBF_DEVICE) {
         return putAckt(paddr, pbuffer, 1, 1, 0);
