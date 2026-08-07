@@ -580,7 +580,8 @@ void ca_repeater ( int setDebug )
     }
 #endif
 
-    debugPrintf ( ( "CA Repeater: Attached and initialized\n" ) );
+    if ( debug )
+        debugPrintf ( ( "CA Repeater: Attached and initialized\n" ) );
 
     while ( true ) {
         osiSocklen_t from_size = sizeof ( from );
