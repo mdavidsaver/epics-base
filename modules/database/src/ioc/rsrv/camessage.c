@@ -743,7 +743,6 @@ static int write_action ( caHdrLargeArray *mp,
     int                     status;
     long                    dbStatus;
     void                    *asWritePvt;
-    unsigned                size;
 
     pciu = MPTOPCIU(mp, client);
     if(!pciu){
@@ -759,8 +758,19 @@ static int write_action ( caHdrLargeArray *mp,
         mp->m_count = dbChannelFinalElements(pciu->dbch);
     }
 
-    size = dbr_size_n (mp->m_dataType, mp->m_count);
-    if (size > mp->m_postsize) {
+    if (mp->m_dataType == DBR_STRING && mp->m_count == 1 && mp->m_postsize < MAX_STRING_SIZE
+        && (client->sssb || !!(client->sssb = malloc(MAX_STRING_SIZE)))) {
+        // client sent DBR_STRING with truncated body.  This is allowed when count==1.
+        // we copy into a temporary buffer.
+        // copy into [0, postsize)
+        memcpy(client->sssb, pPayload, mp->m_postsize);
+        // zero remaining [postsize, max_string_size)
+        memset(client->sssb + mp->m_postsize, 0, MAX_STRING_SIZE - mp->m_postsize);
+        // use instead of socket buffer
+        pPayload = client->sssb;
+
+    } else if (dbr_size_n (mp->m_dataType, mp->m_count) > mp->m_postsize) {
+        log_header ( "truncated body", client, mp, 0);
         return RSRV_ERROR;
     }
 

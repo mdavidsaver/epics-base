@@ -1136,6 +1136,7 @@ void destroy_client ( struct client *client )
         free ( client->pHostName );
     }
 
+    free ( client->sssb );
     freeListFree ( rsrvClientFreeList, client );
 }
 
