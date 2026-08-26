@@ -1664,6 +1664,60 @@ void rsrvFreePutNotify ( client *pClient,
      }
 }
 
+/* Only one concurrent write_notify (aka. put with callback) is allowed for each client.
+ * If a second write_notify is attempted before the first has completed, then wait for
+ * some time for the first to complete.  Then cancel the first.
+ */
+static const double write_notify_timeout = 60.0;
+
+// wait for in-progress put notify to complete, or cancel after some time
+static void write_notify_cancel(const struct channel_in_use *pciu)
+{
+    struct client* client = pciu->client;
+    // serialize concurrent put notifies
+    epicsMutexMustLock(client->putNotifyLock);
+    while(pciu->pPutNotify->busy){
+        epicsMutexUnlock(client->putNotifyLock);
+        epicsEventStatus status = epicsEventWaitWithTimeout(client->blockSem, write_notify_timeout);
+        if ( status != epicsEventWaitOK ) { // timeout
+            char busyTmp;
+            void * asWritePvtTmp = 0;
+
+            epicsMutexMustLock(client->putNotifyLock);
+            busyTmp = pciu->pPutNotify->busy;
+            epicsMutexUnlock(client->putNotifyLock);
+
+            /* if any possibility of put notify still running
+             * then cancel it
+             */
+            if ( busyTmp ) {
+                dbNotifyCancel(&pciu->pPutNotify->dbPutNotify);
+            }
+            epicsMutexMustLock(client->putNotifyLock);
+            busyTmp = pciu->pPutNotify->busy;
+            if ( busyTmp ) {
+                if ( pciu->pPutNotify->onExtraLaborQueue ) {
+                    ellDelete ( &client->putNotifyQue,
+                              &pciu->pPutNotify->node );
+                }
+                pciu->pPutNotify->busy = FALSE;
+                asWritePvtTmp = pciu->pPutNotify->asWritePvt;
+                pciu->pPutNotify->asWritePvt = 0;
+            }
+            epicsMutexUnlock(client->putNotifyLock);
+
+            if ( busyTmp ) {
+                log_header("put call back time out", client,
+                           &pciu->pPutNotify->msg, 0);
+                asTrapWriteAfter ( asWritePvtTmp );
+                putNotifyErrorReply (client, &pciu->pPutNotify->msg, ECA_PUTCBINPROG);
+            }
+        }
+        epicsMutexMustLock(client->putNotifyLock);
+    }
+    epicsMutexUnlock(client->putNotifyLock);
+}
+
 /*
  * write_notify_action()
  */
@@ -1694,60 +1748,10 @@ static int write_notify_action ( caHdrLargeArray *mp, void *pPayload,
         return RSRV_OK;
     }
 
-    size = dbr_size_n (mp->m_dataType, mp->m_count);
-    if (size > mp->m_postsize) {
-        return RSRV_ERROR;
-    }
-
     if ( pciu->pPutNotify ) {
+        write_notify_cancel(pciu);
 
-        /*
-         * serialize concurrent put notifies
-         */
-        epicsMutexMustLock(client->putNotifyLock);
-        while(pciu->pPutNotify->busy){
-            epicsMutexUnlock(client->putNotifyLock);
-            status = epicsEventWaitWithTimeout(client->blockSem,60.0);
-            if ( status != epicsEventWaitOK ) {
-                char busyTmp;
-                void * asWritePvtTmp = 0;
-
-                epicsMutexMustLock(client->putNotifyLock);
-                busyTmp = pciu->pPutNotify->busy;
-                epicsMutexUnlock(client->putNotifyLock);
-
-                /*
-                 * if any possibility of put notify still running
-                 * then cancel it
-                 */
-                if ( busyTmp ) {
-                    dbNotifyCancel(&pciu->pPutNotify->dbPutNotify);
-                }
-                epicsMutexMustLock(client->putNotifyLock);
-                busyTmp = pciu->pPutNotify->busy;
-                if ( busyTmp ) {
-                    if ( pciu->pPutNotify->onExtraLaborQueue ) {
-                        ellDelete ( &client->putNotifyQue,
-                                    &pciu->pPutNotify->node );
-                    }
-                    pciu->pPutNotify->busy = FALSE;
-                    asWritePvtTmp = pciu->pPutNotify->asWritePvt;
-                    pciu->pPutNotify->asWritePvt = 0;
-                }
-                epicsMutexUnlock(client->putNotifyLock);
-
-                if ( busyTmp ) {
-                    log_header("put call back time out", client,
-                        &pciu->pPutNotify->msg, 0);
-                    asTrapWriteAfter ( asWritePvtTmp );
-                    putNotifyErrorReply (client, &pciu->pPutNotify->msg, ECA_PUTCBINPROG);
-                }
-            }
-            epicsMutexMustLock(client->putNotifyLock);
-        }
-        epicsMutexUnlock(client->putNotifyLock);
-    }
-    else {
+    } else {
         pciu->pPutNotify = rsrvAllocPutNotify ( pciu );
         if ( ! pciu->pPutNotify ) {
             /*
@@ -1761,6 +1765,8 @@ static int write_notify_action ( caHdrLargeArray *mp, void *pPayload,
         }
     }
 
+    size = dbr_size_n (mp->m_dataType, mp->m_count);
+
     if ( ! rsrvExpandPutNotify ( pciu->pPutNotify, size ) ) {
         log_header ( "no memory to initiate vector put notify",
             client, mp, 0 );
@@ -1768,20 +1774,33 @@ static int write_notify_action ( caHdrLargeArray *mp, void *pPayload,
         return RSRV_ERROR;
     }
 
+    if (mp->m_dataType == DBR_STRING && mp->m_count == 1 && mp->m_postsize < size) {
+        // client sent DBR_STRING with truncated body.  This is allowed when count==1.
+        // put notify buffer has sufficient capacity, so copy in directly
+        char *pPNbuf = pciu->pPutNotify->pbuffer;
+        memcpy(pPNbuf                 , pPayload, mp->m_postsize);
+        memset(pPNbuf + mp->m_postsize, 0       , size - mp->m_postsize);
+
+    } else if (mp->m_postsize < size) {
+        log_header ( "truncated body", client, mp, 0);
+        return RSRV_ERROR;
+
+    } else {
+        // copy/convert to host endian
+        status = caNetConvert (
+            mp->m_dataType, pPayload, pciu->pPutNotify->pbuffer,
+            FALSE /* net -> host format */, mp->m_count );
+        if ( status != ECA_NORMAL ) {
+            log_header ("invalid data type", client, mp, 0);
+            putNotifyErrorReply ( client, mp, status );
+            return RSRV_ERROR;
+        }
+    }
+
     pciu->pPutNotify->busy = TRUE;
     pciu->pPutNotify->onExtraLaborQueue = FALSE;
     pciu->pPutNotify->msg = *mp;
     pciu->pPutNotify->nRequest = mp->m_count;
-
-    status = caNetConvert (
-        mp->m_dataType, pPayload, pciu->pPutNotify->pbuffer,
-        FALSE /* net -> host format */, mp->m_count );
-    if ( status != ECA_NORMAL ) {
-        log_header ("invalid data type", client, mp, 0);
-        putNotifyErrorReply ( client, mp, status );
-        return RSRV_ERROR;
-    }
-
     pciu->pPutNotify->dbrType = mp->m_dataType;
 
     pciu->pPutNotify->asWritePvt = asTrapWriteWithData (
