@@ -57,8 +57,8 @@
 
 static EVENTFUNC read_reply;
 
-#define logBadId(CLIENT, MP, PPL)\
-logBadIdWithFileAndLineno(CLIENT, MP, PPL, __FILE__, __LINE__)
+#define logBadId(CLIENT, MP)\
+logBadIdWithFileAndLineno(CLIENT, MP, __FILE__, __LINE__)
 
 /*
  * for tracking db put notifies
@@ -283,7 +283,6 @@ static void log_header (
     const char              *pContext,
     struct client           *client,
     const caHdrLargeArray   *mp,
-    const void              *pPayLoad,
     unsigned                mnum
 )
 {
@@ -312,12 +311,11 @@ static void log_header (
 static void logBadIdWithFileAndLineno(
 struct client       *client,
 caHdrLargeArray     *mp,
-const void          *pPayload,
 char                *pFileName,
 unsigned            lineno
 )
 {
-    log_header ( "bad resource ID", client, mp, pPayload, 0 );
+    log_header ( "bad resource ID", client, mp, 0 );
     SEND_LOCK ( client );
     send_err ( mp, ECA_INTERNAL, client, "Bad Resource ID at %s.%d",
         pFileName, lineno );
@@ -330,9 +328,10 @@ unsigned            lineno
 static int bad_udp_cmd_action ( caHdrLargeArray *mp,
                        void *pPayload, struct client *pClient )
 {
+    (void)pPayload;
     if (CASDEBUG > 0)
         log_header ("invalid (damaged?) request code from UDP",
-                    pClient, mp, pPayload, 0);
+                    pClient, mp, 0);
     return RSRV_ERROR;
 }
 
@@ -343,7 +342,8 @@ static int bad_tcp_cmd_action ( caHdrLargeArray *mp, void *pPayload,
                            struct client *client )
 {
     const char *pCtx = "invalid (damaged?) request code from TCP";
-    log_header ( pCtx, client, mp, pPayload, 0 );
+    (void)pPayload;
+    log_header ( pCtx, client, mp, 0 );
 
     /*
      *  by default, clients don't recover
@@ -611,7 +611,7 @@ static int read_action ( caHdrLargeArray *mp, void *pPayloadIn, struct client *p
     db_field_log *pfl = NULL;
 
     if ( ! pciu ) {
-        logBadId ( pClient, mp, 0 );
+        logBadId ( pClient, mp );
         return RSRV_ERROR;
     }
     readAccess = asCheckGet ( pciu->asClientPVT );
@@ -706,7 +706,7 @@ static int read_notify_action ( caHdrLargeArray *mp, void *pPayload, struct clie
 
     pciu = MPTOPCIU ( mp, client );
     if ( !pciu ) {
-        logBadId ( client, mp, pPayload );
+        logBadId ( client, mp );
         return RSRV_ERROR;
     }
 
@@ -747,12 +747,12 @@ static int write_action ( caHdrLargeArray *mp,
 
     pciu = MPTOPCIU(mp, client);
     if(!pciu){
-        logBadId(client, mp, pPayload);
+        logBadId(client, mp);
         return RSRV_ERROR;
     }
 
     if (INVALID_DB_REQ(mp->m_dataType)) {
-        log_header ("bad put data type", client, mp, pPayload, 0);
+        log_header ("bad put data type", client, mp, 0);
         return RSRV_ERROR;
     }
     if (mp->m_count > dbChannelFinalElements(pciu->dbch)) {
@@ -780,7 +780,7 @@ static int write_action ( caHdrLargeArray *mp,
         mp->m_dataType, pPayload, pPayload,
         FALSE /* net -> host format */, mp->m_count );
     if ( status != ECA_NORMAL ) {
-        log_header ("invalid data type", client, mp, pPayload, 0);
+        log_header ("invalid data type", client, mp, 0);
         SEND_LOCK(client);
         send_err(
             mp,
@@ -850,7 +850,7 @@ static int host_name_action ( caHdrLargeArray *mp, void *pPayload,
     size = epicsStrnLen(pName, mp->m_postsize)+1;
     if (size > 512 || size > mp->m_postsize) {
         log_header ( "bad (very long) host name",
-            client, mp, pPayload, 0 );
+            client, mp, 0 );
         SEND_LOCK(client);
         send_err(
             mp,
@@ -875,7 +875,7 @@ static int host_name_action ( caHdrLargeArray *mp, void *pPayload,
     pMalloc = malloc(size);
     if(!pMalloc){
         log_header ( "no space in pool for new host name",
-            client, mp, pPayload, 0 );
+            client, mp, 0 );
         SEND_LOCK(client);
         send_err(
             mp,
@@ -937,7 +937,7 @@ static int client_name_action ( caHdrLargeArray *mp, void *pPayload,
     size = epicsStrnLen(pName, mp->m_postsize)+1;
     if (size > 512 || size > mp->m_postsize) {
         log_header ("a very long user name was specified",
-            client, mp, pPayload, 0);
+            client, mp, 0);
         SEND_LOCK(client);
         send_err(
             mp,
@@ -954,7 +954,7 @@ static int client_name_action ( caHdrLargeArray *mp, void *pPayload,
     pMalloc = malloc(size);
     if(!pMalloc){
         log_header ("no memory for new user name",
-            client, mp, pPayload, 0);
+            client, mp, 0);
         SEND_LOCK(client);
         send_err(
             mp,
@@ -1229,7 +1229,7 @@ static int claim_ciu_action ( caHdrLargeArray *mp,
      */
     if (mp->m_postsize<=1) {
         log_header ( "empty PV name in UDP search request?",
-            client, mp, pPayload, 0 );
+            client, mp, 0 );
         return RSRV_OK;
     }
     pName[mp->m_postsize-1] = '\0';
@@ -1254,7 +1254,7 @@ static int claim_ciu_action ( caHdrLargeArray *mp,
             mp->m_cid);
     if (!pciu) {
         log_header ("no memory to create new channel",
-            client, mp, pPayload, 0);
+            client, mp, 0);
         SEND_LOCK(client);
         send_err(mp,
             ECA_ALLOCMEM,
@@ -1276,7 +1276,7 @@ static int claim_ciu_action ( caHdrLargeArray *mp,
             client->pHostName ? client->pHostName : "");
     if(status != 0 && status != S_asLib_asNotActive){
         log_header ("No room for security table",
-            client, mp, pPayload, 0);
+            client, mp, 0);
         SEND_LOCK(client);
         send_err(mp, ECA_ALLOCMEM, client, "No room for security table");
         SEND_UNLOCK(client);
@@ -1306,7 +1306,7 @@ static int claim_ciu_action ( caHdrLargeArray *mp,
     }
     else if (status!=0) {
         log_header ("No room for access security state change subscription",
-            client, mp, pPayload, 0);
+            client, mp, 0);
         SEND_LOCK(client);
         send_err(mp, ECA_ALLOCMEM, client,
             "No room for access security state change subscription");
@@ -1666,12 +1666,12 @@ static int write_notify_action ( caHdrLargeArray *mp, void *pPayload,
 
     pciu = MPTOPCIU(mp, client);
     if(!pciu){
-        logBadId ( client, mp, pPayload );
+        logBadId ( client, mp );
         return RSRV_ERROR;
     }
 
     if (INVALID_DB_REQ(mp->m_dataType)) {
-        log_header ("bad put notify data type", client, mp, pPayload, 0);
+        log_header ("bad put notify data type", client, mp, 0);
         putNotifyErrorReply (client, mp, ECA_BADTYPE);
         return RSRV_ERROR;
     }
@@ -1728,7 +1728,7 @@ static int write_notify_action ( caHdrLargeArray *mp, void *pPayload,
 
                 if ( busyTmp ) {
                     log_header("put call back time out", client,
-                        &pciu->pPutNotify->msg, pciu->pPutNotify->pbuffer, 0);
+                        &pciu->pPutNotify->msg, 0);
                     asTrapWriteAfter ( asWritePvtTmp );
                     putNotifyErrorReply (client, &pciu->pPutNotify->msg, ECA_PUTCBINPROG);
                 }
@@ -1745,7 +1745,7 @@ static int write_notify_action ( caHdrLargeArray *mp, void *pPayload,
              * if there isn't enough memory left
              */
             log_header ( "no memory to initiate put notify",
-                client, mp, pPayload, 0 );
+                client, mp, 0 );
             putNotifyErrorReply (client, mp, ECA_ALLOCMEM);
             return RSRV_ERROR;
         }
@@ -1753,7 +1753,7 @@ static int write_notify_action ( caHdrLargeArray *mp, void *pPayload,
 
     if ( ! rsrvExpandPutNotify ( pciu->pPutNotify, size ) ) {
         log_header ( "no memory to initiate vector put notify",
-            client, mp, pPayload, 0 );
+            client, mp, 0 );
         putNotifyErrorReply ( client, mp, ECA_ALLOCMEM );
         return RSRV_ERROR;
     }
@@ -1767,7 +1767,7 @@ static int write_notify_action ( caHdrLargeArray *mp, void *pPayload,
         mp->m_dataType, pPayload, pciu->pPutNotify->pbuffer,
         FALSE /* net -> host format */, mp->m_count );
     if ( status != ECA_NORMAL ) {
-        log_header ("invalid data type", client, mp, pPayload, 0);
+        log_header ("invalid data type", client, mp, 0);
         putNotifyErrorReply ( client, mp, status );
         return RSRV_ERROR;
     }
@@ -1804,7 +1804,7 @@ static int event_add_action (caHdrLargeArray *mp, void *pPayload, struct client 
 
     pciu = MPTOPCIU ( mp, client );
     if ( ! pciu ) {
-        logBadId ( client, mp, pPayload );
+        logBadId ( client, mp );
         return RSRV_ERROR;
     }
 
@@ -1821,7 +1821,7 @@ static int event_add_action (caHdrLargeArray *mp, void *pPayload, struct client 
 
     if (!pevext) {
         log_header ("no memory to add subscription",
-            client, mp, pPayload, 0);
+            client, mp, 0);
         SEND_LOCK(client);
         send_err(
             mp,
@@ -1849,7 +1849,7 @@ static int event_add_action (caHdrLargeArray *mp, void *pPayload, struct client 
                 read_reply, pevext, pevext->mask);
     if (pevext->pdbev == NULL) {
         log_header ("no memory to add subscription to db",
-            client, mp, pPayload, 0);
+            client, mp, 0);
         SEND_LOCK(client);
         send_err (mp, ECA_ALLOCMEM, client,
             "subscription install into record %s failed",
@@ -1918,7 +1918,7 @@ static int clear_channel_reply ( caHdrLargeArray *mp,
       */
      pciu = MPTOPCIU(mp, client);
      if(!pciu){
-         logBadId ( client, mp, pPayload );
+         logBadId ( client, mp );
          return RSRV_ERROR;
      }
 
@@ -1994,7 +1994,7 @@ static int clear_channel_reply ( caHdrLargeArray *mp,
      if(status != S_bucket_success){
          UNLOCK_CLIENTQ;
          errMessage (status, "Bad resource id during channel clear");
-         logBadId ( client, mp, pPayload );
+         logBadId ( client, mp );
          return RSRV_ERROR;
      }
      rsrvChannelCount--;
@@ -2027,7 +2027,7 @@ static int event_cancel_reply ( caHdrLargeArray *mp, void *pPayload, struct clie
       */
      pciu = MPTOPCIU(mp, client);
      if (!pciu) {
-         logBadId ( client, mp, pPayload );
+         logBadId ( client, mp );
          return RSRV_ERROR;
      }
 
@@ -2194,7 +2194,7 @@ static int search_reply_udp ( caHdrLargeArray *mp, void *pPayload, struct client
      */
     if (mp->m_postsize<=1) {
         log_header ("empty PV name in UDP search request?",
-            client, mp, pPayload, 0);
+            client, mp, 0);
         return RSRV_OK;
     }
     pName[mp->m_postsize-1] = '\0';
@@ -2281,7 +2281,7 @@ static int search_reply_tcp (
      */
     if (mp->m_postsize<=1) {
         log_header ("empty PV name in UDP search request?",
-            client, mp, pPayload, 0);
+            client, mp, 0);
         return RSRV_OK;
     }
     pName[mp->m_postsize-1] = '\0';
@@ -2478,7 +2478,7 @@ int camessage ( struct client *client )
                     "CAS: Client version %u too old", client->minor_version_number );
                 SEND_UNLOCK(client);
                 log_header ( "CAS: Client version too old",
-                    client, &msg, 0, nmsg );
+                    client, &msg, nmsg );
                 if (msgsize >= bytes_left) {
                     client->recvBytesToDrain = msgsize - bytes_left;
                     client->recv.stk = client->recv.cnt;
@@ -2506,7 +2506,7 @@ int camessage ( struct client *client )
                     "CAS: Missaligned protocol rejected" );
                 SEND_UNLOCK(client);
                 log_header ( "CAS: Missaligned protocol rejected",
-                    client, &msg, 0, nmsg );
+                    client, &msg, nmsg );
             }
             status = RSRV_ERROR;
             break;
@@ -2528,7 +2528,7 @@ int camessage ( struct client *client )
                         rsrvSizeofLargeBufTCP );
                     SEND_UNLOCK(client);
                     log_header ( "CAS: server unable to load large request message",
-                        client, &msg, 0, nmsg );
+                        client, &msg, nmsg );
                 }
                 assert ( client->recv.cnt <= client->recv.maxstk );
                 assert ( msgsize >= bytes_left );
@@ -2550,7 +2550,7 @@ int camessage ( struct client *client )
         nmsg++;
 
         if ( CASDEBUG > 2 )
-            log_header (NULL, client, &msg, pBody, nmsg);
+            log_header (NULL, client, &msg, nmsg);
 
         if ( client->proto==IPPROTO_UDP ) {
             if ( msg.m_cmmd < NELEMENTS ( udpJumpTable ) ) {
