@@ -646,6 +646,27 @@ long dbEntryToAddr(const DBENTRY *pdbentry, DBADDR *paddr)
         if (prset && prset->cvt_dbaddr) {
             return prset->cvt_dbaddr(paddr);
         }
+        long size = dbValueSize(paddr->field_type);
+        if(paddr->field_type == DBF_NOACCESS) {
+            // not directly usable, so anything goes...
+
+        } else if(paddr->no_elements == 0 || paddr->field_size == 0) {
+            // max. element count, or element stroage, of zero is unusable
+            return S_dbLib_badDbAddr;
+
+        } else if(paddr->field_type == DBF_STRING
+                  && (paddr->field_size <= 1
+                      || (paddr->no_elements > 1
+                          && paddr->field_size != MAX_STRING_SIZE)))
+        {
+            // A useful string needs at least 2 bytes of storage.
+            // Array of strings must provide exactly 40 bytes per element.
+            return S_dbLib_badDbAddr;
+
+        } else if(paddr->field_size > DBF_STRING && size && paddr->field_size != size) {
+            // for primative types other than STRING, provided element storage must be exact
+            return S_dbLib_badDbAddr;
+        }
     }
     return 0;
 }
