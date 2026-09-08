@@ -893,7 +893,7 @@ unsigned int    caEventMask
          * Only send event msg if they are waiting on the field which
          * changed or pval==NULL, and are waiting on matching event
          */
-        if ( (dbChannelField(pevent->chan) == pField || pField==NULL) &&
+        if ( (pevent->chan->addr.compare == pField || pField==NULL) &&
             (caEventMask & pevent->select)) {
             db_field_log *pLog = db_create_event_log(pevent);
             if(pLog)
