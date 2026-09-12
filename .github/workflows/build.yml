@@ -283,6 +283,10 @@ jobs:
           pip install -U pip twine
           python -m twine -h
 
+      - name: List
+        shell: bash
+        run: du -csh epicscorelibs*.gz epicscorelibs*.whl
+
       - name: Check
         run: twine check epicscorelibs*.gz epicscorelibs*.whl
 
