@@ -565,14 +565,28 @@ long dbChannelOpen(dbChannel *chan)
     db_field_log probe;
     db_field_log p;
 
+    if(chan->opened)
+        return S_db_Blocked;
+
     for (node = ellFirst(&chan->filters); node; node = ellNext(node)) {
         filter = CONTAINER(node, chFilter, list_node);
          /* Call channel_open */
         status = 0;
         if (filter->plug->fif->channel_open)
             status = filter->plug->fif->channel_open(filter);
-        if (status) return status;
+        if (status) { // failing
+            // close previous successfully opened
+            while( (node = ellPrevious(node)) != NULL) {
+                filter = CONTAINER(node, chFilter, list_node);
+
+                if (filter->plug->fif->channel_close)
+                    filter->plug->fif->channel_close(filter);
+            }
+            return status;
+        }
     }
+
+    chan->opened = 1;
 
     /* Set up type probe */
     memset(&probe, 0, sizeof(probe));
@@ -717,7 +731,8 @@ void dbChannelDelete(dbChannel *chan)
 
     /* Close filters in reverse order */
     while ((filter = (chFilter *) ellPop(&chan->filters))) {
-        filter->plug->fif->channel_close(filter);
+        if(chan->opened && filter->plug->fif->channel_close)
+            filter->plug->fif->channel_close(filter);
         freeListFree(chFilterFreeList, filter);
     }
     free((char *) chan->name);

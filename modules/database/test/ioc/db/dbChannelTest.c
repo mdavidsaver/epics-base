@@ -157,7 +157,7 @@ MAIN(testDbChannel)     /* dbChannelTest is an API routine... */
 {
     dbChannel *pch;
 
-    testPlan(76);
+    testPlan(81);
 
     testdbPrepare();
 
@@ -233,6 +233,15 @@ MAIN(testDbChannel)     /* dbChannelTest is an API routine... */
     r = r_any;
     e = e_start | e_null | e_end;
     testOk1(!!(pch = dbChannelCreate("x.{any:null}")));
+    e = 0;
+    if (pch) dbChannelDelete(pch);
+
+    /* ... and Open */
+    r = r_any;
+    e = e_start | e_null | e_end;
+    testOk1(!!(pch = dbChannelCreate("x.{any:null}")));
+    e = e_open | e_reg_pre | e_reg_post;
+    testOk1(pch && dbChannelOpen(pch)==0);
     e = e_close;
     if (pch) dbChannelDelete(pch);
 
@@ -244,19 +253,19 @@ MAIN(testDbChannel)     /* dbChannelTest is an API routine... */
     e = e_report;
     dbChannelShow(pch, 2, 2);
 
-    e = e_close;
+    e = 0;
     if (pch) dbChannelDelete(pch);
 
     e = e_start | e_start_array | e_boolean | e_integer | e_end_array
             | e_end;
     testOk1(!!(pch = dbChannelCreate("x.{any:[true,1]}")));
-    e = e_close;
+    e = 0;
     if (pch) dbChannelDelete(pch);
 
     e = e_start | e_start_map | e_map_key | e_double | e_string | e_end_map
             | e_end;
     testOk1(!!(pch = dbChannelCreate("x.{any:{a:2.7183,b:'c'}}")));
-    e = e_close;
+    e = 0;
     if (pch) dbChannelDelete(pch);
 
     /* More event rejection */

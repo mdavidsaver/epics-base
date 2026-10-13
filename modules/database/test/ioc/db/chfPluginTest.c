@@ -633,7 +633,7 @@ MAIN(chfPluginTest)
         "guards intact, values correct");
     if (!testOk(c1 == e1, "all expected calls happened"))
         testDiag("expected %#x - called %#x", e1, c1);
-    e1 = e_close | e_free; c1 = 0;
+    e1 = e_free; c1 = 0;
     if (pch) dbChannelDelete(pch);
     testOk(!puser1, "user part cleaned up");
     if (!testOk(c1 == e1, "all expected calls happened"))
@@ -647,7 +647,7 @@ MAIN(chfPluginTest)
         "guards intact, values correct");
     if (!testOk(c1 == e1, "all expected calls happened"))
         testDiag("expected %#x - called %#x", e1, c1);
-    e1 = e_close | e_free; c1 = 0;
+    e1 = e_free; c1 = 0;
     if (pch) dbChannelDelete(pch);
     testOk(!puser1, "user part cleaned up");
     if (!testOk(c1 == e1, "all expected calls happened"))
@@ -682,7 +682,7 @@ MAIN(chfPluginTest)
         "guards intact, values correct");
     if (!testOk(c1 == e1, "all expected calls happened"))
         testDiag("expected %#x - called %#x", e1, c1);
-    e1 = e_close | e_free; c1 = 0;
+    e1 = e_free; c1 = 0;
     if (pch) dbChannelDelete(pch);
     testOk(!puser1, "user part cleaned up");
     if (!testOk(c1 == e1, "all expected calls happened"))
@@ -696,7 +696,7 @@ MAIN(chfPluginTest)
         "guards intact, values correct");
     if (!testOk(c1 == e1, "all expected calls happened"))
         testDiag("expected %#x - called %#x", e1, c1);
-    e1 = e_close | e_free; c1 = 0;
+    e1 = e_free; c1 = 0;
     if (pch) dbChannelDelete(pch);
     testOk(!puser1, "user part cleaned up");
     if (!testOk(c1 == e1, "all expected calls happened"))
@@ -710,7 +710,7 @@ MAIN(chfPluginTest)
         "guards intact, values correct");
     if (!testOk(c1 == e1, "all expected calls happened"))
         testDiag("expected %#x - called %#x", e1, c1);
-    e1 = e_close | e_free; c1 = 0;
+    e1 = e_free; c1 = 0;
     if (pch) dbChannelDelete(pch);
     testOk(!puser1, "user part cleaned up");
     if (!testOk(c1 == e1, "all expected calls happened"))
@@ -724,7 +724,7 @@ MAIN(chfPluginTest)
         "guards intact, values correct");
     if (!testOk(c1 == e1, "all expected calls happened"))
         testDiag("expected %#x - called %#x", e1, c1);
-    e1 = e_close | e_free; c1 = 0;
+    e1 = e_free; c1 = 0;
     if (pch) dbChannelDelete(pch);
     testOk(!puser1, "user part cleaned up");
     if (!testOk(c1 == e1, "all expected calls happened"))
@@ -738,7 +738,7 @@ MAIN(chfPluginTest)
         "guards intact, values correct");
     if (!testOk(c1 == e1, "all expected calls happened"))
         testDiag("expected %#x - called %#x", e1, c1);
-    e1 = e_close | e_free; c1 = 0;
+    e1 = e_free; c1 = 0;
     if (pch) dbChannelDelete(pch);
     testOk(!puser1, "user part cleaned up");
     if (!testOk(c1 == e1, "all expected calls happened"))
@@ -755,7 +755,7 @@ MAIN(chfPluginTest)
         "guards intact, values correct");
     if (!testOk(c1 == e1, "all expected calls happened"))
         testDiag("expected %#x - called %#x", e1, c1);
-    e1 = e_close | e_free; c1 = 0;
+    e1 = e_free; c1 = 0;
     if (pch) dbChannelDelete(pch);
     testOk(!puser1, "user part cleaned up");
     if (!testOk(c1 == e1, "all expected calls happened"))
@@ -811,7 +811,7 @@ MAIN(chfPluginTest)
         "guards intact, values correct");
     if (!testOk(c1 == e1, "all expected calls happened"))
         testDiag("expected %#x - called %#x", e1, c1);
-    e1 = e_close | e_free; c1 = 0;
+    e1 = e_free; c1 = 0;
     if (pch) dbChannelDelete(pch);
     testOk(!puser1, "user part cleaned up");
     if (!testOk(c1 == e1, "all expected calls happened"))

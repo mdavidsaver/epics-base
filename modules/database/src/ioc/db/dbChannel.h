@@ -87,6 +87,7 @@ typedef struct dbChannel {
     long  final_no_elements;  /**< Final number of array elements */
     short final_field_size;   /**< Final size of each element */
     short final_type;         /**< Final type of database field */
+    unsigned char opened;     /**< dbChannelOpen() called successfully */
     ELLLIST filters;          /**< Filters used by dbChannel */
     ELLLIST pre_chain;        /**< Filters on pre-event-queue chain */
     ELLLIST post_chain;       /**< Filters on post-event-queue chain */
