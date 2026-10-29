@@ -11,6 +11,7 @@
 #define osdThreadh
 
 #include <pthread.h>
+#include <sys/types.h>
 
 #include "libComAPI.h"
 #include "ellLib.h"
@@ -24,6 +25,9 @@ typedef struct epicsThreadOSD {
     ELLNODE            node;
     int                refcnt;
     pthread_t          tid;
+#ifdef __linux__
+    pid_t              lwpId;
+#endif
     pthread_attr_t     attr;
     struct sched_param schedParam;
     int                schedPolicy;
