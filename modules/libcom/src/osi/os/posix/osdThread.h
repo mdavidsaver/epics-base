@@ -39,7 +39,7 @@ typedef struct epicsThreadOSD {
     EPICSTHREADFUNC    createFunc;
     void              *createArg;
     epicsEventId       suspendEvent;
-    // TODO: unsafe
+    // atomic
     int                isSuspended;
     // const after creation
     int                isEpicsThread;

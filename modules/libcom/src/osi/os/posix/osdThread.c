@@ -790,14 +790,14 @@ LIBCOM_API void epicsStdCall epicsThreadSuspendSelf(void)
     pthreadInfo = (epicsThreadOSD *)pthread_getspecific(getpthreadInfo);
     if(pthreadInfo==NULL)
         pthreadInfo = createImplicit();
-    pthreadInfo->isSuspended = 1;
+    epicsAtomicSetIntT(&pthreadInfo->isSuspended, 1);
     epicsEventWait(pthreadInfo->suspendEvent);
 }
 
 LIBCOM_API void epicsStdCall epicsThreadResume(epicsThreadOSD *pthreadInfo)
 {
     assert(epicsThreadOnceCalled);
-    pthreadInfo->isSuspended = 0;
+    epicsAtomicSetIntT(&pthreadInfo->isSuspended, 0);
     epicsEventSignal(pthreadInfo->suspendEvent);
 }
 
@@ -910,7 +910,7 @@ LIBCOM_API int epicsStdCall epicsThreadIsEqual(epicsThreadId p1, epicsThreadId p
 LIBCOM_API int epicsStdCall epicsThreadIsSuspended(epicsThreadId pthreadInfo) {
     assert(epicsThreadOnceCalled);
     assert(pthreadInfo);
-    return(pthreadInfo->isSuspended ? 1 : 0);
+    return !!epicsAtomicGetIntT(&pthreadInfo->isSuspended);
 }
 
 LIBCOM_API void epicsStdCall epicsThreadSleep(double seconds)
