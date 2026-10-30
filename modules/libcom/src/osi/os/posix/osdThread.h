@@ -22,26 +22,39 @@ extern "C" {
 #endif
 
 typedef struct epicsThreadOSD {
+    // guarded by listLock
     ELLNODE            node;
+    // atomic
     int                refcnt;
+    // const after creation
     pthread_t          tid;
 #ifdef __linux__
     pid_t              lwpId;
 #endif
+    // TODO: unsafe
     pthread_attr_t     attr;
     struct sched_param schedParam;
     int                schedPolicy;
+    // const after creation
     EPICSTHREADFUNC    createFunc;
     void              *createArg;
     epicsEventId       suspendEvent;
+    // TODO: unsafe
     int                isSuspended;
+    // const after creation
     int                isEpicsThread;
     int                isRealTimeScheduled;
+    // guard by listLock
     int                isOnThreadList;
+    // atomic
     int                isRunning;
+    // thread local
     int                isOkToBlock;
+    // TODO: unsafe
     unsigned int       osiPriority;
+    // atomic
     int                joinable;
+    // const after creation
     char               name[1];     /* actually larger */
 } epicsThreadOSD;
 
