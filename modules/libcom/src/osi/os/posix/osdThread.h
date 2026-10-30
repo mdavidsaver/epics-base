@@ -31,7 +31,10 @@ typedef struct epicsThreadOSD {
 #ifdef __linux__
     pid_t              lwpId;
 #endif
-    // TODO: unsafe
+#ifndef __rtems__
+    pthread_mutex_t    prioLock;
+#endif
+    // guard by prioLock (after creation, before destruction)
     pthread_attr_t     attr;
     struct sched_param schedParam;
     int                schedPolicy;
@@ -50,7 +53,7 @@ typedef struct epicsThreadOSD {
     int                isRunning;
     // thread local
     int                isOkToBlock;
-    // TODO: unsafe
+    // guard by prioLock
     unsigned int       osiPriority;
     // atomic
     int                joinable;

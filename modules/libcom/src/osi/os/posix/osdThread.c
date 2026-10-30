@@ -95,6 +95,15 @@ static ELLLIST pthreadList = ELLLIST_INIT;
 static commonAttr *pcommonAttr = 0;
 static int epicsThreadOnceCalled = 0;
 static int wantPrioScheduling = 0;
+
+#ifdef __rtems__
+// on RTEMS, pthread_mutex_t is a limited resource.
+// rather than allocate a per-thread lock, reuse the thread list lock to guard
+// against the (relatively) rare fetch/change of priority after creation.
+#  define prioLock(peT) (listLock)
+#else
+#  define prioLock(peT) (peT)->prioLock
+#endif
 
 static epicsThreadOSD *createImplicit(void);
 
@@ -136,7 +145,9 @@ LIBCOM_API int epicsThreadGetPosixPriority(epicsThreadId pthreadInfo)
     maxPriority = (double)pcommonAttr->maxPriority;
     minPriority = (double)pcommonAttr->minPriority;
     slope = (maxPriority - minPriority)/100.0;
+    (void)mutexLock(&prioLock(pthreadInfo));
     oss = (double)pthreadInfo->osiPriority * slope + minPriority;
+    (void)pthread_mutex_unlock(&prioLock(pthreadInfo));
     return((int)oss);
 #else
     return 0;
@@ -175,9 +186,19 @@ static epicsThreadOSD * create_threadInfo(const char *name)
     pthreadInfo = calloc(1,sizeof(*pthreadInfo) + strlen(name));
     if(!pthreadInfo)
         return NULL;
+#ifndef __rtems__
+    if(osdPosixMutexInit(&pthreadInfo->prioLock, PTHREAD_MUTEX_DEFAULT)) {
+        free(pthreadInfo);
+        return NULL;
+    }
+#endif
     pthreadInfo->isRunning = 1;
     pthreadInfo->suspendEvent = epicsEventCreate(epicsEventEmpty);
     if(!pthreadInfo->suspendEvent){
+#ifndef __rtems__
+        int status = pthread_mutex_destroy(&pthreadInfo->prioLock);
+        checkStatusOnce(status, "pthread_mutex_destroy");
+#endif
         free(pthreadInfo);
         return NULL;
     }
@@ -824,7 +845,10 @@ LIBCOM_API void epicsStdCall epicsThreadExitMain(void)
 LIBCOM_API unsigned int epicsStdCall epicsThreadGetPriority(epicsThreadId pthreadInfo)
 {
     assert(epicsThreadOnceCalled);
-    return(pthreadInfo->osiPriority);
+    (void)mutexLock(&prioLock(pthreadInfo));
+    unsigned int prio = pthreadInfo->osiPriority;
+    (void)pthread_mutex_unlock(&prioLock(pthreadInfo));
+    return prio;
 }
 
 LIBCOM_API unsigned int epicsStdCall epicsThreadGetPrioritySelf(void)
@@ -848,11 +872,18 @@ LIBCOM_API void epicsStdCall epicsThreadSetPriority(epicsThreadId pthreadInfo,un
         fprintf(stderr,"epicsThreadSetPriority called by non epics thread\n");
         return;
     }
+    (void)mutexLock(&prioLock(pthreadInfo));
     pthreadInfo->osiPriority = priority;
-    if(!pthreadInfo->isRealTimeScheduled) return;
+    if(!pthreadInfo->isRealTimeScheduled) {
+        (void)pthread_mutex_unlock(&prioLock(pthreadInfo));
+        return;
+    }
 
 #if defined (_POSIX_THREAD_PRIORITY_SCHEDULING) && _POSIX_THREAD_PRIORITY_SCHEDULING > 0
-    if(!pcommonAttr->usePolicy) return;
+    if(!pcommonAttr->usePolicy) {
+        (void)pthread_mutex_unlock(&prioLock(pthreadInfo));
+        return;
+    }
     pthreadInfo->schedParam.sched_priority = epicsThreadGetPosixPriority(pthreadInfo);
     status = pthread_attr_setschedparam(
         &pthreadInfo->attr,&pthreadInfo->schedParam);
@@ -861,6 +892,7 @@ LIBCOM_API void epicsStdCall epicsThreadSetPriority(epicsThreadId pthreadInfo,un
         pthreadInfo->tid, pthreadInfo->schedPolicy, &pthreadInfo->schedParam);
     if(errVerbose) checkStatus(status,"pthread_setschedparam");
 #endif /* _POSIX_THREAD_PRIORITY_SCHEDULING */
+    (void)pthread_mutex_unlock(&prioLock(pthreadInfo));
 }
 
 LIBCOM_API epicsThreadBooleanStatus epicsStdCall epicsThreadHighestPriorityLevelBelow(
