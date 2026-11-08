@@ -21,6 +21,7 @@ typedef struct aaodset {
     long (*write_aao)(struct aaoRecord *prec); /*returns: (-1,0)=>(failure,success)*/
 } aaodset;
 #define HAS_aaodset
+#define AAO_POSTS_NORD
 
 #include "callback.h"
 

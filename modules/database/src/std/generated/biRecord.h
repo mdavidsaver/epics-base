@@ -86,6 +86,8 @@ typedef struct biRecord {
     epicsUInt32         mask;       /**< @brief Hardware Mask */
     epicsUInt16         lalm;       /**< @brief Last Value Alarmed */
     epicsUInt16         mlst;       /**< @brief Last Value Monitored */
+    epicsFloat64        aftc;       /**< @brief Alarm Filter Time Constant */
+    epicsFloat64        afvl;       /**< @brief Alarm Filter Value */
     DBLINK              siol;       /**< @brief Simulation Input Link */
     epicsUInt32         sval;       /**< @brief Simulation Value */
     DBLINK              siml;       /**< @brief Simulation Mode Link */
@@ -158,15 +160,17 @@ typedef enum {
 	biRecordMASK = 57,
 	biRecordLALM = 58,
 	biRecordMLST = 59,
-	biRecordSIOL = 60,
-	biRecordSVAL = 61,
-	biRecordSIML = 62,
-	biRecordSIMM = 63,
-	biRecordSIMS = 64,
-	biRecordOLDSIMM = 65,
-	biRecordSSCN = 66,
-	biRecordSDLY = 67,
-	biRecordSIMPVT = 68
+	biRecordAFTC = 60,
+	biRecordAFVL = 61,
+	biRecordSIOL = 62,
+	biRecordSVAL = 63,
+	biRecordSIML = 64,
+	biRecordSIMM = 65,
+	biRecordSIMS = 66,
+	biRecordOLDSIMM = 67,
+	biRecordSSCN = 68,
+	biRecordSDLY = 69,
+	biRecordSIMPVT = 70
 } biFieldIndex;
 
 #ifdef GEN_SIZE_OFFSET
@@ -180,10 +184,10 @@ static int biRecordSizeOffset(dbRecordType *prt)
 {
     biRecord *prec = 0;
 
-    if (prt->no_fields != 69) {
+    if (prt->no_fields != 71) {
         cantProceed("IOC build or installation error:\n"
             "    The biRecord defined in the DBD file has %d fields,\n"
-            "    but the record support code was built with 69.\n",
+            "    but the record support code was built with 71.\n",
             prt->no_fields);
     }
     prt->papFldDes[biRecordNAME]->size = sizeof(prec->name);
@@ -306,6 +310,10 @@ static int biRecordSizeOffset(dbRecordType *prt)
     prt->papFldDes[biRecordLALM]->offset = (unsigned short)offsetof(biRecord, lalm);
     prt->papFldDes[biRecordMLST]->size = sizeof(prec->mlst);
     prt->papFldDes[biRecordMLST]->offset = (unsigned short)offsetof(biRecord, mlst);
+    prt->papFldDes[biRecordAFTC]->size = sizeof(prec->aftc);
+    prt->papFldDes[biRecordAFTC]->offset = (unsigned short)offsetof(biRecord, aftc);
+    prt->papFldDes[biRecordAFVL]->size = sizeof(prec->afvl);
+    prt->papFldDes[biRecordAFVL]->offset = (unsigned short)offsetof(biRecord, afvl);
     prt->papFldDes[biRecordSIOL]->size = sizeof(prec->siol);
     prt->papFldDes[biRecordSIOL]->offset = (unsigned short)offsetof(biRecord, siol);
     prt->papFldDes[biRecordSVAL]->size = sizeof(prec->sval);

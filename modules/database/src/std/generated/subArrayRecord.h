@@ -21,6 +21,7 @@ typedef struct sadset {
     long (*read_sa)(struct subArrayRecord *prec); /*returns: (-1,0)=>(failure,success)*/
 } sadset;
 #define HAS_sadset
+#define SA_POSTS_NORD
 
 
 /** @brief Declaration of subArray record type. */

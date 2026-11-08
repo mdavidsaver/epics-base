@@ -21,6 +21,7 @@ typedef struct wfdset {
     long (*read_wf)(struct waveformRecord *prec); /*returns: (-1,0)=>(failure,success)*/
 } wfdset;
 #define HAS_wfdset
+#define WF_POSTS_NORD
 
 #include "callback.h"
 

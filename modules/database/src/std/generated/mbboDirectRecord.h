@@ -17,7 +17,7 @@
 struct mbboDirectRecord;
 typedef struct mbbodirectdset {
     dset common; /*init_record returns: (0, 2)=>(success, success no convert)*/
-    long (*write_mbbo)(struct mbboDirectRecord *prec); /*returns: (0, 2)=>(success, success no convert)*/
+    long (*write_mbboDirect)(struct mbboDirectRecord *prec); /*returns: (0, 2)=>(success, success no convert)*/
 } mbbodirectdset;
 #define HAS_mbbodirectdset
 

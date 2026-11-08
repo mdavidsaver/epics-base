@@ -21,6 +21,7 @@ typedef struct aaidset {
     long (*read_aai)(struct aaiRecord *prec); /*returns: (-1,0)=>(failure,success)*/
 } aaidset;
 #define HAS_aaidset
+#define AAI_POSTS_NORD
 #define AAI_DEVINIT_PASS1 2
 
 #include "callback.h"

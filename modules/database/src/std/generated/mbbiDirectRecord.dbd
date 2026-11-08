@@ -16,7 +16,7 @@ recordtype(mbbiDirect) {
     %struct mbbiDirectRecord;
     %typedef struct mbbidirectdset {
     %    dset common; /* init_record returns: (-1,0) => (failure, success)*/
-    %    long (*read_mbbi)(struct mbbiDirectRecord *prec); /* (0, 2) => (success, success no convert)*/
+    %    long (*read_mbbiDirect)(struct mbbiDirectRecord *prec); /* (0, 2) => (success, success no convert)*/
     %} mbbidirectdset;
     %#define HAS_mbbidirectdset
     %
