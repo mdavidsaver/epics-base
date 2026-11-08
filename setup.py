@@ -459,7 +459,7 @@ def build_module(name, srcdir, defs=[], deps=[], srcs=[], soversion=None):
     MOD = DSO(
         name='epicscorelibs.lib.'+name,
         sources = srcs+src,
-        include_dirs = [os.path.join('epicscorelibs', 'include')] + inc + ['.'],
+        include_dirs = [os.path.join('epicscorelibs', 'include')] + inc + [srcdir, '.'],
         define_macros = cxxdefs+defs,
         dsos = ['epicscorelibs.lib.'+D for D in deps],
         libraries = get_config_var('LDADD'),

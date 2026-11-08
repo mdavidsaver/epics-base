@@ -20,6 +20,7 @@ include modules/ca/src/client/*.cpp
 prune modules/ca/src/O.*
 
 include modules/database/src/ioc/*/*.dbd
+include modules/database/src/ioc/epics-gdb-helper.py
 include modules/database/src/std/*/*.dbd
 include modules/pvAccess/src/ioc/*.dbd
 include modules/pva2pva/pdbApp/qsrv-new.dbd
