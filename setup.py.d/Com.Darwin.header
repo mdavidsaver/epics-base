@@ -6,7 +6,6 @@ osi/os/Darwin/osdTime.h
 osi/os/posix/osiUnistd.h
 osi/os/posix/osdThread.h
 osi/os/posix/epicsAtomicOSD.h
-osi/os/posix/epicsMath.h
 osi/os/posix/osdEvent.h
 osi/os/posix/osdMutex.h
 osi/os/posix/osdStrtod.h
