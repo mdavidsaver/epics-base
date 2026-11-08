@@ -30,6 +30,7 @@
 #include "osiProcess.h"
 #include "osiWireFormat.h"
 #include "epicsAlgorithm.h"
+#include "epicsMath.h"
 #include "errlog.h"
 #include "locationException.h"
 
@@ -73,7 +74,7 @@ double getMaxPeriod()
     if ( envGetConfigParamPtr ( & EPICS_CA_MAX_SEARCH_PERIOD ) ) {
         long longStatus = envGetDoubleConfigParam (
             & EPICS_CA_MAX_SEARCH_PERIOD, & maxPeriod );
-        if ( ! longStatus ) {
+        if ( ! longStatus && finite ( maxPeriod ) && maxPeriod > 0.0 ) {
             if ( maxPeriod < maxSearchPeriodLowerLimit ) {
                 epicsPrintf ( "\"%s\" out of range (low)\n",
                                 EPICS_CA_MAX_SEARCH_PERIOD.name );
@@ -83,7 +84,9 @@ double getMaxPeriod()
             }
         }
         else {
-            epicsPrintf ( "EPICS \"%s\" wasn't a real number\n",
+            /* Reset to default on parse error or out of range value */
+            maxPeriod = maxSearchPeriodDefault;
+            epicsPrintf ( "EPICS \"%s\" was not a positive real number\n",
                             EPICS_CA_MAX_SEARCH_PERIOD.name );
             epicsPrintf ( "Setting \"%s\" = %f seconds\n",
                 EPICS_CA_MAX_SEARCH_PERIOD.name, maxPeriod );
@@ -242,7 +245,7 @@ udpiiu::udpiiu (
     // the local port number below
     static const unsigned short PORT_ANY = 0u;
     osiSockAddr addr;
-    memset ( (char *)&addr, 0 , sizeof (addr) );
+    memset ( &addr, 0 , sizeof (addr) );
     addr.ia.sin_family = AF_INET;
     addr.ia.sin_addr.s_addr = htonl ( INADDR_ANY );
     addr.ia.sin_port = htons ( PORT_ANY );
@@ -462,7 +465,7 @@ void udpiiu :: M_repeaterTimerNotify :: repeaterRegistrationMessage ( unsigned a
  *
  *  register with the repeater
  */
-void epicsStdCall caRepeaterRegistrationMessage ( 
+void epicsStdCall caRepeaterRegistrationMessage (
            SOCKET sock, unsigned repeaterPort, unsigned attemptNumber )
 {
     osiSockAddr saddr;
@@ -514,7 +517,7 @@ void epicsStdCall caRepeaterRegistrationMessage (
         saddr.ia.sin_port = htons ( port );
     }
 
-    memset ( (char *) &msg, 0, sizeof (msg) );
+    memset ( &msg, 0, sizeof (msg) );
     AlignedWireRef < epicsUInt16 > ( msg.m_cmmd ) = REPEATER_REGISTER;
     msg.m_available = saddr.ia.sin_addr.s_addr;
 
@@ -597,7 +600,7 @@ void epicsStdCall caStartRepeaterIfNotInstalled ( unsigned repeaterPort )
     tmpSock = epicsSocketCreate ( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
     if ( tmpSock != INVALID_SOCKET ) {
         ca_uint16_t port = static_cast < ca_uint16_t > ( repeaterPort );
-        memset ( (char *) &bd, 0, sizeof ( bd ) );
+        memset ( &bd, 0, sizeof ( bd ) );
         bd.ia.sin_family = AF_INET;
         bd.ia.sin_addr.s_addr = htonl ( INADDR_ANY );
         bd.ia.sin_port = htons ( port );
@@ -1342,7 +1345,7 @@ const char * udpiiu::pHostName (
     return netiiu::pHostName ( cacGuard );
 }
 
-unsigned udpiiu::getHostMinorProtocol ( 
+unsigned udpiiu::getHostMinorProtocol (
     epicsGuard < epicsMutex > & cacGuard ) const throw ()
 {
     return netiiu::getHostMinorProtocol ( cacGuard );

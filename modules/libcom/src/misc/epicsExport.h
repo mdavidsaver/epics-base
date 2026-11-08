@@ -116,12 +116,19 @@ typedef void (*REGISTRAR)(void);
  *
  * The epicsRegisterFunction() macro must be used to declare and register
  * a function that is named in a DBD \c function statement and called by
- * one or more subroutine or aSub records. For example:
- \code
-    epicsRegisterFunction(mySubInit);
-    epicsRegisterFunction(mySubProcess);
- \endcode
-*
+ * one or more subroutine or aSub records. For example in C code:
+ * \code{.c}
+ *    epicsRegisterFunction(mySubInit);
+ *    epicsRegisterFunction(mySubProcess);
+ * \endcode
+ *
+ * Place matching entries in a DBD file.
+ *
+ * \code{.dbd}
+ *    registrar(mySubInit)
+ *    registrar(mySubProcess)
+ * \endcode
+ *
  * \param fun Function's name
  */
 #ifdef __cplusplus

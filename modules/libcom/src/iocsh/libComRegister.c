@@ -22,6 +22,7 @@
 #include "osiUnistd.h"
 #include "logClient.h"
 #include "errlog.h"
+#include "errlogPvt.h"
 #include "taskwd.h"
 #include "registry.h"
 #include "epicsGeneralTime.h"
@@ -267,7 +268,7 @@ static const iocshArg * const errlogInitArgs[1] = {&errlogInitArg0};
 static const iocshFuncDef errlogInitFuncDef = {
     "errlogInit",1,errlogInitArgs,
     "Initialize error log client buffer size\n"
-    "  bufSize - size of circular buffer (default = 1280 bytes)\n"
+    "  bufSize - size of circular buffer (default = 2560 bytes)\n"
 };
 static void errlogInitCallFunc(const iocshArgBuf *args)
 {
@@ -282,12 +283,27 @@ static const iocshArg * const errlogInit2Args[] =
 static const iocshFuncDef errlogInit2FuncDef = {
     "errlogInit2", 2, errlogInit2Args,
     "Initialize error log client buffer size and maximum message size\n"
-    "  bufSize    - size of circular buffer       (default = 1280 bytes)\n"
-    "  maxMsgSize - maximum size of error message (default =  256 bytes)\n"
+    "  bufSize    - size of circular buffer       (default = 2560 bytes)\n"
+    "  maxMsgSize - maximum size of error message (default =  512 bytes)\n"
 };
 static void errlogInit2CallFunc(const iocshArgBuf *args)
 {
     errlogInit2(args[0].ival, args[1].ival);
+}
+
+/* errlogShow */
+static const iocshArg errlogShowArg0 = { "level",iocshArgInt};
+static const iocshArg * const errlogShowArgs[1] = {&errlogShowArg0};
+static const iocshFuncDef errlogShowFuncDef = {
+    "errlogShow",1,errlogShowArgs,
+    "Show the contents of the error log private data\n"
+    "level 0 - Show the size of the buffers and max message size\n"
+    "      1 - Show the number of listeners\n"
+    "      2 - Show the contents of the buffer\n"
+};
+static void errlogShowCallFunc(const iocshArgBuf *args)
+{
+    errlogShow(args[0].ival);
 }
 
 /* errlog */
@@ -500,6 +516,7 @@ void epicsStdCall libComRegister(void)
     iocshRegister(&eltcFuncDef, eltcCallFunc);
     iocshRegister(&errlogInitFuncDef,errlogInitCallFunc);
     iocshRegister(&errlogInit2FuncDef,errlogInit2CallFunc);
+    iocshRegister(&errlogShowFuncDef,errlogShowCallFunc);
     iocshRegister(&errlogFuncDef, errlogCallFunc);
     iocshRegister(&iocLogPrefixFuncDef, iocLogPrefixCallFunc);
 

@@ -168,7 +168,7 @@ void iocshRegisterImpl (const iocshFuncDef *piocshFuncDef,
     }
     n = (struct iocshCommand *) callocMustSucceed (1, sizeof *n,
         "iocshRegister");
-    if (!registryAdd(iocshCmdID, piocshFuncDef->name, (void *)n)) {
+    if (!registryAdd(iocshCmdID, piocshFuncDef->name, n)) {
         free (n);
         errlogPrintf ("iocshRegister failed to add %s\n", piocshFuncDef->name);
         return;
@@ -605,6 +605,7 @@ char** iocsh_attempt_completion(const char* word, int start, int end)
 
 struct ReadlineContext {
     void *context;
+    FILE *context_fp;
 #ifdef USE_READLINE
     // readline on BSD/OSX missing 'rl_completion_func_t' typedef, and 'const'
     char* prev_rl_readline_name;
@@ -618,12 +619,14 @@ struct ReadlineContext {
 
     ReadlineContext()
         :context(NULL)
+        ,context_fp(NULL)
     {}
 
     bool setup(FILE *fp) {
+        context_fp = fp;
         context = epicsReadlineBegin(fp);
 #ifdef USE_READLINE
-        if(context) {
+        if(context && !fp) {
             prev_rl_readline_name = (char*)rl_readline_name;
             prev_rl_basic_word_break_characters = (char*)rl_basic_word_break_characters;
             prev_rl_completer_word_break_characters = (char*)rl_completer_word_break_characters;
@@ -640,6 +643,7 @@ struct ReadlineContext {
             rl_bind_key('\t', rl_complete);
             compute_hist_file();
             if(!hist_file.empty()) {
+                clear_history(); // clear as read_history() will append
                 if(int err = read_history(hist_file.c_str())) {
                     if(err!=ENOENT)
                         fprintf(epicsGetStderr(),
@@ -656,21 +660,23 @@ struct ReadlineContext {
     ~ReadlineContext() {
         if(context) {
 #ifdef USE_READLINE
-            if(!hist_file.empty()) {
-                if(int err = write_history(hist_file.c_str())) {
-                    fprintf(epicsGetStderr(),
-                        ERL_ERROR " %s (%d) writing '%s'\n",
-                        strerror(err), err, hist_file.c_str());
+            if(!context_fp) {
+                if(!hist_file.empty()) {
+                    if(int err = write_history(hist_file.c_str())) {
+                        fprintf(epicsGetStderr(),
+                            ERL_ERROR " %s (%d) writing '%s'\n",
+                            strerror(err), err, hist_file.c_str());
+                    }
                 }
+                rl_readline_name = prev_rl_readline_name;
+                rl_basic_word_break_characters = prev_rl_basic_word_break_characters;
+                rl_completer_word_break_characters = prev_rl_completer_word_break_characters;
+                rl_basic_quote_characters = prev_rl_basic_quote_characters;
+                rl_completer_quote_characters = prev_rl_completer_quote_characters;
+                rl_attempted_completion_function = prev_rl_attempted_completion_function;
+                // cf. osdReadlineBegin() in gnuReadline.c
+                rl_bind_key('\t', rl_insert);
             }
-            rl_readline_name = prev_rl_readline_name;
-            rl_basic_word_break_characters = prev_rl_basic_word_break_characters;
-            rl_completer_word_break_characters = prev_rl_completer_word_break_characters;
-            rl_basic_quote_characters = prev_rl_basic_quote_characters;
-            rl_completer_quote_characters = prev_rl_completer_quote_characters;
-            rl_attempted_completion_function = prev_rl_attempted_completion_function;
-            // cf. osdReadlineBegin() in gnuReadline.c
-            rl_bind_key('\t', rl_insert);
 #endif
             epicsReadlineEnd(context);
         }
@@ -742,7 +748,7 @@ void epicsStdCall iocshRegisterVariable (const iocshVarDef *piocshVarDef)
         if (!found) {
             n = (struct iocshVariable *) callocMustSucceed(1, sizeof *n,
                 "iocshRegisterVariable");
-            if (!registryAdd(iocshVarID, piocshVarDef->name, (void *)n)) {
+            if (!registryAdd(iocshVarID, piocshVarDef->name, n)) {
                 free(n);
                 iocshTableUnlock();
                 errlogPrintf("iocshRegisterVariable failed to add %s.\n",
@@ -776,7 +782,7 @@ const iocshVarDef * epicsStdCall iocshFindVariable(const char *name)
 /*
  * Free storage created by iocshRegister/iocshRegisterVariable
  */
-void epicsStdCall iocshFree(void) 
+void epicsStdCall iocshFree(void)
 {
     struct iocshCommand *pc;
     struct iocshVariable *pv;
@@ -799,8 +805,8 @@ void epicsStdCall iocshFree(void)
 
 /*
  * Parse argument input based on the arg type specified.
- * It is worth noting that depending on type this argument may 
- * be defaulted if a value is not specified. For example, a 
+ * It is worth noting that depending on type this argument may
+ * be defaulted if a value is not specified. For example, a
  * double/int with no value will default to 0 which may allow
  * you to add optional arguments to the end of your argument list.
  */
@@ -863,7 +869,7 @@ cvtArg (const char *filename, int lineno, char *arg, iocshArgBuf *argBuf,
                 showError(filename, lineno, ANSI_RED("Out of memory!"));
                 return 0;
             }
-            strncpy(argBuf->sval, arg, slen);
+            memcpy(argBuf->sval, arg, slen + 1);
         } else {
           argBuf->sval = NULL;
         }
@@ -948,7 +954,7 @@ static void helpCallFunc(const iocshArgBuf *args)
                 if (epicsStrGlobMatch(piocshFuncDef->name, argv[iarg]) != 0) {
 
                     if (! firstFunction) {
-                        fprintf(epicsGetStdout(), 
+                        fprintf(epicsGetStdout(),
                             ANSI_UNDERLINE("                                                            ")
                             "\n");
                     }
@@ -970,7 +976,7 @@ static void helpCallFunc(const iocshArgBuf *args)
                     if(piocshFuncDef->usage) {
                         fprintf(epicsGetStdout(), "\n%s", piocshFuncDef->usage);
                     }
-                    
+
                     firstFunction = false;
                 }
 
@@ -1102,7 +1108,7 @@ iocshBody (const char *pathname, const char *commandLine, const char *macros)
             return -1;
         }
 
-        epicsThreadPrivateSet(iocshContextId, (void *) context);
+        epicsThreadPrivateSet(iocshContextId, context);
     }
     MAC_HANDLE *handle = context->handle;
 
@@ -1553,13 +1559,14 @@ static void onCallFunc(const iocshArgBuf *args)
                 USAGE();
             } else if (epicsParseDouble(args->aval.av[3],
                           &context->scope->timeout, NULL)) {
-                context->scope->timeout = 5.0;
-            } else {
+                /* epicsParseDouble returns non-zero on failure */
                 USAGE();
                 fprintf(epicsGetStderr(),
                     ANSI_RED("Invalid 'on error wait' delay '%s'.") "\n",
                     args->aval.av[3]);
+                context->scope->timeout = 5.0;
             }
+            /* else parse succeeded and timeout has been set */
 
         } else {
             USAGE();

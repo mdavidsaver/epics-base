@@ -364,4 +364,5 @@ epicsLoadTest$(DEP): epicsInstallDir.h
 # use INSTALL_LOCATION instead of FINAL_LOCATION since test executables are not installed.
 epicsInstallDir.h: $(TOP)/configure/CONFIG_SITE*
 	$(ECHO) "INSTALL_LOCATION=$(INSTALL_LOCATION)"
-	$(PERL) $(TOP)/modules/database/src/std/softIoc/makeInstallDir.pl "$(INSTALL_LOCATION)" > $@
+	$(PERL) $(TOP)/modules/database/src/std/softIoc/makeInstallDir.pl "$(INSTALL_LOCATION)" > $@.stdout
+	$(MV) $@.stdout $@

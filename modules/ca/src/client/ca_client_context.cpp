@@ -117,7 +117,7 @@ ca_client_context::ca_client_context ( bool enablePreemptiveCallback ) :
     // the local port number below
     {
         osiSockAddr addr;
-        memset ( (char *)&addr, 0 , sizeof ( addr ) );
+        memset ( &addr, 0 , sizeof ( addr ) );
         addr.ia.sin_family = AF_INET;
         addr.ia.sin_addr.s_addr = htonl ( INADDR_ANY );
         addr.ia.sin_port = htons ( PORT_ANY );
@@ -726,6 +726,12 @@ void ca_client_context::selfTest () const
 epicsMutex & ca_client_context::mutexRef () const
 {
     return this->mutex;
+}
+
+void ca_client_context::sync()
+{
+    // bounce through vtable
+    this->pServiceContext->sync();
 }
 
 cacContext & ca_client_context::createNetworkContext (

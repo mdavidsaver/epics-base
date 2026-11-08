@@ -444,7 +444,7 @@ static long getCharChar(const dbAddr *paddr,
 
     if (paddr->pfldDes && paddr->pfldDes->field_type == DBF_STRING) {
         /* This is a DBF_STRING field being read as a long string.
-         * The buffer we return must be zero-terminated.
+         * The buffer we return must be null terminated.
          */
         pdst[--nRequest] = 0;
         if (nRequest == 0)
@@ -466,7 +466,7 @@ static long getCharUchar(const dbAddr *paddr,
 
     if (paddr->pfldDes && paddr->pfldDes->field_type == DBF_STRING) {
         /* This is a DBF_STRING field being read as a long string.
-         * The buffer we return must be zero-terminated.
+         * The buffer we return must be null terminated.
          */
         pdst[--nRequest] = 0;
         if (nRequest == 0)
@@ -1528,12 +1528,12 @@ static long putUInt64String(dbAddr *paddr,
 
 
     if (nRequest==1 && offset==0) {
-        cvtUlongToString(*psrc, pdst);
+        cvtUInt64ToString(*psrc, pdst);
         return 0;
     }
     pdst += (size*offset);
     while (nRequest--) {
-        cvtUlongToString(*psrc, pdst);
+        cvtUInt64ToString(*psrc, pdst);
         psrc++;
         if (++offset == no_elements)
             pdst = (char *) paddr->pfield;

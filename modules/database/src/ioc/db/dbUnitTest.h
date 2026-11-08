@@ -6,13 +6,6 @@
 * in file LICENSE that is included with this distribution.
  \*************************************************************************/
 
-/** @file dbUnitTest.h
- * @brief Helpers for unittests of process database
- * @author Michael Davidsaver, Ralph Lange
- *
- * @see @ref dbunittest
- */
-
 #ifndef EPICSUNITTESTDB_H
 #define EPICSUNITTESTDB_H
 
@@ -204,15 +197,19 @@ DBCORE_API void testGlobalUnlock(void);
 }
 #endif
 
-/** @page dbunittest Unit testing of record processing
+/** @file dbUnitTest.h
+ * @brief Helpers for unittests of process database
+ * @author Michael Davidsaver, Ralph Lange
  *
- * @see @ref epicsUnitTest.h
+ * @section dbunittest Unit testing of record processing
+ *
+ * @see @ref unittest
  *
  * @section dbtestskel Test skeleton
  *
  * For the impatient, the skeleton of a test:
  *
- * @code
+ * @code{.c}
  * #include <dbUnitTest.h>
  * #include <testMain.h>
  *
@@ -236,7 +233,7 @@ DBCORE_API void testGlobalUnlock(void);
  * }
  * @endcode
  *
- * @code
+ * @code{make}
  * TOP = ..
  * include $(TOP)/configure/CONFIG
  *
@@ -253,6 +250,27 @@ DBCORE_API void testGlobalUnlock(void);
  *
  * include $(TOP)/configure/RULES
  * @endcode
+ *
+ * Discussion:
+ *
+ * Some tests require the context of an IOC to be run. This conflicts with the
+ * idea of running multiple tests within a test harness, as iocInit() is only
+ * allowed to be called once, and some parts of the full IOC (e.g. the rsrv CA
+ * server) can not be shut down cleanly. The function iocBuildIsolated() allows
+ * to start an IOC without its Channel Access parts, so that it can be shutdown
+ * quite cleanly using iocShutdown(). This feature is only intended to be used
+ * from test programs, do not use it on production IOCs. After building the
+ * IOC using iocBuildIsolated() or iocBuild(), it has to be started by calling
+ * iocRun().
+ *
+ * The part from iocBuildIsolated() to iocShutdown() can be repeated to
+ * execute multiple tests within one executable or harness.
+ *
+ * To make it easier to create a single test program that can be built for
+ * both the embedded and workstation operating system harnesses, the header file
+ * testMain.h provides a convenience macro MAIN() that adjusts the name of the
+ * test program according to the platform it is running on: main() on
+ * workstations and a regular function name on embedded systems.
  *
  * @section dbtestactions Actions
  *
@@ -276,7 +294,7 @@ DBCORE_API void testGlobalUnlock(void);
  *
  * @see enum dbfType in dbFldTypes.h
  *
- * @code
+ * @code{.c}
  * testdbPutFieldOk("pvname", DBF_ULONG, (unsigned int)5);
  * testdbPutFieldOk("pvname", DBF_FLOAT, (double)4.1);
  * testdbPutFieldOk("pvname", DBF_STRING, "hello world");
@@ -304,7 +322,7 @@ DBCORE_API void testGlobalUnlock(void);
  * epicsMutex, ...) and use of epicsThreadMustJoin() is impractical.
  *
  * For example.  The following has a subtle race where the event may be
- * destroyed (free()'d) before the call to epicsEventMustSignal() has
+ * destroyed (free()'d) before the call to epicsEventMustTrigger() has
  * returned.  On some targets this leads to a use after free() error.
  *
  * @code
@@ -317,14 +335,14 @@ DBCORE_API void testGlobalUnlock(void);
  * }
  * // ...
  * void thread2() {
- *   epicsEventMustSignal(evt); // <- Racer
+ *   epicsEventMustTrigger(evt); // <- Racer
  * }
  * @endcode
  *
  * When possible, the best way to avoid this race would be to join the worker
  * before destroying the event.
  *
- * @code
+ * @code{.c}
  * epicsEventId evt;
  * void thread1() {
  *     epicsThreadOpts opts = EPICS_THREAD_OPTS_INIT;
@@ -338,15 +356,15 @@ DBCORE_API void testGlobalUnlock(void);
  *     epicsEventDestroy(evt);
  * }
  * void thread2() {
- *   epicsEventMustSignal(evt);
+ *   epicsEventMustTrigger(evt);
  * }
  * @endcode
  *
  * Another way to avoid this race is to use a global mutex to ensure
- * that epicsEventMustSignal() has returned before destroying the event.
+ * that epicsEventMustTrigger() has returned before destroying the event.
  * testGlobalLock() and testGlobalUnlock() provide access to such a mutex.
  *
- * @code
+ * @code{.c}
  * epicsEventId evt;
  * void thread1() {
  *   evt = epicsEventMustCreate(...);
@@ -359,7 +377,7 @@ DBCORE_API void testGlobalUnlock(void);
  * // ...
  * void thread2() {
  *   testGlobalLock();   // <-- added
- *   epicsEventMustSignal(evt);
+ *   epicsEventMustTrigger(evt);
  *   testGlobalUnlock(); // <-- added
  * }
  * @endcode

@@ -337,7 +337,10 @@ COMPILE.cpp = $(CCC) $(CPPFLAGS) $(CXXFLAGS) $(INCLUDES)
 
 #--------------------------------------------------
 # C preprocessor command
-PREPROCESS.cpp = $(CPP) $(CPPFLAGS) $(INCLUDES) $< > $@
+define PREPROCESS.cpp
+$(CPP) $(CPPFLAGS) $(INCLUDES) $< > $@.stdout
+$(MV) $@.stdout $@
+endef
 
 #--------------------------------------------------
 # genVersion header defaults

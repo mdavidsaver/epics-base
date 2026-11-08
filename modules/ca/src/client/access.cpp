@@ -196,7 +196,7 @@ int epicsStdCall ca_context_create (
             return ECA_ALLOCMEM;
         }
 
-        epicsThreadPrivateSet ( caClientContextId, (void *) pcac );
+        epicsThreadPrivateSet ( caClientContextId, pcac );
     }
     catch ( ... ) {
         return ECA_ALLOCMEM;
@@ -717,6 +717,18 @@ int epicsStdCall ca_context_status ( ca_client_context * pcac, unsigned level )
     return ECA_NORMAL;
 }
 
+extern "C"
+LIBCA_API
+void dbCaSyncLocal(void);
+
+void dbCaSyncLocal(void)
+{
+    if(struct ca_client_context * ctxt = ca_current_context()) {
+        // bounce for access to private data member
+        ctxt->sync();
+    }
+}
+
 /*
  * ca_current_context ()
  *
@@ -944,7 +956,7 @@ const unsigned short dbr_value_size[LAST_BUFFER_TYPE+1] = {
 };
 
 //extern "C"
-const enum dbr_value_class dbr_value_class[LAST_BUFFER_TYPE+1] = {
+const enum dbr_value_class_e dbr_value_class[LAST_BUFFER_TYPE+1] = {
     dbr_class_string,       /* string max size              */
     dbr_class_int,          /* short                        */
     dbr_class_float,        /* IEEE Float                   */

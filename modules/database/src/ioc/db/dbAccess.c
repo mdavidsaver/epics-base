@@ -365,13 +365,14 @@ static void getOptions(DBADDR *paddr, char **poriginal, long *options,
         }
         if( (*options) & DBR_AMSG ) {
             if (!pfl) {
-                STATIC_ASSERT(sizeof(pcommon->amsg)==sizeof(pfl->amsg));
-                strncpy(pbuffer, pcommon->amsg, sizeof(pcommon->amsg)-1);
+                STATIC_ASSERT(sizeof(pcommon->amsg)==DB_AMSG_SIZE);
+                strncpy(pbuffer, pcommon->amsg, DB_AMSG_SIZE);
             } else {
-                strncpy(pbuffer, pfl->amsg,sizeof(pfl->amsg)-1);
+                STATIC_ASSERT(sizeof(pfl->amsg)==DB_AMSG_SIZE);
+                strncpy(pbuffer, pfl->amsg, DB_AMSG_SIZE);
             }
-            pbuffer[sizeof(pcommon->amsg)-1] = '\0';
-            pbuffer += sizeof(pcommon->amsg);
+            pbuffer[DB_AMSG_SIZE-1] = '\0';
+            pbuffer += DB_AMSG_SIZE;
         }
         if( (*options) & DBR_UNITS ) {
             memset(pbuffer,'\0',dbr_units_size);
@@ -550,7 +551,7 @@ long dbProcess(dbCommon *precord)
         monitor_mask |= DBE_VALUE|DBE_LOG;
         pdbFldDes = pdbRecordType->papFldDes[pdbRecordType->indvalFlddes];
         db_post_events(precord,
-                (void *)(((char *)precord) + pdbFldDes->offset),
+                ((char *)precord) + pdbFldDes->offset,
                 monitor_mask);
         goto all_done;
     }
@@ -587,7 +588,7 @@ long dbProcess(dbCommon *precord)
         db_post_events(precord, &precord->sevr, DBE_VALUE);
         pdbFldDes = pdbRecordType->papFldDes[pdbRecordType->indvalFlddes];
         db_post_events(precord,
-                (void *)(((char *)precord) + pdbFldDes->offset),
+                ((char *)precord) + pdbFldDes->offset,
                 DBE_VALUE|DBE_ALARM);
         goto all_done;
     }
@@ -597,7 +598,7 @@ long dbProcess(dbCommon *precord)
     if (!prset || !prset->process) {
         callNotifyCompletion = TRUE;
         precord->pact = 1;/*set pact so error is issued only once*/
-        recGblRecordError(S_db_noRSET, (void *)precord, "dbProcess");
+        recGblRecordError(S_db_noRSET, precord, "dbProcess");
         status = S_db_noRSET;
         if (*ptrace)
             printf("%s: No RSET for %s\n", context, precord->name);
@@ -709,7 +710,7 @@ void dbInitEntryFromAddr(struct dbAddr *paddr, DBENTRY *pdbentry)
     struct dbCommon *prec = paddr->precord;
     dbCommonPvt *ppvt = dbRec2Pvt(prec);
 
-    memset((char *)pdbentry,'\0',sizeof(DBENTRY));
+    memset(pdbentry, '\0', sizeof(DBENTRY));
 
     pdbentry->pdbbase = pdbbase;
     pdbentry->precordType = prec->rdes;
@@ -723,7 +724,7 @@ void dbInitEntryFromRecord(struct dbCommon *prec, DBENTRY *pdbentry)
 {
     dbCommonPvt *ppvt = dbRec2Pvt(prec);
 
-    memset((char *)pdbentry,'\0',sizeof(DBENTRY));
+    memset(pdbentry, '\0', sizeof(DBENTRY));
 
     pdbentry->pdbbase = pdbbase;
     pdbentry->precordType = prec->rdes;
@@ -851,7 +852,7 @@ static long getLinkValue(DBADDR *paddr, short dbrType,
     {
         const char *rtnString = dbGetString(&dbEntry);
 
-        strncpy(pbuf, rtnString, maxlen-1);
+        strncpy(pbuf, rtnString, maxlen);
         pbuf[maxlen-1] = 0;
         if(dbrType!=DBR_STRING)
             nReq = strlen(pbuf)+1;
@@ -955,7 +956,9 @@ long dbGet(DBADDR *paddr, short dbrType,
     if (INVALID_DB_REQ(dbrType) || field_type > DBF_DEVICE) {
         char message[80];
 
-        sprintf(message, "dbGet: Request type is %d\n", dbrType);
+        sprintf(message, "dbGet: dbrType = %d, field_type = %.12s (%d).",
+                dbrType, dbGetFieldTypeString(field_type), field_type);
+
         recGblDbaddrError(S_db_badDbrtype, paddr, message);
         status = S_db_badDbrtype;
         goto done;
@@ -1070,7 +1073,7 @@ static long dbPutFieldLink(DBADDR *paddr,
     dbFldDes    *pfldDes = paddr->pfldDes;
     long        special = paddr->special;
     struct link *plink = (struct link *)paddr->pfield;
-    const char  *pstring = (const char *)pbuffer;
+    const char  *pstring = pbuffer;
     struct dsxt *old_dsxt = NULL;
     dset *new_dset = NULL;
     struct dsxt *new_dsxt = NULL;
@@ -1084,11 +1087,16 @@ static long dbPutFieldLink(DBADDR *paddr,
     switch (dbrType) {
     case DBR_CHAR:
     case DBR_UCHAR:
-        if (pstring[nRequest - 1] != '\0')
+        if (nRequest == 0) {
+            pstring = pbuffer = ""; // treat zero bytes the same as one null byte
+        } else if (pstring[nRequest - 1] != '\0') {
             return S_db_badDbrtype;
+        }
         break;
 
     case DBR_STRING:
+        if (nRequest != 1)
+            return S_db_onlyOne;
         break;
 
     default:
@@ -1250,6 +1258,8 @@ long dbPutField(DBADDR *paddr, short dbrType,
 
     if (special == SPC_ATTRIBUTE)
         return S_db_noMod;
+    if (nRequest < 0)
+        return S_db_badChoice;
 
     /*check for putField disabled*/
     if (precord->disp && paddr->pfield != &precord->disp)
@@ -1329,6 +1339,8 @@ long dbPut(DBADDR *paddr, short dbrType,
 
     if (special == SPC_ATTRIBUTE)
         return S_db_noMod;
+    if (nRequest < 0)
+        return S_db_badChoice;
 
     if (dbrType == DBR_PUT_ACKT && field_type <= DBF_DEVICE) {
         return putAckt(paddr, pbuffer, 1, 1, 0);
@@ -1337,7 +1349,9 @@ long dbPut(DBADDR *paddr, short dbrType,
     } else if (INVALID_DB_REQ(dbrType) || field_type > DBF_DEVICE) {
         char message[80];
 
-        sprintf(message, "dbPut: Request type is %d", dbrType);
+        sprintf(message, "dbPut: dbrType = %d, field_type = %.12s (%d).",
+                dbrType, dbGetFieldTypeString(field_type), field_type);
+
         recGblDbaddrError(S_db_badDbrtype, paddr, message);
         return S_db_badDbrtype;
     }

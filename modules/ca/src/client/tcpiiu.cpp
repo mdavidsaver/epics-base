@@ -812,7 +812,7 @@ tcpiiu::tcpiiu (
         pSearchDest->setCircuit ( this );
     }
 
-    memset ( (void *) &this->curMsg, '\0', sizeof ( this->curMsg ) );
+    memset ( &this->curMsg, '\0', sizeof ( this->curMsg ) );
 }
 
 // this must always be called by the udp thread when it holds
@@ -1804,9 +1804,9 @@ const char * tcpiiu::pHostName (
     return this->hostNameCacheInstance.pointer ();
 }
 
-unsigned tcpiiu::getHostMinorProtocol ( 
+unsigned tcpiiu::getHostMinorProtocol (
     epicsGuard < epicsMutex > & guard) const throw ()
-{   
+{
     guard.assertIdenticalMutex ( this->mutex );
     return this->minorProtocolVersion;
 }

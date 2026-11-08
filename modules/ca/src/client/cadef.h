@@ -272,13 +272,13 @@ LIBCA_API unsigned epicsStdCall ca_write_access (chid chan);
  */
 enum channel_state {
     /// valid chid, IOC not found or unavailable
-	cs_never_conn,
+        cs_never_conn,
     /// valid chid, IOC was found, but unavailable (previously connected to server)
-	cs_prev_conn,
+        cs_prev_conn,
     /// valid chid, IOC was found, still available
-	cs_conn,
+        cs_conn,
     /// channel deleted by user
-	cs_closed
+        cs_closed
 };
 
 /** \brief Returns an enumerated type indicating the current state of the specified IO channel.
@@ -352,7 +352,7 @@ enum ca_preemptive_callback_select
  *
  * \sa ca_context_destroy()
  */
-LIBCA_API int epicsStdCall 
+LIBCA_API int epicsStdCall
         ca_context_create (enum ca_preemptive_callback_select select);
 
 /** \brief Detach from any CA context currently attached to the calling thread.
@@ -465,7 +465,7 @@ typedef unsigned capri;
  *
  * See `caExample.c` in the example application created by `makeBaseApp.pl`.
  *
- * \param[in] pChanName A nil terminated process variable name string.
+ * \param[in] pChanName A null terminated process variable name string.
  * \parblock
  *  EPICS process control * function block database variable names are of the
  *  form `<record name>.<field name>`. If the field name and the period
@@ -1433,7 +1433,7 @@ LIBCA_API void epicsStdCall ca_signal_with_file_and_lineno
  * pFormat      R   printf dtyle format string (and optional arguments)
  *
  */
-LIBCA_API void epicsStdCall ca_signal_formated (long ca_status, const char *pfilenm, 
+LIBCA_API void epicsStdCall ca_signal_formated (long ca_status, const char *pfilenm,
                                        int lineno, const char *pFormat, ...);
 
 /** \brief Return a character string which contains the name of the host
@@ -1457,11 +1457,11 @@ LIBCA_API const char * epicsStdCall ca_host_name (chid channel);
  * \param[out] bufLength The size of the pBuf buffer.
  * \returns The effective size of the written host name.
  */
-LIBCA_API unsigned epicsStdCall ca_get_host_name ( chid pChan, 
+LIBCA_API unsigned epicsStdCall ca_get_host_name ( chid pChan,
     char *pBuf, unsigned bufLength );
 
 /** \brief Return the minor protocol version number used by the host to
- *  which a channel is currently connected.   
+ *  which a channel is currently connected.
  *
  * \param[in] pChan channel identifier
  * \returns The minor protocol version number.

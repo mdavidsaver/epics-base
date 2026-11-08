@@ -20,6 +20,7 @@
 #include "epicsStdio.h"
 #include "dbDefs.h"
 #include "epicsThread.h"
+#include "epicsString.h"
 #include "cantProceed.h"
 #include "epicsMutex.h"
 #include "errlog.h"
@@ -97,7 +98,7 @@ long epicsStdCall asInitialize(ASINPUTFUNCPTR inputfunction)
     HAGNAME     *phagname;
     static epicsThreadOnceId asInitializeOnceFlag = EPICS_THREAD_ONCE_INIT;
 
-    epicsThreadOnce(&asInitializeOnceFlag,asInitializeOnce,(void *)0);
+    epicsThreadOnce(&asInitializeOnceFlag,asInitializeOnce,NULL);
     LOCK;
     pasbasenew = asCalloc(1,sizeof(ASBASE));
     if(!freeListPvt) freeListInitPvt(&freeListPvt,sizeof(ASGCLIENT),20);
@@ -656,6 +657,14 @@ next_rule:
     }
     return(0);
 }
+
+static
+void asDumpQuoted(FILE *fp, const char *s)
+{
+    fprintf(fp, "\"");
+    (void)epicsStrPrintEscaped(fp, s, strlen(s));
+    fprintf(fp, "\"");
+}
 
 int epicsStdCall asDumpUag(const char *uagname)
 {
@@ -679,7 +688,7 @@ int epicsStdCall asDumpUagFP(FILE *fp,const char *uagname)
         puagname = (UAGNAME *)ellFirst(&puag->list);
         if(puagname) fprintf(fp," {"); else fprintf(fp,"\n");
         while(puagname) {
-            fprintf(fp,"%s",puagname->user);
+            asDumpQuoted(fp, puagname->user);
             puagname = (UAGNAME *)ellNext(&puagname->node);
             if(puagname) fprintf(fp,","); else fprintf(fp,"}\n");
         }
@@ -710,7 +719,7 @@ int epicsStdCall asDumpHagFP(FILE *fp,const char *hagname)
         phagname = (HAGNAME *)ellFirst(&phag->list);
         if(phagname) fprintf(fp," {"); else fprintf(fp,"\n");
         while(phagname) {
-            fprintf(fp,"%s",phagname->host);
+            asDumpQuoted(fp, phagname->host);
             phagname = (HAGNAME *)ellNext(&phagname->node);
             if(phagname) fprintf(fp,","); else fprintf(fp,"}\n");
         }
@@ -1234,7 +1243,7 @@ static long asHagAddHost(HAG *phag,const char *host)
         if(aToIPAddr(host, 0, &addr)) {
             static const char unresolved[] = "unresolved:";
 
-            errlogPrintf("ACF: Unable to resolve host '%s'\n", host);
+            errlogPrintf(ERL_ERROR ": ACF: Unable to resolve host '%s'.  Ignoring.\n", host);
 
             phagname = asCalloc(1, sizeof(*phagname) + sizeof(unresolved)-1+strlen(host));
             strcpy(phagname->host, unresolved);

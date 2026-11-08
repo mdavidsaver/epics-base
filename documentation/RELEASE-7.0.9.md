@@ -60,7 +60,7 @@ field actually changed.
 
 There are two changes to `msi` included here.
 
-`msi` now treats files included by .template or .substutiions files in a more
+`msi` now treats files included by .template or .substitutions files in a more
 consistent way: for relative paths, it will always look relative to the current
 working directory if no `-I` flags are passed, and if they are passed then it
 will search for the _relative_ path from each of those flags. That is, the
@@ -113,6 +113,12 @@ already be conditionally casting to/from the appropriate type.
 
 This release fixes the false positives failures when building with `_FORTIFY_SOURCE` level 3.
 The override introduced in 7.0.8.1 has been removed.
+
+### Improve error propagation in `dbLoadTemplate`
+
+If an error occurs while processing a `.substitutions` file (e.g. a syntax
+error in a `.template` file), `dbLoadTemplate` will stop processing that file
+and return an error. This means that further substitutions won't occur.
 
 ### Other
 
